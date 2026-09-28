@@ -9,8 +9,9 @@ canvas { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh;
 .overlay {
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   background: rgba(6, 12, 22, .74); text-align: center; padding: 16px; box-sizing: border-box; z-index: 5;
+  overflow-y: auto; align-items: safe center;
 }
-.card { max-width: 440px; width: 100%; }
+.card { max-width: 440px; width: 100%; margin: auto 0; }
 h1 { margin: 0 0 6px; font-size: 36px; letter-spacing: .02em; }
 .sub { margin: 0 0 18px; color: #aebbd0; font-size: 15px; line-height: 1.5; }
 .keys {
@@ -39,3 +40,61 @@ button.go {
 #bu { right: 16px; bottom: calc(100px + env(safe-area-inset-bottom)); width: 84px; height: 84px; }
 #bd { right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); height: 62px; width: 84px; border-radius: 31px; }
 #bh { right: 112px; bottom: calc(28px + env(safe-area-inset-bottom)); width: 62px; height: 62px; font-size: 15px; font-weight: 600; }
+
+button.ghost {
+  font: inherit; font-size: 16px; padding: 12px 22px; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .35); background: transparent; color: #e8eef7;
+}
+.card.wide { max-width: 560px; }
+.card.wide .keys { max-width: 480px; }
+
+.menu {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
+  box-sizing: border-box; text-align: center;
+  background: radial-gradient(ellipse at 50% 30%, #25476b, #0b1320 70%);
+}
+button.mode {
+  display: block; width: 100%; margin: 0 0 12px; padding: 16px 18px; border-radius: 14px; cursor: pointer;
+  text-align: left; font: inherit; color: #e8eef7; background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .18);
+}
+button.mode b { display: block; font-size: 19px; margin-bottom: 4px; }
+button.mode span { font-size: 14px; color: #aebbd0; }
+button.mode.primary { background: rgba(255, 209, 102, .14); border-color: #ffd166; }
+button.mode.primary b { color: #ffd166; }
+
+.flight3d, .viewport { position: fixed; inset: 0; }
+.viewport canvas { display: block; position: static; width: 100% !important; height: 100% !important; }
+.hud3d {
+  position: fixed; top: 10px; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .8); width: calc(100% - 32px);
+}
+.hud3d .mission { font-weight: 700; font-size: 16px; }
+.hud3d .telemetry { font: 12px ui-monospace, Menlo, Consolas, monospace; margin-top: 4px; color: #d8e6f5; }
+.hud3d .score3d { font-size: 12px; color: #aebbd0; margin-top: 3px; }
+.messages {
+  position: fixed; top: 26%; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none;
+  font-weight: 700; font-size: 17px; text-shadow: 0 1px 4px rgba(0, 0, 0, .9); width: calc(100% - 32px);
+}
+.messages div { margin-bottom: 6px; }
+.hint {
+  position: fixed; top: 40%; left: 50%; transform: translateX(-50%); pointer-events: none; color: #fff;
+  font-size: 18px; font-weight: 700; text-shadow: 0 1px 4px rgba(0, 0, 0, .9); text-align: center; width: calc(100% - 32px);
+}
+
+.sticks { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
+.stick {
+  position: absolute; bottom: calc(24px + env(safe-area-inset-bottom)); width: 132px; height: 132px; border-radius: 50%;
+  background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .3); pointer-events: auto; touch-action: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.stick.left { left: 20px; }
+.stick.right { right: 20px; }
+.stick .knob { width: 56px; height: 56px; border-radius: 50%; background: rgba(255, 209, 102, .55); border: 2px solid #ffd166; }
+.stick span { position: absolute; top: -20px; font-size: 11px; color: #cfe0f0; white-space: nowrap; text-shadow: 0 1px 2px #000; }
+.tbtn {
+  position: absolute; pointer-events: auto; font: inherit; font-weight: 700; font-size: 14px; color: #fff; touch-action: none;
+  background: rgba(8, 14, 24, .55); border: 1px solid rgba(255, 255, 255, .35); border-radius: 10px; padding: 8px 14px;
+}
+.tbtn.engine { left: 50%; transform: translateX(-110%); bottom: calc(40px + env(safe-area-inset-bottom)); }
+.tbtn.view { left: 50%; transform: translateX(10%); bottom: calc(40px + env(safe-area-inset-bottom)); }

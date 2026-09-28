@@ -1,58 +1,27 @@
-import { useEffect, useState } from 'react';
-import { Game, type BestStore, type Key } from './game/game';
-import { GameCanvas } from './components/GameCanvas';
-import { Overlay } from './components/Overlay';
-import { TouchControls } from './components/TouchControls';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import Flight2D from './components/Flight2D';
+import { Menu, type FlightMode } from './components/Menu';
 
-const KEYMAP: Record<string, Key> = {
-  ArrowUp: 'up', KeyW: 'up', Space: 'up',
-  ArrowDown: 'down', KeyS: 'down',
-  ArrowLeft: 'left', KeyA: 'left',
-  ArrowRight: 'right', KeyD: 'right',
-};
-
-const bestStore: BestStore = {
-  load() {
-    try { return Number(localStorage.getItem('heli-best')) || 0; } catch { return 0; }
-  },
-  save(v) {
-    try { localStorage.setItem('heli-best', String(v)); } catch { /* storage unavailable */ }
-  },
-};
+const Flight3D = lazy(() => import('./components/Flight3D'));
 
 export function App() {
-  const [game] = useState(() => new Game({ store: bestStore }));
+  const [mode, setMode] = useState<FlightMode | null>(null);
   const [touch, setTouch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
+  const exit = useCallback(() => setMode(null), []);
 
   useEffect(() => {
-    const keydown = (e: KeyboardEvent) => {
-      const k = KEYMAP[e.code];
-      if (k) { game.keys[k] = true; e.preventDefault(); }
-      if (e.repeat) return;
-      if (game.mode === 'play' && e.code === 'KeyE') game.hookPressed = true;
-      if (e.code === 'KeyR' && (game.mode === 'play' || game.mode === 'over')) game.start();
-      else if ((game.mode === 'title' || game.mode === 'over') && (e.code === 'Enter' || e.code === 'Space')) game.start();
-    };
-    const keyup = (e: KeyboardEvent) => { const k = KEYMAP[e.code]; if (k) game.keys[k] = false; };
-    const blur = () => { for (const k of Object.keys(game.keys) as Key[]) game.keys[k] = false; };
     const touchstart = () => setTouch(true);
-    window.addEventListener('keydown', keydown);
-    window.addEventListener('keyup', keyup);
-    window.addEventListener('blur', blur);
     window.addEventListener('touchstart', touchstart, { passive: true });
-    return () => {
-      window.removeEventListener('keydown', keydown);
-      window.removeEventListener('keyup', keyup);
-      window.removeEventListener('blur', blur);
-      window.removeEventListener('touchstart', touchstart);
-    };
-  }, [game]);
+    return () => window.removeEventListener('touchstart', touchstart);
+  }, []);
 
-  return (
-    <>
-      <GameCanvas game={game} touch={touch} />
-      {touch && <TouchControls game={game} />}
-      <Overlay game={game} />
-    </>
-  );
+  if (mode === '3d') {
+    return (
+      <Suspense fallback={<div className="menu"><p className="sub">조종석 불러오는 중…</p></div>}>
+        <Flight3D onExit={exit} touch={touch} />
+      </Suspense>
+    );
+  }
+  if (mode === '2d') return <Flight2D onExit={exit} touch={touch} />;
+  return <Menu onPick={setMode} />;
 }
