@@ -2,7 +2,18 @@
 
 브라우저에서 바로 하는 2D 헬기 조종 게임. 화물을 줄에 매달아 도착지 패드에 내려놓는다.
 
-`index.html` 하나로 되어 있어 빌드 없이 파일을 열면 실행된다.
+https://kyhsa93.github.io/heli-game/
+
+React + TypeScript + Vite. `main`에 push하면 GitHub Actions가 테스트·빌드 후 Pages에 배포한다.
+
+```sh
+npm install
+npm run dev     # 개발 서버
+npm run check   # 타입체크 + 테스트 + 빌드
+```
+
+- `src/game/` — 물리·규칙(`game.ts`), 지형(`world.ts`), 캔버스 렌더(`render.ts`). React에 의존하지 않는다.
+- `src/components/` — 캔버스 루프, 시작/추락 화면, 터치 버튼.
 
 ## 조작
 

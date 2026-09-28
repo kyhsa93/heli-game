@@ -1,0 +1,17 @@
+export const G = 300;
+export const WORLD = 8000;
+export const CEIL = -450;
+export const ROPE = 90;
+export const PAD_W = 150;
+export const SKID = 18;
+export const CR = 11;
+export const MH = 1;
+export const MC = 0.45;
+export const K = 900;
+export const C = 34;
+export const LAND_VY = 130;
+export const LAND_VX = 70;
+export const LAND_A = 0.3;
+export const BREAK_VY = 300;
+export const HOOK_REACH = 48;
+export const STEP = 1 / 120;
