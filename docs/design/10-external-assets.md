@@ -128,6 +128,23 @@
 ### 없는 것 → 코드 모델 유지
 아파치 조종석, 자기 기체 아파치(조종석과 일치 필요), 벙커, 연료 블래더, ZSU-23-4류 대공포.
 
+### 실제 채택 현황 (M1 완료 시점)
+
+Sketchfab 모델은 무료·CC-BY여도 **계정 API 토큰 없이는 받을 수 없어**(#65, 소유자 결정 대기) Poly Pizza에서 같은 스타일의 대체 모델을 골랐다. `public/assets/CREDITS.md`가 최종 목록이다.
+
+| 게임 유닛 | 사용 중인 모델 | 라이선스 | 비고 |
+| --- | --- | --- | --- |
+| `tank`, `c_tank` | Tank — KolosStudios (poly.pizza/m/egcLMSGiuA) | CC-BY 3.0 | T-72 대신 |
+| `apc`, `c_apc` | Tank — Quaternius (poly.pizza/m/FA5daiyZQq) | CC0 | BTR 대신, 애니메이션·스킨 제거 |
+| `truck`, `c_truck` | Truckk — KolosStudios (poly.pizza/m/jHwRymyg2C) | CC-BY 3.0 | |
+| `fuel_truck` | Truck Tank — KolosStudios (poly.pizza/m/64ayx6pW3O) | CC-BY 3.0 | |
+| `technical` | Pickup Truck — Quaternius (poly.pizza/m/qn4grQgHm8) | CC0 | UAZ 대신 |
+| `inf` 계열 | Soldier — KolosStudios (poly.pizza/m/XT8jgwSesV) | CC-BY 3.0 | 애니메이션·스킨 제거 |
+| `civ_car` | SUV — Quaternius (poly.pizza/m/xsMtZhBkxL) | CC0 | |
+| 그 외(자주대공포·SAM·벙커·탄약고·지휘소·헬기) | 코드 모델 | — | Sketchfab 결정 후 교체 검토 |
+
+사운드는 Freesound 원본 다운로드가 로그인이 필요해 **공개 HQ 미리듣기(mp3)** 를 원본으로 썼다(CC0는 형식과 무관하게 적용). 채택: 헬기 실내 루프(craigsmith), H135 시동(Borgory), 기관포 단발·폭발 2종(qubodup), Kenney 충격음 2종. 헬파이어·로켓 발사음, 무전 잡음은 해당 작업(M2·M3)에서 추가한다.
+
 ## 10.7 실제 지형 데이터 (보류)
 
 | 출처 | 라이선스 | 비고 |
