@@ -44,9 +44,9 @@
         "kind": "bullet",
         "range": 1000,
         "minRange": 0,
-        "damage": 0.5,
+        "damage": 2.5,
         "rate": 5,
-          "accuracy": 0.08
+          "accuracy": 0.15
       }
     ],
     "detect": "visual",
@@ -146,9 +146,9 @@
         "kind": "bullet",
         "range": 1500,
         "minRange": 0,
-        "damage": 2,
+        "damage": 10,
         "rate": 4,
-          "accuracy": 0.1
+          "accuracy": 0.26
       }
     ],
     "detect": "visual",
@@ -233,9 +233,9 @@
         "kind": "bullet",
         "range": 2500,
         "minRange": 0,
-        "damage": 5,
+        "damage": 20,
         "rate": 15,
-          "accuracy": 0.12
+          "accuracy": 0.22
       }
     ],
     "detect": "radar",
@@ -317,9 +317,9 @@
         "kind": "bullet",
         "range": 2000,
         "minRange": 0,
-        "damage": 4,
+        "damage": 16,
         "rate": 8,
-          "accuracy": 0.1
+          "accuracy": 0.26
       }
     ],
     "detect": "visual",
@@ -347,9 +347,9 @@
         "kind": "bullet",
         "range": 1500,
         "minRange": 0,
-        "damage": 4,
+        "damage": 10,
         "rate": 5,
-          "accuracy": 0.1
+          "accuracy": 0.22
       },
       {
         "id": "heli_rkt",

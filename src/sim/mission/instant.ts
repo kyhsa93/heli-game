@@ -21,6 +21,8 @@ const THREATS: Record<ThreatLevel, string[]> = {
   high: ['aaa_light', 'spaag', 'manpads', 'sam_short'],
 };
 
+export const PAR_KILL_SHARE = 0.85;
+
 export function generateInstant(opts: InstantOptions): MissionDef {
   const r = rng(opts.seed);
   const ter = new Terrain(opts.seed, { size: INSTANT_SIZE });
@@ -90,6 +92,6 @@ export function generateInstant(opts: InstantOptions): MissionDef {
     waypoints: [...clusters.map((c, i) => ({ id: `tgt${i + 1}`, name: `TGT${i + 1}`, position: c })), { id: 'bp1', name: 'BP1', position: bp(1) }, { id: 'bp2', name: 'BP2', position: bp(-1) }],
     units, groups, objectives,
     triggers: [{ id: 'go', once: true, when: { kind: 'time', afterSec: 2 }, then: [{ kind: 'radio', from: 'control', text: t('instant.radio') }] }],
-    par: Math.round(1000 + kills * 0.7 + 400), parTimeSec: 480, wingman: false,
+    par: Math.round((1000 + kills * PAR_KILL_SHARE + 600) / 50) * 50, parTimeSec: 480, wingman: false,
   };
 }

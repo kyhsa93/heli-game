@@ -29,7 +29,7 @@ export function directWeapons(u: Unit) {
 
 export function hitChance(world: World, w: UnitWeaponDef, dist: number) {
   const speed = airspeed(world.player, world.wind);
-  return clamp((w.accuracy ?? 0) * (1 - dist / w.range) * (speed >= FAST ? FAST_FACTOR : 1) * world.difficulty.enemyAccuracy, 0, 1);
+  return clamp((w.accuracy ?? 0) * (1 - (dist / w.range) ** 2) * (speed >= FAST ? FAST_FACTOR : 1) * world.difficulty.enemyAccuracy, 0, 1);
 }
 
 export function unitHitChance(world: World, u: Unit, w: UnitWeaponDef, dist: number) {
