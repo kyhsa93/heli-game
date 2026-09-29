@@ -4,6 +4,8 @@ import { airspeed } from '../heli/state';
 import type { Unit, UnitWeaponDef } from '../units';
 import type { World } from '../world';
 import { AI_TICK, eyeOf, SUSPECT } from './awareness';
+import { terrainClear } from '../los';
+import { unitCenter } from '../sensors/laser';
 
 export const LOS_LOST_SECONDS = 3;
 export const SEARCH_SECONDS = 20;
@@ -77,18 +79,28 @@ function enter(u: Unit, state: Unit['ai']['state']) {
   if (state === 'engage') { u.ai.blindTimer = 0; u.ai.fireAcc = 0; }
 }
 
+export function wingmanTarget(world: World, eye: Vector3, dist: number): Unit | null {
+  const w = world.wingman && world.unit(world.wingman.unitId);
+  if (!w?.alive) return null;
+  const c = unitCenter(w);
+  return eye.distanceTo(c) < dist && terrainClear(world.terrain, eye, c) ? w : null;
+}
+
 function fire(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
+  const wing = wingmanTarget(world, eye, dist);
+  const range = wing ? eye.distanceTo(unitCenter(wing)) : dist;
   for (const w of directWeapons(u)) {
-    if (dist > w.range || dist < w.minRange) continue;
+    if (range > w.range || range < w.minRange) continue;
     u.ai.fireAcc += w.rate * dt;
     while (u.ai.fireAcc >= 1) {
       u.ai.fireAcc -= 1;
-      const hit = world.rng() < unitHitChance(world, u, w, dist);
-      const target = world.player.pos.clone();
-      if (!hit) target.add(new Vector3(world.rng() - 0.5, world.rng() - 0.5, world.rng() - 0.5).multiplyScalar(30 + dist * 0.02));
+      const hit = world.rng() < unitHitChance(world, u, w, range);
+      const target = wing ? unitCenter(wing) : world.player.pos.clone();
+      if (!hit) target.add(new Vector3(world.rng() - 0.5, world.rng() - 0.5, world.rng() - 0.5).multiplyScalar(30 + range * 0.02));
       const dir = target.sub(eye).normalize();
       world.emit({ t: 'fire', weapon: w.id, pos: eye.clone(), dir, owner: u.id, tracer: true });
-      if (hit) world.emit({ t: 'playerHit', by: u.id, weapon: w.id, damage: w.damage });
+      if (hit && wing) world.damageUnit(wing, w.damage, false);
+      else if (hit) world.emit({ t: 'playerHit', by: u.id, weapon: w.id, damage: w.damage });
     }
     break;
   }

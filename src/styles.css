@@ -172,3 +172,9 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .campaign-map .side.enemy { top: 8px; color: #ef476f; }
 .campaign-map .side.allied { bottom: 8px; color: #4cc9f0; }
 .room-card h2.pick-title { font-size: 22px; color: #e8eef7; margin: 4px 0 8px; letter-spacing: 0; }
+.radio-menu { position: fixed; left: calc(16px + env(safe-area-inset-left)); top: 50%; transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; gap: 6px;
+  background: rgba(6, 12, 22, .78); border: 1px solid rgba(76, 201, 240, .6); border-radius: 10px; padding: 10px 12px; pointer-events: auto; }
+.radio-menu b { color: #4cc9f0; font-size: 15px; }
+.radio-menu button { font: inherit; font-size: 15px; text-align: left; color: #e8eef7; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .2); border-radius: 8px; padding: 6px 10px; }
+.radio-menu button.on { border-color: #4cc9f0; color: #4cc9f0; }
+.radio-menu small { color: #8fa0b5; font-size: 12px; }

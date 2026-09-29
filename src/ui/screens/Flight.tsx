@@ -12,6 +12,7 @@ import { farpUnder } from '../../sim/farp';
 import { FarpMenu } from '../flight/FarpMenu';
 import { MISSIONS } from '../../content/missions';
 import { missionSession, type MissionRuntime } from '../../sim/mission/runtime';
+import { WINGMAN_ORDERS } from '../../sim/ai/wingman';
 import type { UnlockId } from '../../sim/mission/schema';
 import type { LoadoutDef } from '../../sim/heli/loadout';
 import type { MissionDef } from '../../sim/mission/schema';
@@ -68,8 +69,22 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
   const [atFarp, setAtFarp] = useState(false);
   const [, setFarpTick] = useState(0);
 
+  const [radioOpen, setRadioOpen] = useState(false);
+  const radioOpenRef = useRef(false);
+  radioOpenRef.current = radioOpen;
   const runCommand = (cmd: Command) => {
+    const slot = { weapon1: 0, weapon2: 1, weapon3: 2, weapon4: 3, menu5: 4 }[cmd as string];
+    if (radioOpenRef.current && slot !== undefined) {
+      sim.orderWingman(WINGMAN_ORDERS[slot]);
+      setRadioOpen(false);
+      return;
+    }
     switch (cmd) {
+      case 'radioMenu':
+        if (!sim.wingman) logRef.current.push({ text: t('wingman.none'), color: '#ffd166' });
+        else if (!sim.wingmanMenu) logRef.current.push({ text: t('wingman.locked'), color: '#ffd166' });
+        else setRadioOpen(v => !v);
+        break;
       case 'engine': sim.toggleEngine(); break;
       case 'weapon1': sim.selectWeapon(1); break;
       case 'weapon2': sim.selectWeapon(2); break;
@@ -268,6 +283,13 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
       )}
       <div className="messages" ref={msgRef} />
       <div className="radio-sub" ref={radioRef} style={{ display: 'none' }} />
+      {radioOpen && snap.mode === 'play' && (
+        <div className="radio-menu">
+          <b>{t('wingman.title')}</b>
+          {WINGMAN_ORDERS.map((o, i) => <button key={o} className={sim.wingman?.order === o ? 'on' : ''} onClick={() => { sim.orderWingman(o); setRadioOpen(false); }}>{i + 1}. {t(`wingman.order.${o}`)}</button>)}
+          <small>{t('wingman.close')}</small>
+        </div>
+      )}
       {portrait && snap.mode === 'play' && <div className="overlay"><div className="card"><h1>↻</h1><p className="sub">{t('flight.rotate')}</p></div></div>}
       {atFarp && <FarpMenu world={sim} />}
       <div className="hint" ref={hintRef} />

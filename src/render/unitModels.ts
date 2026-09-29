@@ -50,7 +50,7 @@ function bakeMesh(mesh: THREE.Mesh, matrix: THREE.Matrix4): THREE.BufferGeometry
   const vc = src.getAttribute('color');
   const c = new THREE.Color();
   for (const gr of groups) {
-    const m = mats[gr.materialIndex ?? 0] as THREE.MeshStandardMaterial;
+    const m = (mats[gr.materialIndex ?? 0] ?? mats[0]) as THREE.MeshStandardMaterial;
     const base = m?.color ?? new THREE.Color(1, 1, 1);
     const px = readPixels(m?.map);
     for (let i = gr.start; i < Math.min(count, gr.start + gr.count); i++) {
@@ -72,6 +72,20 @@ function bakeMesh(mesh: THREE.Mesh, matrix: THREE.Matrix4): THREE.BufferGeometry
   out.applyMatrix4(matrix);
   if (!out.getAttribute('normal')) out.computeVertexNormals();
   return out;
+}
+
+export function bakeScene(scene: THREE.Object3D): THREE.BufferGeometry {
+  scene.updateMatrixWorld(true);
+  const parts: THREE.BufferGeometry[] = [];
+  scene.traverse(o => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh && m.geometry && m.visible) parts.push(bakeMesh(m, m.matrixWorld));
+  });
+  const geo = mergeGeometries(parts.map(p => { for (const k of Object.keys(p.attributes)) if (!['position', 'normal', 'color'].includes(k)) p.deleteAttribute(k); return p; }), false)!;
+  geo.computeBoundingBox();
+  geo.translate(0, -geo.boundingBox!.min.y, 0);
+  geo.computeBoundingSphere();
+  return geo;
 }
 
 export function bakeModel(scene: THREE.Object3D, def: UnitDef, modelKey: string): THREE.BufferGeometry {

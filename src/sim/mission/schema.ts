@@ -1,4 +1,5 @@
 import { PYLONS, type LoadoutDef, type Store } from '../heli/loadout';
+import { WINGMAN_ID } from '../ai/wingman';
 import { UNIT_DEFS } from '../units';
 
 export type Vec2 = [number, number];
@@ -195,6 +196,7 @@ function references(m: MissionDef, out: Issue[], warn: Issue[]) {
   };
   const units = dup(m.units, 'units'), groups = dup(m.groups, 'groups'), objectives = dup(m.objectives, 'objectives');
   const triggers = dup(m.triggers, 'triggers'), waypoints = dup(m.waypoints, 'waypoints'), farps = dup(m.farps, 'farps');
+  if (m.wingman) units.add(WINGMAN_ID);
   const half = m.terrain.size / 2;
   const inMap = (v: Vec2, path: string) => { if (Math.abs(v[0]) > half || Math.abs(v[1]) > half) fail(out, path, `position ${v.join(',')} outside the ${m.terrain.size} m map`); };
   const need = (set: Set<string>, id: string, path: string, what: string) => { if (!set.has(id)) fail(out, path, `unknown ${what} ${id}`); };

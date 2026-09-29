@@ -1,6 +1,6 @@
 export type Command =
   | 'engine' | 'view' | 'centerView' | 'toggleHud' | 'help' | 'mute' | 'pause'
-  | 'fire' | 'weaponNext' | 'weapon1' | 'weapon2' | 'weapon3' | 'weapon4'
+  | 'fire' | 'weaponNext' | 'weapon1' | 'weapon2' | 'weapon3' | 'weapon4' | 'menu5'
   | 'tads' | 'laser' | 'zoomIn' | 'zoomOut' | 'fcr' | 'fcrMode' | 'targetNext'
   | 'flare' | 'chaff' | 'bobUp' | 'pnvs' | 'mpdLeftNext' | 'mpdRightNext' | 'radioMenu';
 
@@ -17,6 +17,7 @@ export const KEY_COMMANDS: Readonly<Record<string, Command>> = {
   Digit2: 'weapon2',
   Digit3: 'weapon3',
   Digit4: 'weapon4',
+  Digit5: 'menu5',
   KeyQ: 'weaponNext',
   KeyT: 'tads',
   KeyL: 'laser',

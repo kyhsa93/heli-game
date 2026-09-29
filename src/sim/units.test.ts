@@ -7,7 +7,7 @@ import { World } from './world';
 const DOC_UNITS = [
   'inf', 'inf_mg', 'manpads', 'truck', 'fuel_truck', 'technical', 'apc', 'tank', 'spaag', 'sam_short', 'sam_radar', 'aaa_light',
   'heli_attack', 'bunker', 'ammo_depot', 'hq',
-  'c_inf', 'c_apc', 'c_tank', 'c_truck', 'c_heli_rescue', 'farp', 'civ_car', 'civ_bus', 'civ_house',
+  'c_inf', 'c_apc', 'c_tank', 'c_truck', 'c_heli_rescue', 'c_apache', 'farp', 'civ_car', 'civ_bus', 'civ_house',
 ];
 
 describe('units.json (05-enemies-and-ai.md 5.2, 5.3)', () => {

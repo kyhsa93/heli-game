@@ -567,6 +567,25 @@
     ],
     "heat": 1.0
   },
+  "c_apache": {
+    "side": "coalition",
+    "hp": 300,
+    "armor": 2,
+    "category": "air",
+    "move": {
+      "speed": 80,
+      "air": true
+    },
+    "weapons": [],
+    "detect": "none",
+    "score": 0,
+    "size": [
+      5.2,
+      4.6,
+      17.7
+    ],
+    "heat": 1.0
+  },
   "farp": {
     "side": "coalition",
     "hp": 1,

@@ -163,6 +163,14 @@ function buildShell(root: THREE.Group) {
   return shell;
 }
 
+export function buildHeliExterior(): THREE.Group {
+  const root = new THREE.Group();
+  buildExterior(root);
+  const { disc } = buildRotor(root);
+  root.remove(disc);
+  return root;
+}
+
 export function buildHeli(): HeliModel {
   const root = new THREE.Group();
   const { tailRotor, stores, stingers } = buildExterior(root);

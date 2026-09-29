@@ -10,6 +10,7 @@ import type { Unit } from '../units';
 import type { World } from '../world';
 import type { LoadoutDef } from '../heli/loadout';
 import type { SystemId } from '../heli/damage';
+import { createWingman, formationPoint, WINGMAN_ID, WINGMAN_TYPE } from '../ai/wingman';
 import type { Action, Condition, MissionDef, ObjectiveDef, RadioFrom, UnitRef, UnlockId } from './schema';
 import { FRIENDLY_FAIL, scoreMission, type Score } from './scoring';
 
@@ -100,7 +101,19 @@ export class MissionRuntime implements Objective {
     const initial = m.initialObjectives ? new Set(m.initialObjectives) : null;
     this.objectives = m.objectives.map(def => ({ def, state: !initial || initial.has(def.id) ? 'active' : 'pending', since: 0 }));
     this.placePlayer(world);
+    world.wingmanMenu = unlocked.has('wingmanMenu');
+    if (m.wingman) this.spawnWingman(world);
     this.updateNavTarget();
+  }
+
+  private spawnWingman(world: World) {
+    const at = formationPoint(world);
+    const u = world.spawnUnit(WINGMAN_TYPE, at.x, at.z, world.player.yaw, { missionId: WINGMAN_ID });
+    u.pos.y = at.y;
+    u.vel.copy(world.player.vel);
+    this.unitIds.set(WINGMAN_ID, u.id);
+    const farp = this.mission.farps[0];
+    world.wingman = createWingman(u.id, farp ? new Vector3(farp.position[0], 0, farp.position[1]) : null);
   }
 
   private placePlayer(world: World) {
