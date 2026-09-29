@@ -1,0 +1,135 @@
+import { Vector3 } from 'three';
+import { clamp } from '../../core/math';
+import { airspeed } from '../heli/state';
+import type { Unit, UnitWeaponDef } from '../units';
+import type { World } from '../world';
+import { AI_TICK, eyeOf, SUSPECT } from './awareness';
+
+export const LOS_LOST_SECONDS = 3;
+export const SEARCH_SECONDS = 20;
+export const ALERT_FORGET = 20;
+export const RETREAT_HP = 0.3;
+export const FAST = 60 * 0.514444;
+export const FAST_FACTOR = 0.6;
+export const COVER_RANGE = 600;
+
+export const REACTION: Record<string, number> = { infantry: 2, vehicle: 1.5, tracked: 1.5, airDefense: 1, air: 1.5, structure: 2 };
+export const SAM_REACTION = 3;
+
+export function reactionTime(u: Unit) {
+  if (u.def.weapons.some(w => w.kind === 'missileRadar' || w.kind === 'missileIR') && u.def.category === 'airDefense') return SAM_REACTION;
+  return REACTION[u.def.category] ?? 1.5;
+}
+
+export function directWeapons(u: Unit) {
+  return u.def.weapons.filter(w => w.kind === 'bullet' || w.kind === 'rocket');
+}
+
+export function hitChance(world: World, w: UnitWeaponDef, dist: number) {
+  const speed = airspeed(world.player, world.wind);
+  return clamp((w.accuracy ?? 0) * (1 - dist / w.range) * (speed >= FAST ? FAST_FACTOR : 1) * world.difficulty.enemyAccuracy, 0, 1);
+}
+
+function inRange(u: Unit, dist: number) {
+  return u.def.weapons.some(w => dist <= w.range && dist >= w.minRange);
+}
+
+function sees(world: World, u: Unit, eye: Vector3) {
+  const p = world.player.pos;
+  return u.def.detect === 'radar' ? world.los.radar(u.id, eye, p, world.time) : world.los.visual(u.id, eye, p, world.time).clear;
+}
+
+function nearestCover(world: World, u: Unit): Vector3 | null {
+  let best: Vector3 | null = null, bestD = COVER_RANGE;
+  const threat = world.player.pos;
+  for (const t of world.terrain.trees) {
+    const d = Math.hypot(t.x - u.pos.x, t.z - u.pos.z);
+    if (d < bestD && Math.hypot(t.x - threat.x, t.z - threat.z) > Math.hypot(u.pos.x - threat.x, u.pos.z - threat.z) - 50) { bestD = d; best = new Vector3(t.x, 0, t.z); }
+  }
+  for (const b of world.terrain.buildings) {
+    const d = Math.hypot(b.x - u.pos.x, b.z - u.pos.z);
+    if (d < bestD) { bestD = d; best = new Vector3(b.x, 0, b.z); }
+  }
+  return best;
+}
+
+function moveToward(world: World, u: Unit, to: Vector3, dt: number) {
+  const m = u.def.move;
+  if (!m || m.air) return true;
+  const speed = m.offroad ? (m.offroadSpeed ?? m.speed * 0.6) : m.speed * 0.5;
+  const dx = to.x - u.pos.x, dz = to.z - u.pos.z, d = Math.hypot(dx, dz);
+  if (d < 8) { u.vel.set(0, 0, 0); return true; }
+  const step = Math.min(d, speed * dt);
+  u.pos.x += dx / d * step; u.pos.z += dz / d * step;
+  u.pos.y = world.terrain.surfaceAt(u.pos.x, u.pos.z);
+  u.vel.set(dx / d * speed, 0, dz / d * speed);
+  u.yaw = Math.atan2(-dx, -dz);
+  return false;
+}
+
+function enter(u: Unit, state: Unit['ai']['state']) {
+  u.ai.state = state;
+  u.ai.stateTimer = 0;
+  if (state === 'engage') { u.ai.blindTimer = 0; u.ai.fireAcc = 0; }
+}
+
+function fire(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
+  for (const w of directWeapons(u)) {
+    if (dist > w.range || dist < w.minRange) continue;
+    u.ai.fireAcc += w.rate * dt;
+    while (u.ai.fireAcc >= 1) {
+      u.ai.fireAcc -= 1;
+      const hit = world.rng() < hitChance(world, w, dist);
+      const target = world.player.pos.clone();
+      if (!hit) target.add(new Vector3(world.rng() - 0.5, world.rng() - 0.5, world.rng() - 0.5).multiplyScalar(30 + dist * 0.02));
+      const dir = target.sub(eye).normalize();
+      world.emit({ t: 'fire', weapon: w.id, pos: eye.clone(), dir, owner: u.id, tracer: true });
+      if (hit) world.emit({ t: 'playerHit', by: u.id, weapon: w.id, damage: w.damage });
+    }
+    break;
+  }
+}
+
+export function stepBrain(world: World, u: Unit, dt = AI_TICK) {
+  const ai = u.ai, h = world.player;
+  ai.stateTimer += dt;
+  if (ai.state !== 'retreat' && u.def.move && !u.def.move.air && u.hp < u.def.hp * RETREAT_HP && u.def.weapons.length >= 0) {
+    enter(u, 'retreat');
+    ai.cover = nearestCover(world, u);
+  }
+  const eye = eyeOf(u);
+  const dist = eye.distanceTo(h.pos);
+  switch (ai.state) {
+    case 'idle':
+      if (ai.awareness >= SUSPECT) enter(u, 'alert');
+      break;
+    case 'alert':
+      if (ai.detected && h.alive && inRange(u, dist)) { enter(u, 'engage'); ai.aimTimer = reactionTime(u) * world.difficulty.enemyReaction; }
+      else if (ai.awareness < SUSPECT && (!ai.lastSeen || world.time - ai.lastSeenAt > ALERT_FORGET) && ai.stateTimer > ALERT_FORGET) enter(u, 'idle');
+      break;
+    case 'engage': {
+      const visible = h.alive && sees(world, u, eye) && inRange(u, dist);
+      if (!visible) {
+        ai.blindTimer += dt;
+        if (ai.blindTimer >= LOS_LOST_SECONDS) enter(u, 'search');
+        break;
+      }
+      ai.blindTimer = 0;
+      if (ai.aimTimer > 0) { ai.aimTimer -= dt; break; }
+      fire(world, u, eye, dist, dt);
+      break;
+    }
+    case 'search':
+      if (ai.detected && h.alive && inRange(u, dist) && sees(world, u, eye)) { enter(u, 'engage'); ai.aimTimer = reactionTime(u) * world.difficulty.enemyReaction * 0.5; }
+      else if (ai.stateTimer >= SEARCH_SECONDS) enter(u, ai.awareness >= SUSPECT ? 'alert' : 'idle');
+      break;
+    case 'retreat':
+      if (ai.cover) moveToward(world, u, ai.cover, dt);
+      if (ai.detected && h.alive && sees(world, u, eye) && inRange(u, dist)) fire(world, u, eye, dist, dt);
+      break;
+  }
+}
+
+export function stepBrains(world: World, dt = AI_TICK) {
+  for (const u of world.units) if (u.alive && u.side === 'veros' && u.def.detect !== 'none' && !u.passive) stepBrain(world, u, dt);
+}

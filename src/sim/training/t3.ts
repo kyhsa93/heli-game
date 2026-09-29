@@ -44,14 +44,14 @@ export class TrainingT3 implements Objective {
     this.gunTargets.clear();
     this.rocketTargets.clear();
     for (const [type, dx, dz] of T3_GUN_TARGETS) {
-      this.gunTargets.add(world.spawnUnit(type, pad.x + dx, pad.z + dz, world.rng() * Math.PI * 2, { missionId: `range-${type}`, group: 'gun' }).id);
+      this.gunTargets.add(world.spawnUnit(type, pad.x + dx, pad.z + dz, world.rng() * Math.PI * 2, { missionId: `range-${type}`, group: 'gun', passive: true }).id);
     }
     const away = new Vector3(pad.x - base.x, 0, pad.z - base.z);
     if (away.lengthSq() < 1) away.set(0, 0, -1);
     away.normalize();
     this.rocketCenter.set(pad.x + away.x * T3_ROCKET_OFFSET, 0, pad.z + away.z * T3_ROCKET_OFFSET);
     for (const [type, dx, dz] of T3_ROCKET_TARGETS) {
-      this.rocketTargets.add(world.spawnUnit(type, this.rocketCenter.x + dx, this.rocketCenter.z + dz, world.rng() * Math.PI * 2, { missionId: `range-${type}`, group: 'rockets' }).id);
+      this.rocketTargets.add(world.spawnUnit(type, this.rocketCenter.x + dx, this.rocketCenter.z + dz, world.rng() * Math.PI * 2, { missionId: `range-${type}`, group: 'rockets', passive: true }).id);
     }
     this.rocketCenter.y = world.terrain.surfaceAt(this.rocketCenter.x, this.rocketCenter.z);
     startAirborne(world, new Vector3(pad.x, pad.y, pad.z), T3_START_DISTANCE, 45);

@@ -9,6 +9,7 @@ import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout
 import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
 import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
+import { stepBrains } from './ai/brain';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
 import { LosCache } from './los';
 import { castRay, createLaser, crosshairUnit, unitCenter, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
@@ -48,6 +49,7 @@ export class World {
   identify: { unitId: number | null; time: number } = { unitId: null, time: 0 };
   assists: Assists = { ...DEFAULT_ASSISTS };
   conditions: Conditions = { night: false, fog: false, playerRadar: false };
+  difficulty = { enemyAccuracy: 1, enemyReaction: 1, damageTaken: 1, detection: 1 };
   readonly los: LosCache;
   private aiClock = 0;
   tads: Tads = createTads();
@@ -110,14 +112,14 @@ export class World {
 
   padAt(i: number): Pad3 | undefined { return this.pads[i]; }
 
-  spawnUnit(defId: string, x: number, z: number, yaw = 0, opts: { missionId?: string; group?: string } = {}): Unit {
+  spawnUnit(defId: string, x: number, z: number, yaw = 0, opts: { missionId?: string; group?: string; passive?: boolean } = {}): Unit {
     const def = UNIT_DEFS[defId];
     if (!def) throw new Error(`unknown unit ${defId}`);
     const y = def.move?.air ? this.terrain.surfaceAt(x, z) + 60 : this.terrain.surfaceAt(x, z);
     const u: Unit = {
       id: this.nextUnitId++, defId, def, side: def.side, missionId: opts.missionId, group: opts.group,
       pos: new Vector3(x, y, z), yaw, vel: new Vector3(), hp: def.hp, alive: true,
-      ai: createAiState(), weaponCooldown: 0, identified: false,
+      ai: createAiState(), weaponCooldown: 0, identified: false, passive: opts.passive,
     };
     this.units.push(u);
     return u;
@@ -242,7 +244,7 @@ export class World {
     this.stepMissiles(dt);
     if (this.active) {
       this.aiClock += dt;
-      while (this.aiClock >= AI_TICK - 1e-9) { this.aiClock -= AI_TICK; stepAwareness(this, this.los, this.conditions); }
+      while (this.aiClock >= AI_TICK - 1e-9) { this.aiClock -= AI_TICK; stepAwareness(this, this.los, this.conditions); stepBrains(this); }
     }
     this.events.flush();
   }

@@ -28,7 +28,7 @@ export function eventMessage(e: SimEvent): Omit<Message, 'life'> | null {
       return e.owner === 0 ? { text: t(`msg.missileLost.${e.reason}`), color: '#ef476f' } : null;
     case 'identified':
       return { text: t('msg.identified', { name: t(`units.${e.defId}`), side: t(`sides.${e.side}`) }), color: e.side === 'veros' ? '#ffd166' : '#4cc9f0' };
-    case 'detected': case 'radarTrack': return null;
+    case 'detected': case 'radarTrack': case 'playerHit': return null;
     case 'crash': case 'unitDestroyed': case 'explosion': case 'fire': case 'impact': return null;
   }
 }

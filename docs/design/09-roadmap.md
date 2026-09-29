@@ -59,7 +59,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 
 - [x] [#26](https://github.com/kyhsa93/heli-game/issues/26) **M3-1 가시선**: `sim/los.ts`, 나무 차폐. *완료*: 능선 뒤 가려짐 / 나무 차폐율 테스트.
 - [x] [#27](https://github.com/kyhsa93/heli-game/issues/27) **M3-2 인지 모델**: 05장 5.4절 공식 그대로. *완료*: 5장 5.6절 테스트 목록 중 탐지 관련 3개.
-- [ ] [#28](https://github.com/kyhsa93/heli-game/issues/28) **M3-3 AI 상태 기계**: 대기/경계/교전/수색/후퇴, 조준 지연, 확률 명중 + 연출 예광탄. *완료*: 상태 전이 테스트, "가시선 끊기면 3초 안에 사격 중지" 테스트.
+- [x] [#28](https://github.com/kyhsa93/heli-game/issues/28) **M3-3 AI 상태 기계**: 대기/경계/교전/수색/후퇴, 조준 지연, 확률 명중 + 연출 예광탄. *완료*: 상태 전이 테스트, "가시선 끊기면 3초 안에 사격 중지" 테스트.
 - [ ] [#29](https://github.com/kyhsa93/heli-game/issues/29) **M3-4 플레이어 피해 계통**: 03장 3.3절 표 전체, EUFD 경고, 증상. *완료*: 계통별 증상 테스트(엔진 1 정지 시 최대 추력 −50% 등).
 - [ ] [#30](https://github.com/kyhsa93/heli-game/issues/30) **M3-5 적 미사일**: 비례항법, 적외선/레이더, 가시선 상실 시 유도 상실. *완료*: 정지 표적 명중 테스트, 지형 뒤로 숨으면 빗나감 테스트.
 - [ ] [#31](https://github.com/kyhsa93/heli-game/issues/31) **M3-6 RWR·CMWS·대응책**: ASE 페이지, IHADSS 위협 표시, 플레어·채프 확률. *완료*: 기만 확률 통계 테스트(시드 고정 1,000회), 스크린샷.

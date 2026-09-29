@@ -90,7 +90,7 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
   if (!h.alive) return;
   const eye = new Vector3();
   for (const u of world.units) {
-    if (!u.alive || u.side !== 'veros' || u.def.detect === 'none') continue;
+    if (!u.alive || u.side !== 'veros' || u.def.detect === 'none' || u.passive) continue;
     eyeOf(u, eye);
     const dist = eye.distanceTo(h.pos);
     if (u.def.detect === 'radar' && u.def.radar) {

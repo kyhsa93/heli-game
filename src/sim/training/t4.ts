@@ -71,7 +71,7 @@ export class TrainingT4 implements Objective {
         }
       }
     }
-    for (const p of spots) this.tanks.add(world.spawnUnit('tank', p.x, p.z, heading, { missionId: 't4-tank', group: 'armor' }).id);
+    for (const p of spots) this.tanks.add(world.spawnUnit('tank', p.x, p.z, heading, { missionId: 't4-tank', group: 'armor', passive: true }).id);
     this.world = world;
     this.identified = false;
     this.lastHit = null;

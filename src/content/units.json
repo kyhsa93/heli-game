@@ -15,7 +15,8 @@
         "range": 800,
         "minRange": 0,
         "damage": 0.3,
-        "rate": 2
+        "rate": 2,
+          "accuracy": 0.06
       }
     ],
     "detect": "visual",
@@ -44,7 +45,8 @@
         "range": 1000,
         "minRange": 0,
         "damage": 0.5,
-        "rate": 5
+        "rate": 5,
+          "accuracy": 0.08
       }
     ],
     "detect": "visual",
@@ -145,7 +147,8 @@
         "range": 1500,
         "minRange": 0,
         "damage": 2,
-        "rate": 4
+        "rate": 4,
+          "accuracy": 0.1
       }
     ],
     "detect": "visual",
@@ -173,7 +176,8 @@
         "range": 2000,
         "minRange": 0,
         "damage": 6,
-        "rate": 3
+        "rate": 3,
+          "accuracy": 0.12
       }
     ],
     "detect": "visual",
@@ -201,7 +205,8 @@
         "range": 1200,
         "minRange": 0,
         "damage": 2,
-        "rate": 4
+        "rate": 4,
+          "accuracy": 0.08
       }
     ],
     "detect": "visual",
@@ -229,7 +234,8 @@
         "range": 2500,
         "minRange": 0,
         "damage": 5,
-        "rate": 15
+        "rate": 15,
+          "accuracy": 0.12
       }
     ],
     "detect": "radar",
@@ -312,7 +318,8 @@
         "range": 2000,
         "minRange": 0,
         "damage": 4,
-        "rate": 8
+        "rate": 8,
+          "accuracy": 0.1
       }
     ],
     "detect": "visual",
@@ -341,7 +348,8 @@
         "range": 1500,
         "minRange": 0,
         "damage": 4,
-        "rate": 5
+        "rate": 5,
+          "accuracy": 0.1
       },
       {
         "id": "heli_rkt",
@@ -349,7 +357,8 @@
         "range": 2500,
         "minRange": 0,
         "damage": 30,
-        "rate": 1
+        "rate": 1,
+          "accuracy": 0.15
       },
       {
         "id": "heli_aam",
@@ -382,7 +391,8 @@
         "range": 1000,
         "minRange": 0,
         "damage": 0.5,
-        "rate": 5
+        "rate": 5,
+          "accuracy": 0.08
       }
     ],
     "detect": "visual",
@@ -447,7 +457,8 @@
         "range": 800,
         "minRange": 0,
         "damage": 0.3,
-        "rate": 2
+        "rate": 2,
+          "accuracy": 0.06
       }
     ],
     "detect": "visual",
@@ -476,7 +487,8 @@
         "range": 2000,
         "minRange": 0,
         "damage": 6,
-        "rate": 3
+        "rate": 3,
+          "accuracy": 0.12
       }
     ],
     "detect": "visual",
@@ -504,7 +516,8 @@
         "range": 1200,
         "minRange": 0,
         "damage": 2,
-        "rate": 4
+        "rate": 4,
+          "accuracy": 0.08
       }
     ],
     "detect": "visual",

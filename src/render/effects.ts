@@ -141,6 +141,7 @@ export function fallbackAtlas() {
 interface Burning { pos: THREE.Vector3; time: number; acc: number; size: number }
 
 export const BURN_SECONDS = 30;
+export const ENEMY_TRACER_SPEED = 900;
 
 export class Effects {
   readonly group = new THREE.Group();
@@ -149,6 +150,7 @@ export class Effects {
   private tracers: THREE.LineSegments;
   private tracerPos: Float32Array;
   private burning: Burning[] = [];
+  private enemyTracers: { pos: THREE.Vector3; vel: THREE.Vector3; life: number }[] = [];
   private missileMesh: THREE.InstancedMesh;
   private mm = new THREE.Matrix4();
   private mq = new THREE.Quaternion();
@@ -198,6 +200,10 @@ export class Effects {
           break;
         }
         this.glow.spawn(e.pos, new THREE.Vector3(), 0.05, 1.6, 2.2, 1, CELL.muzzle);
+        if (e.owner !== 0 && e.tracer && this.enemyTracers.length < 64) {
+          const range = e.pos.distanceTo(world.player.pos) + 200;
+          this.enemyTracers.push({ pos: e.pos.clone(), vel: e.dir.clone().multiplyScalar(ENEMY_TRACER_SPEED), life: range / ENEMY_TRACER_SPEED });
+        }
         if (this.rnd() < 0.3) this.smoke.spawn(e.pos, e.dir.clone().multiplyScalar(4), 0.8, 1, 3, 0.25, CELL.dust[0], 0.5, 2);
         break;
       case 'impact': {
@@ -269,6 +275,16 @@ export class Effects {
       if (!p.tracer || n >= this.maxTracers) continue;
       const tail = p.pos.clone().addScaledVector(p.vel, -0.025);
       this.tracerPos.set([p.pos.x, p.pos.y, p.pos.z, tail.x, tail.y, tail.z], n * 6);
+      n++;
+    }
+    for (let i = this.enemyTracers.length - 1; i >= 0; i--) {
+      const t = this.enemyTracers[i];
+      t.life -= dt;
+      t.pos.addScaledVector(t.vel, dt);
+      if (t.life <= 0) { this.enemyTracers.splice(i, 1); continue; }
+      if (n >= this.maxTracers) continue;
+      const tail = t.pos.clone().addScaledVector(t.vel, -0.03);
+      this.tracerPos.set([t.pos.x, t.pos.y, t.pos.z, tail.x, tail.y, tail.z], n * 6);
       n++;
     }
     const g = this.tracers.geometry;

@@ -20,7 +20,8 @@ export type SimEvent =
   | { t: 'advice'; code: AdviceCode; value?: number }
   | { t: 'identified'; id: number; defId: string; side: Side }
   | { t: 'detected'; id: number; by: 'visual' | 'radar' }
-  | { t: 'radarTrack'; id: number; on: boolean };
+  | { t: 'radarTrack'; id: number; on: boolean }
+  | { t: 'playerHit'; by: number; weapon: string; damage: number };
 
 export type AdviceCode = 'landingTooHard' | 'wrongPad';
 

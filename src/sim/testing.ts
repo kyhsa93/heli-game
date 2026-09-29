@@ -1,7 +1,15 @@
 import type { SimEvent } from './events';
 import { hoverCollective as hoverFor } from './heli/loadout';
 import { agl, updateQ } from './heli/state';
+import { Vector3 } from 'three';
+import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
+import { stepBrains } from './ai/brain';
+import { GEAR_Y } from './heli/airframe';
+import { LosCache, terrainClear } from './los';
+import { HALF } from './terrain';
 import { STEP, World } from './world';
+
+const DAY: Conditions = { night: false, fog: false, playerRadar: false };
 
 export function hoverCollective(world: World) {
   return hoverFor(world.grossWeight);
@@ -48,4 +56,52 @@ export function airborneAt(world: World, x: number, z: number, y: number) {
   h.pos.set(x, y, z); h.vel.set(0, 0, 0);
   h.pitch = h.roll = 0; h.pRate = h.rRate = h.yRate = 0;
   updateQ(h);
+}
+
+export function putPlayer(world: World, x: number, z: number, aglM: number) {
+  const h = world.player;
+  h.pos.set(x, world.terrain.surfaceAt(x, z) - GEAR_Y + aglM, z);
+  h.vel.set(0, 0, 0);
+}
+
+export function runAi(world: World, los: LosCache, seconds: number, cond: Conditions = DAY, until?: () => boolean, brains = false) {
+  const t0 = world.time;
+  for (let t = 0; t < seconds; t += AI_TICK) {
+    world.time += AI_TICK;
+    stepAwareness(world, los, cond);
+    if (brains) stepBrains(world);
+    world.events.flush();
+    if (until?.()) return world.time - t0;
+  }
+  return Infinity;
+}
+
+export function openPair(world: World, dist: number, lowAgl = 9) {
+  for (let i = 0; i < 3000; i++) {
+    const x = ((i * 7919) % 173) / 173 * HALF * 1.4 - HALF * 0.7, z = ((i * 104729) % 181) / 181 * HALF * 1.4 - HALF * 0.7;
+    if (world.terrain.heightAt(x, z) < 1) continue;
+    const ang = (i % 8) * Math.PI / 4;
+    const px = x + Math.sin(ang) * dist, pz = z + Math.cos(ang) * dist;
+    if (Math.abs(px) > HALF - 100 || Math.abs(pz) > HALF - 100 || world.terrain.heightAt(px, pz) < 1) continue;
+    const eye = new Vector3(x, world.terrain.surfaceAt(x, z) + 4.4, z);
+    const low = new Vector3(px, world.terrain.surfaceAt(px, pz) + lowAgl - GEAR_Y, pz);
+    if (!terrainClear(world.terrain, eye, low)) continue;
+    const trees = world.terrain.treesNear(px, pz).concat(world.terrain.treesNear(x, z));
+    if (trees.length) continue;
+    return { unit: new Vector3(x, 0, z), player: new Vector3(px, 0, pz) };
+  }
+  throw new Error('no open pair');
+}
+
+export function hiddenPair(world: World) {
+  for (let i = 0; i < 3000; i++) {
+    const x = ((i * 7919) % 173) / 173 * HALF * 1.4 - HALF * 0.7, z = ((i * 104729) % 181) / 181 * HALF * 1.4 - HALF * 0.7;
+    const ang = (i % 8) * Math.PI / 4;
+    const px = x + Math.sin(ang) * 1200, pz = z + Math.cos(ang) * 1200;
+    if (Math.abs(px) > HALF - 100 || Math.abs(pz) > HALF - 100) continue;
+    const eye = new Vector3(x, world.terrain.surfaceAt(x, z) + 4.4, z);
+    const p = new Vector3(px, world.terrain.surfaceAt(px, pz) + 20, pz);
+    if (world.terrain.surfaceAt((x + px) / 2, (z + pz) / 2) > Math.max(eye.y, p.y) + 30) return { unit: new Vector3(x, 0, z), player: new Vector3(px, 0, pz) };
+  }
+  throw new Error('no hidden pair');
 }

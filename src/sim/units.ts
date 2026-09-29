@@ -6,7 +6,7 @@ export type Category = 'infantry' | 'vehicle' | 'tracked' | 'airDefense' | 'air'
 export type WeaponKind = 'bullet' | 'rocket' | 'missileIR' | 'missileRadar';
 export type Detect = 'visual' | 'visualIR' | 'radar' | 'none';
 
-export interface UnitWeaponDef { id: string; kind: WeaponKind; range: number; minRange: number; damage: number; rate: number }
+export interface UnitWeaponDef { id: string; kind: WeaponKind; range: number; minRange: number; damage: number; rate: number; accuracy?: number }
 
 export interface UnitDef {
   side: Side;
@@ -39,10 +39,15 @@ export interface AiState {
   lastSeenAt: number;
   radar: RadarMode;
   radarTimer: number;
+  aimTimer: number;
+  blindTimer: number;
+  stateTimer: number;
+  fireAcc: number;
+  cover: Vector3 | null;
 }
 
 export function createAiState(): AiState {
-  return { awareness: 0, state: 'idle', detected: false, lastSeen: null, lastSeenAt: -Infinity, radar: 'search', radarTimer: 0 };
+  return { awareness: 0, state: 'idle', detected: false, lastSeen: null, lastSeenAt: -Infinity, radar: 'search', radarTimer: 0, aimTimer: 0, blindTimer: 0, stateTimer: 0, fireAcc: 0, cover: null };
 }
 
 export interface Unit {
@@ -60,6 +65,7 @@ export interface Unit {
   ai: AiState;
   weaponCooldown: number;
   identified: boolean;
+  passive?: boolean;
 }
 
 export function squadMembers(u: Unit) {
@@ -89,6 +95,7 @@ export function validateUnitDefs(defs: Record<string, UnitDef>): string[] {
       if (!KINDS.has(w.kind)) e(`${w.id} kind ${w.kind}`);
       if (!(w.range > w.minRange && w.minRange >= 0)) e(`${w.id} range`);
       if (!(w.damage > 0 && w.rate > 0)) e(`${w.id} damage/rate`);
+      if ((w.kind === 'bullet' || w.kind === 'rocket') && !(w.accuracy !== undefined && w.accuracy > 0 && w.accuracy <= 1)) e(`${w.id} accuracy`);
     }
   }
   return errors;

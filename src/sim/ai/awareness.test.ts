@@ -1,12 +1,9 @@
 import { Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
-import { GEAR_Y } from '../heli/airframe';
-import { LosCache, terrainClear } from '../los';
-import { HALF } from '../terrain';
-import { makeWorld } from '../testing';
+import { LosCache } from '../los';
+import { hiddenPair, makeWorld, openPair, putPlayer, runAi } from '../testing';
 import type { Unit } from '../units';
-import type { World } from '../world';
-import { AI_TICK, ALERT_LEVEL, eyeOf, stepAwareness, SUSPECT, type Conditions } from './awareness';
+import { AI_TICK, ALERT_LEVEL, eyeOf, SUSPECT, type Conditions } from './awareness';
 
 const DAY: Conditions = { night: false, fog: false, playerRadar: false };
 
@@ -17,60 +14,13 @@ function setup(seed = 7) {
   return { world, events, los: new LosCache(world.terrain) };
 }
 
-function putPlayer(world: World, x: number, z: number, aglM: number) {
-  const h = world.player;
-  h.pos.set(x, world.terrain.surfaceAt(x, z) - GEAR_Y + aglM, z);
-  h.vel.set(0, 0, 0);
-}
-
-function run(world: World, los: LosCache, seconds: number, cond = DAY, until?: () => boolean) {
-  const t0 = world.time;
-  for (let t = 0; t < seconds; t += AI_TICK) {
-    world.time += AI_TICK;
-    stepAwareness(world, los, cond);
-    world.events.flush();
-    if (until?.()) return world.time - t0;
-  }
-  return Infinity;
-}
-
-function openPair(world: World, dist: number, lowAgl = 9) {
-  for (let i = 0; i < 3000; i++) {
-    const x = ((i * 7919) % 173) / 173 * HALF * 1.4 - HALF * 0.7, z = ((i * 104729) % 181) / 181 * HALF * 1.4 - HALF * 0.7;
-    if (world.terrain.heightAt(x, z) < 1) continue;
-    const ang = (i % 8) * Math.PI / 4;
-    const px = x + Math.sin(ang) * dist, pz = z + Math.cos(ang) * dist;
-    if (Math.abs(px) > HALF - 100 || Math.abs(pz) > HALF - 100 || world.terrain.heightAt(px, pz) < 1) continue;
-    const eye = new Vector3(x, world.terrain.surfaceAt(x, z) + 4.4, z);
-    const low = new Vector3(px, world.terrain.surfaceAt(px, pz) + lowAgl - GEAR_Y, pz);
-    if (!terrainClear(world.terrain, eye, low)) continue;
-    const trees = world.terrain.treesNear(px, pz).concat(world.terrain.treesNear(x, z));
-    if (trees.length) continue;
-    return { unit: new Vector3(x, 0, z), player: new Vector3(px, 0, pz) };
-  }
-  throw new Error('no open pair');
-}
-
-function hiddenPair(world: World) {
-  for (let i = 0; i < 3000; i++) {
-    const x = ((i * 7919) % 173) / 173 * HALF * 1.4 - HALF * 0.7, z = ((i * 104729) % 181) / 181 * HALF * 1.4 - HALF * 0.7;
-    const ang = (i % 8) * Math.PI / 4;
-    const px = x + Math.sin(ang) * 1200, pz = z + Math.cos(ang) * 1200;
-    if (Math.abs(px) > HALF - 100 || Math.abs(pz) > HALF - 100) continue;
-    const eye = new Vector3(x, world.terrain.surfaceAt(x, z) + 4.4, z);
-    const p = new Vector3(px, world.terrain.surfaceAt(px, pz) + 20, pz);
-    if (world.terrain.surfaceAt((x + px) / 2, (z + pz) / 2) > Math.max(eye.y, p.y) + 30) return { unit: new Vector3(x, 0, z), player: new Vector3(px, 0, pz) };
-  }
-  throw new Error('no hidden pair');
-}
-
 describe('awareness (05-enemies-and-ai.md 5.4)', () => {
   it('never detects a player hidden behind a ridge', () => {
     const { world, los } = setup();
     const g = hiddenPair(world);
     const tank = world.spawnUnit('tank', g.unit.x, g.unit.z);
     putPlayer(world, g.player.x, g.player.z, 20);
-    run(world, los, 60);
+    runAi(world, los, 60);
     expect(tank.ai.detected).toBe(false);
     expect(tank.ai.awareness).toBeLessThanOrEqual(SUSPECT);
   });
@@ -80,11 +30,11 @@ describe('awareness (05-enemies-and-ai.md 5.4)', () => {
     const g = openPair(world, 1800);
     const tank = world.spawnUnit('tank', g.unit.x, g.unit.z);
     putPlayer(world, g.player.x, g.player.z, 9);
-    const low = run(world, los, 120, DAY, () => tank.ai.detected);
+    const low = runAi(world, los, 120, DAY, () => tank.ai.detected);
     const w2 = setup().world, los2 = new LosCache(w2.terrain);
     const tank2 = w2.spawnUnit('tank', g.unit.x, g.unit.z);
     putPlayer(w2, g.player.x, g.player.z, 120);
-    const high = run(w2, los2, 120, DAY, () => tank2.ai.detected);
+    const high = runAi(w2, los2, 120, DAY, () => tank2.ai.detected);
     expect(high).toBeLessThan(low);
     expect(low / high).toBeGreaterThan(2);
   });
@@ -95,10 +45,10 @@ describe('awareness (05-enemies-and-ai.md 5.4)', () => {
     const tank = world.spawnUnit('tank', g.unit.x, g.unit.z);
     tank.ai.awareness = 0.9;
     putPlayer(world, g.player.x, g.player.z, 20);
-    run(world, los, 2);
+    runAi(world, los, 2);
     expect(tank.ai.awareness).toBeCloseTo(0.6, 1);
     tank.ai.awareness = 0;
-    run(world, los, 10);
+    runAi(world, los, 10);
     expect(tank.ai.awareness).toBeCloseTo(SUSPECT, 5);
   });
 
@@ -112,7 +62,7 @@ describe('awareness (05-enemies-and-ai.md 5.4)', () => {
     const friend = world.spawnUnit('c_tank', g.unit.x + 50, g.unit.z);
     for (const u of [near, far] as Unit[]) { u.pos.y = -500; }
     putPlayer(world, g.player.x, g.player.z, 150);
-    run(world, los, 60, DAY, () => spotter.ai.detected);
+    runAi(world, los, 60, DAY, () => spotter.ai.detected);
     expect(spotter.ai.detected).toBe(true);
     expect(events.some(e => e.t === 'detected' && e.id === spotter.id)).toBe(true);
     expect(near.ai.awareness).toBeGreaterThan(ALERT_LEVEL - 0.02);
@@ -130,7 +80,7 @@ describe('awareness (05-enemies-and-ai.md 5.4)', () => {
         const los = new LosCache(world.terrain);
         const sam = world.spawnUnit('spaag', g.unit.x, g.unit.z);
         putPlayer(world, g.player.x, g.player.z, aglM);
-        times.push(run(world, los, 30, DAY, () => sam.ai.radar !== 'search'));
+        times.push(runAi(world, los, 30, DAY, () => sam.ai.radar !== 'search'));
       }
       return times.reduce((a, b) => a + Math.min(b, 30), 0) / times.length;
     };
@@ -142,8 +92,8 @@ describe('awareness (05-enemies-and-ai.md 5.4)', () => {
     const g = openPair(world, 2500, 12);
     const sam = world.spawnUnit('spaag', g.unit.x, g.unit.z);
     putPlayer(world, g.player.x, g.player.z, 120);
-    const found = run(world, los, 10, DAY, () => sam.ai.radar === 'acquire');
-    const tracked = run(world, los, 10, DAY, () => sam.ai.radar === 'track');
+    const found = runAi(world, los, 10, DAY, () => sam.ai.radar === 'acquire');
+    const tracked = runAi(world, los, 10, DAY, () => sam.ai.radar === 'track');
     expect(found).toBeLessThan(1);
     expect(tracked).toBeCloseTo(2, 0);
     expect(events.some(e => e.t === 'radarTrack' && e.on)).toBe(true);
@@ -154,7 +104,7 @@ describe('awareness (05-enemies-and-ai.md 5.4)', () => {
     const g = openPair(world, 2500, 12);
     const sam = world.spawnUnit('spaag', g.unit.x, g.unit.z);
     putPlayer(world, g.player.x, g.player.z, 12);
-    run(world, los, AI_TICK, { ...DAY, playerRadar: true });
+    runAi(world, los, AI_TICK, { ...DAY, playerRadar: true });
     expect(sam.ai.detected).toBe(true);
   });
 });
