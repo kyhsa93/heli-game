@@ -1,3 +1,5 @@
+import type { Side } from './units';
+
 export type CrashReason =
   | 'rotorStrike' | 'terrain' | 'water' | 'tree' | 'building'
   | 'ditched' | 'hardLanding' | 'slideLanding' | 'tiltLanding' | 'slope';
@@ -9,6 +11,7 @@ export type SimEvent =
   | { t: 'refuel' }
   | { t: 'boundary' }
   | { t: 'objective'; id: string; state: 'done' | 'failed' }
+  | { t: 'unitDestroyed'; id: number; defId: string; side: Side; byPlayer: boolean }
   | { t: 'advice'; code: AdviceCode; value?: number };
 
 export type AdviceCode = 'landingTooHard' | 'wrongPad';

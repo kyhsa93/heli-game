@@ -7,6 +7,7 @@ import { clampToArea, collide, stepFlight } from './heli/flight';
 import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
+import { UNIT_DEFS, type Unit } from './units';
 
 export const STEP = 1 / 120;
 
@@ -22,6 +23,8 @@ export class World {
   target: NavTarget | null = null;
   active = false;
   readonly events = new EventBus<SimEvent>();
+  units: Unit[] = [];
+  private nextUnitId = 1;
   private atBoundary = false;
   private refuelNoted = false;
 
@@ -53,6 +56,33 @@ export class World {
   }
 
   padAt(i: number): Pad3 | undefined { return this.pads[i]; }
+
+  spawnUnit(defId: string, x: number, z: number, yaw = 0, opts: { missionId?: string; group?: string } = {}): Unit {
+    const def = UNIT_DEFS[defId];
+    if (!def) throw new Error(`unknown unit ${defId}`);
+    const y = def.move?.air ? this.terrain.surfaceAt(x, z) + 60 : this.terrain.surfaceAt(x, z);
+    const u: Unit = {
+      id: this.nextUnitId++, defId, def, side: def.side, missionId: opts.missionId, group: opts.group,
+      pos: new Vector3(x, y, z), yaw, vel: new Vector3(), hp: def.hp, alive: true,
+      ai: { awareness: 0, state: 'idle' }, weaponCooldown: 0, identified: false,
+    };
+    this.units.push(u);
+    return u;
+  }
+
+  unit(id: number) {
+    return this.units.find(u => u.id === id);
+  }
+
+  damageUnit(u: Unit, amount: number, byPlayer: boolean) {
+    if (!u.alive || u.def.indestructible || amount <= 0) return;
+    u.hp = Math.max(0, u.hp - amount);
+    if (u.hp === 0) {
+      u.alive = false;
+      u.vel.set(0, 0, 0);
+      this.emit({ t: 'unitDestroyed', id: u.id, defId: u.defId, side: u.side, byPlayer });
+    }
+  }
 
   step(dt: number) {
     this.time += dt;

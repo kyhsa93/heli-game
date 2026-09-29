@@ -160,5 +160,32 @@
   },
   "loading": {
     "text": "불러오는 중…"
+  },
+  "units": {
+    "inf": "보병 분대",
+    "inf_mg": "기관총 분대",
+    "manpads": "휴대용 대공미사일 조",
+    "truck": "수송 트럭",
+    "fuel_truck": "유조차",
+    "technical": "기관총 차량",
+    "apc": "보병전투차",
+    "tank": "전차",
+    "spaag": "자주대공포",
+    "sam_short": "단거리 지대공미사일",
+    "sam_radar": "지대공미사일 레이더 기지",
+    "aaa_light": "대공 기관포 진지",
+    "heli_attack": "적 공격 헬기",
+    "bunker": "벙커",
+    "ammo_depot": "탄약고",
+    "hq": "지휘소",
+    "c_inf": "연합군 보병 분대",
+    "c_apc": "연합군 장갑차",
+    "c_tank": "연합군 전차",
+    "c_truck": "연합군 보급 트럭",
+    "c_heli_rescue": "구조 헬기",
+    "farp": "전방 재보급 지점",
+    "civ_car": "민간 승용차",
+    "civ_bus": "민간 버스",
+    "civ_house": "민가"
   }
 }

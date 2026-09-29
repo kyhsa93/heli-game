@@ -1,0 +1,628 @@
+{
+  "inf": {
+    "side": "veros",
+    "hp": 40,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "rifle",
+        "kind": "bullet",
+        "range": 800,
+        "minRange": 0,
+        "damage": 0.3,
+        "rate": 2
+      }
+    ],
+    "detect": "visual",
+    "score": 20,
+    "size": [
+      6,
+      1.8,
+      6
+    ],
+    "heat": 0.7,
+    "squad": 6
+  },
+  "inf_mg": {
+    "side": "veros",
+    "hp": 40,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "lmg",
+        "kind": "bullet",
+        "range": 1000,
+        "minRange": 0,
+        "damage": 0.5,
+        "rate": 5
+      }
+    ],
+    "detect": "visual",
+    "score": 30,
+    "size": [
+      6,
+      1.8,
+      6
+    ],
+    "heat": 0.7,
+    "squad": 5
+  },
+  "manpads": {
+    "side": "veros",
+    "hp": 30,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "sa_ir",
+        "kind": "missileIR",
+        "range": 4500,
+        "minRange": 500,
+        "damage": 250,
+        "rate": 0.1
+      }
+    ],
+    "detect": "visual",
+    "score": 120,
+    "size": [
+      4,
+      1.8,
+      4
+    ],
+    "heat": 0.7,
+    "squad": 2
+  },
+  "truck": {
+    "side": "veros",
+    "hp": 60,
+    "armor": 1,
+    "category": "vehicle",
+    "move": {
+      "speed": 15,
+      "offroad": false
+    },
+    "weapons": [],
+    "detect": "none",
+    "score": 40,
+    "size": [
+      2.5,
+      3,
+      7
+    ],
+    "heat": 1.0
+  },
+  "fuel_truck": {
+    "side": "veros",
+    "hp": 50,
+    "armor": 1,
+    "category": "vehicle",
+    "move": {
+      "speed": 12,
+      "offroad": false
+    },
+    "weapons": [],
+    "detect": "none",
+    "score": 60,
+    "size": [
+      2.5,
+      3,
+      8
+    ],
+    "heat": 1.0,
+    "secondaryExplosion": {
+      "radius": 15,
+      "damage": 80
+    }
+  },
+  "technical": {
+    "side": "veros",
+    "hp": 60,
+    "armor": 1,
+    "category": "vehicle",
+    "move": {
+      "speed": 18,
+      "offroad": true,
+      "offroadSpeed": 10
+    },
+    "weapons": [
+      {
+        "id": "hmg",
+        "kind": "bullet",
+        "range": 1500,
+        "minRange": 0,
+        "damage": 2,
+        "rate": 4
+      }
+    ],
+    "detect": "visual",
+    "score": 50,
+    "size": [
+      2,
+      2.2,
+      5
+    ],
+    "heat": 1.0
+  },
+  "apc": {
+    "side": "veros",
+    "hp": 150,
+    "armor": 3,
+    "category": "tracked",
+    "move": {
+      "speed": 12,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "ac30",
+        "kind": "bullet",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 6,
+        "rate": 3
+      }
+    ],
+    "detect": "visual",
+    "score": 100,
+    "size": [
+      3.2,
+      2.6,
+      7
+    ],
+    "heat": 1.0
+  },
+  "tank": {
+    "side": "veros",
+    "hp": 300,
+    "armor": 4,
+    "category": "tracked",
+    "move": {
+      "speed": 10,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "aa_mg",
+        "kind": "bullet",
+        "range": 1200,
+        "minRange": 0,
+        "damage": 2,
+        "rate": 4
+      }
+    ],
+    "detect": "visual",
+    "score": 150,
+    "size": [
+      3.6,
+      2.4,
+      9.5
+    ],
+    "heat": 1.0
+  },
+  "spaag": {
+    "side": "veros",
+    "hp": 180,
+    "armor": 2,
+    "category": "airDefense",
+    "move": {
+      "speed": 10,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "zu23x4",
+        "kind": "bullet",
+        "range": 2500,
+        "minRange": 0,
+        "damage": 5,
+        "rate": 15
+      }
+    ],
+    "detect": "radar",
+    "score": 300,
+    "size": [
+      3.1,
+      3.8,
+      6.5
+    ],
+    "heat": 1.0,
+    "radar": {
+      "search": 8000,
+      "track": 4000
+    }
+  },
+  "sam_short": {
+    "side": "veros",
+    "hp": 150,
+    "armor": 2,
+    "category": "airDefense",
+    "move": {
+      "speed": 10,
+      "offroad": true,
+      "stationaryToFire": true
+    },
+    "weapons": [
+      {
+        "id": "sam_radar",
+        "kind": "missileRadar",
+        "range": 10000,
+        "minRange": 1500,
+        "damage": 350,
+        "rate": 0.08
+      }
+    ],
+    "detect": "radar",
+    "score": 400,
+    "size": [
+      3,
+      4,
+      7.5
+    ],
+    "heat": 1.0,
+    "radar": {
+      "search": 15000,
+      "track": 10000
+    }
+  },
+  "sam_radar": {
+    "side": "veros",
+    "hp": 250,
+    "armor": 3,
+    "category": "structure",
+    "move": null,
+    "weapons": [],
+    "detect": "radar",
+    "score": 500,
+    "size": [
+      8,
+      6,
+      8
+    ],
+    "heat": 0.6,
+    "radar": {
+      "search": 20000,
+      "track": 0
+    },
+    "linkedRadar": true
+  },
+  "aaa_light": {
+    "side": "veros",
+    "hp": 100,
+    "armor": 1,
+    "category": "airDefense",
+    "move": null,
+    "weapons": [
+      {
+        "id": "zu23x2",
+        "kind": "bullet",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 4,
+        "rate": 8
+      }
+    ],
+    "detect": "visual",
+    "score": 150,
+    "size": [
+      4,
+      2,
+      4
+    ],
+    "heat": 0.5,
+    "searchlightAtNight": true
+  },
+  "heli_attack": {
+    "side": "veros",
+    "hp": 250,
+    "armor": 2,
+    "category": "air",
+    "move": {
+      "speed": 70,
+      "air": true
+    },
+    "weapons": [
+      {
+        "id": "heli_gun",
+        "kind": "bullet",
+        "range": 1500,
+        "minRange": 0,
+        "damage": 4,
+        "rate": 5
+      },
+      {
+        "id": "heli_rkt",
+        "kind": "rocket",
+        "range": 2500,
+        "minRange": 0,
+        "damage": 30,
+        "rate": 1
+      },
+      {
+        "id": "heli_aam",
+        "kind": "missileIR",
+        "range": 3000,
+        "minRange": 300,
+        "damage": 200,
+        "rate": 0.05
+      }
+    ],
+    "detect": "visualIR",
+    "score": 400,
+    "size": [
+      6,
+      4.5,
+      17
+    ],
+    "heat": 1.0
+  },
+  "bunker": {
+    "side": "veros",
+    "hp": 400,
+    "armor": 5,
+    "category": "structure",
+    "move": null,
+    "weapons": [
+      {
+        "id": "lmg",
+        "kind": "bullet",
+        "range": 1000,
+        "minRange": 0,
+        "damage": 0.5,
+        "rate": 5
+      }
+    ],
+    "detect": "visual",
+    "score": 150,
+    "size": [
+      8,
+      3,
+      8
+    ],
+    "heat": 0.3
+  },
+  "ammo_depot": {
+    "side": "veros",
+    "hp": 300,
+    "armor": 3,
+    "category": "structure",
+    "move": null,
+    "weapons": [],
+    "detect": "none",
+    "score": 300,
+    "size": [
+      14,
+      6,
+      10
+    ],
+    "heat": 0.3,
+    "secondaryExplosion": {
+      "radius": 40,
+      "damage": 120,
+      "chain": true
+    }
+  },
+  "hq": {
+    "side": "veros",
+    "hp": 500,
+    "armor": 4,
+    "category": "structure",
+    "move": null,
+    "weapons": [],
+    "detect": "none",
+    "score": 600,
+    "size": [
+      16,
+      7,
+      12
+    ],
+    "heat": 0.5
+  },
+  "c_inf": {
+    "side": "coalition",
+    "hp": 40,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "rifle",
+        "kind": "bullet",
+        "range": 800,
+        "minRange": 0,
+        "damage": 0.3,
+        "rate": 2
+      }
+    ],
+    "detect": "visual",
+    "score": 0,
+    "size": [
+      6,
+      1.8,
+      6
+    ],
+    "heat": 0.7,
+    "squad": 6
+  },
+  "c_apc": {
+    "side": "coalition",
+    "hp": 150,
+    "armor": 3,
+    "category": "tracked",
+    "move": {
+      "speed": 12,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "ac30",
+        "kind": "bullet",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 6,
+        "rate": 3
+      }
+    ],
+    "detect": "visual",
+    "score": 0,
+    "size": [
+      3.2,
+      2.6,
+      7
+    ],
+    "heat": 1.0
+  },
+  "c_tank": {
+    "side": "coalition",
+    "hp": 300,
+    "armor": 4,
+    "category": "tracked",
+    "move": {
+      "speed": 10,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "aa_mg",
+        "kind": "bullet",
+        "range": 1200,
+        "minRange": 0,
+        "damage": 2,
+        "rate": 4
+      }
+    ],
+    "detect": "visual",
+    "score": 0,
+    "size": [
+      3.6,
+      2.4,
+      9.5
+    ],
+    "heat": 1.0
+  },
+  "c_truck": {
+    "side": "coalition",
+    "hp": 60,
+    "armor": 1,
+    "category": "vehicle",
+    "move": {
+      "speed": 15,
+      "offroad": false
+    },
+    "weapons": [],
+    "detect": "none",
+    "score": 0,
+    "size": [
+      2.5,
+      3,
+      7
+    ],
+    "heat": 1.0
+  },
+  "c_heli_rescue": {
+    "side": "coalition",
+    "hp": 150,
+    "armor": 1,
+    "category": "air",
+    "move": {
+      "speed": 60,
+      "air": true
+    },
+    "weapons": [],
+    "detect": "none",
+    "score": 0,
+    "size": [
+      3,
+      4,
+      16
+    ],
+    "heat": 1.0
+  },
+  "farp": {
+    "side": "coalition",
+    "hp": 1,
+    "armor": 0,
+    "category": "structure",
+    "move": null,
+    "weapons": [],
+    "detect": "none",
+    "score": 0,
+    "size": [
+      24,
+      3,
+      24
+    ],
+    "heat": 0.2,
+    "indestructible": true
+  },
+  "civ_car": {
+    "side": "civilian",
+    "hp": 30,
+    "armor": 0,
+    "category": "vehicle",
+    "move": {
+      "speed": 14,
+      "offroad": false
+    },
+    "weapons": [],
+    "detect": "none",
+    "score": 0,
+    "size": [
+      1.8,
+      1.5,
+      4.2
+    ],
+    "heat": 1.0
+  },
+  "civ_bus": {
+    "side": "civilian",
+    "hp": 50,
+    "armor": 1,
+    "category": "vehicle",
+    "move": {
+      "speed": 12,
+      "offroad": false
+    },
+    "weapons": [],
+    "detect": "none",
+    "score": 0,
+    "size": [
+      2.5,
+      3.2,
+      11
+    ],
+    "heat": 1.0
+  },
+  "civ_house": {
+    "side": "civilian",
+    "hp": 200,
+    "armor": 2,
+    "category": "structure",
+    "move": null,
+    "weapons": [],
+    "detect": "none",
+    "score": 0,
+    "size": [
+      8,
+      6,
+      7
+    ],
+    "heat": 0.2
+  }
+}
