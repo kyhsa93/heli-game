@@ -1,18 +1,28 @@
 import { MISSION_IDS } from '../content/missions';
+import type { LoadoutDef } from '../sim/heli/loadout';
+import type { MissionReport } from './report';
+
 export type Screen =
   | { name: 'title' }
   | { name: 'training' }
   | { name: 'credits' }
-  | { name: 'flight'; missionId: string };
+  | { name: 'briefing'; missionId: string }
+  | { name: 'loadout'; missionId: string }
+  | { name: 'flight'; missionId: string; loadout?: LoadoutDef }
+  | { name: 'debrief'; missionId: string; report?: MissionReport };
 
 export const TRAININGS = ['t1', 't2', 't3', 't4', 't5'] as const;
 export const AVAILABLE_MISSIONS = new Set(['t1', 't3', 't4', 't5', ...MISSION_IDS]);
+export const isMission = (id: string) => MISSION_IDS.includes(id);
 
 export function parseHash(hash: string): Screen {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  const id = parts[1];
   if (parts[0] === 'training') return { name: 'training' };
   if (parts[0] === 'credits') return { name: 'credits' };
-  if (parts[0] === 'flight' && parts[1] && AVAILABLE_MISSIONS.has(parts[1])) return { name: 'flight', missionId: parts[1] };
+  if (id && isMission(id) && (parts[0] === 'briefing' || parts[0] === 'flight' || parts[0] === 'debrief')) return { name: 'briefing', missionId: id };
+  if (id && isMission(id) && parts[0] === 'loadout') return { name: 'loadout', missionId: id };
+  if (parts[0] === 'flight' && id && AVAILABLE_MISSIONS.has(id)) return { name: 'flight', missionId: id };
   return { name: 'title' };
 }
 
@@ -21,7 +31,10 @@ export function toHash(screen: Screen): string {
     case 'title': return '#/title';
     case 'training': return '#/training';
     case 'credits': return '#/credits';
+    case 'briefing': return `#/briefing/${screen.missionId}`;
+    case 'loadout': return `#/loadout/${screen.missionId}`;
     case 'flight': return `#/flight/${screen.missionId}`;
+    case 'debrief': return `#/debrief/${screen.missionId}`;
   }
 }
 
@@ -48,10 +61,8 @@ export class UiState {
   }
 
   syncFromLocation() {
-    const next = parseHash(this.location.hash);
-    if (toHash(next) !== toHash(this.screen)) {
-      this.screen = next;
-      for (const fn of this.listeners) fn();
-    }
+    if (toHash(parseHash(this.location.hash)) === toHash(this.screen) || this.location.hash === toHash(this.screen)) return;
+    this.screen = parseHash(this.location.hash);
+    for (const fn of this.listeners) fn();
   }
 }

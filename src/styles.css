@@ -67,7 +67,7 @@ button.go {
 .tads-row { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom)); display: flex; gap: 8px; pointer-events: auto; }
 .tads-row .tbtn { position: static; }
 .tbtn.view { left: 50%; transform: translateX(10%); bottom: calc(40px + env(safe-area-inset-bottom)); }
-.farp-menu { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 4;
+.farp-menu { position: fixed; right: calc(16px + env(safe-area-inset-right)); top: calc(56px + env(safe-area-inset-top)); z-index: 4; max-width: min(420px, calc(100vw - 32px));
   background: rgba(8, 14, 24, .82); border: 1px solid rgba(76, 201, 240, .5); border-radius: 12px; padding: 10px 14px;
   display: flex; flex-direction: column; gap: 6px; align-items: center; color: #e8eef7; font-size: 14px; max-width: calc(100vw - 32px); }
 .farp-menu .row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
@@ -107,3 +107,44 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .credits a { color: #ffd166; }
 .credits-link { margin-top: 6px; }
 .tbtn.fire { right: 170px; bottom: calc(150px + env(safe-area-inset-bottom)); width: 64px; height: 64px; border-radius: 50%; padding: 0; background: rgba(239, 71, 111, .45); border-color: #ef476f; }
+
+.room .room-card { max-width: 980px; width: 100%; margin: auto; text-align: left; }
+.room-card h1 { font-size: 30px; }
+.room-card h1.ok { color: #06d6a0; }
+.room-card h1.bad { color: #ef476f; }
+.room-card h2 { font-size: 15px; margin: 14px 0 4px; color: #ffd166; letter-spacing: .04em; }
+.kicker { margin: 0; color: #ffd166; font-size: 13px; letter-spacing: .08em; }
+.room-grid { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.room-text .para { margin: 0 0 6px; color: #cdd8e8; font-size: 14px; line-height: 1.5; }
+.room-text .para.bad { color: #ef476f; }
+.room-buttons { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
+.mission-map { position: relative; width: 100%; aspect-ratio: 1; border: 1px solid rgba(255, 209, 102, .35); border-radius: 8px; overflow: hidden; background: #0b1320; }
+.mission-map canvas { width: 100%; height: 100%; display: block; image-rendering: auto; }
+.map-wait { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #aebbd0; }
+.objs { list-style: none; padding: 0; margin: 0; font-size: 14px; line-height: 1.7; color: #cdd8e8; text-align: left; }
+.objs li.primary { color: #e8eef7; font-weight: 700; }
+.objs li.done { color: #06d6a0; }
+.objs li.failed { color: #ef476f; }
+.pylons { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 10px 0; }
+.pylon { font: inherit; color: #e8eef7; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .25); border-radius: 10px; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.pylon small { color: #aebbd0; }
+.pylon.agm114k, .pylon.agm114l { border-color: #ffd166; }
+.pylon.hydra70 { border-color: #4cc9f0; }
+.pylon:disabled { opacity: .5; }
+.fuel { display: flex; gap: 12px; align-items: center; margin: 8px 0; color: #cdd8e8; }
+.fuel input { flex: 1; }
+.load-stats { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; color: #cdd8e8; font-size: 14px; }
+.margin { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.margin i { display: inline-block; height: 8px; width: 60px; border-radius: 4px; background: #06d6a0; }
+.margin.fair i { background: #ffd166; }
+.margin.poor i, .margin.poor b { background: #ef476f; color: #fff; }
+.stats { border-collapse: collapse; font-size: 14px; color: #cdd8e8; }
+.stats td { padding: 2px 12px 2px 0; }
+.radio-sub { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); max-width: min(760px, calc(100vw - 32px));
+  background: rgba(6, 12, 22, .72); color: #e8eef7; padding: 6px 12px; border-radius: 8px; font-size: 16px; pointer-events: none; z-index: 3; text-align: center; }
+.mission { white-space: pre-line; }
+.pause-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 12px; }
+@media (max-width: 720px) {
+  .room-grid { grid-template-columns: 1fr; }
+  .room-card h1 { font-size: 24px; }
+}

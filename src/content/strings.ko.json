@@ -45,7 +45,8 @@
     "target": "목표: {name} 패드 ({dist} m)",
     "targetArea": "목표: {name} ({dist} m)",
     "practice": "비행 연습",
-    "muted": "음소거"
+    "muted": "음소거",
+    "objectives": "목표 {done}/{total}"
   },
   "hint": {
     "startEngineKey": "I 키로 엔진 시동",
@@ -149,6 +150,14 @@
         "TADS 줌 30°·10°·3°·1°  /  TADS 중 V: 주간(TV)·열상(FLIR) 전환"
       ],
       [
+        "[ / ]",
+        "좌/우 MPD 페이지 — ASE에서 위협 방향, WPN에서 남은 탄"
+      ],
+      [
+        "F / X",
+        "플레어 / 채프 — 미사일 경보 때"
+      ],
+      [
         "V · U · M",
         "외부 시점 · 헬멧 심볼(IHADSS) · 소리"
       ],
@@ -166,7 +175,45 @@
     ],
     "toList": "훈련 목록",
     "voiceOn": "음성 경고 켜기",
-    "voiceOff": "음성 경고 끄기"
+    "voiceOff": "음성 경고 끄기",
+    "keysFor": {
+      "t1": [
+        "I",
+        "W / S",
+        "방향키",
+        "A / D",
+        "마우스 드래그",
+        "V · U · M",
+        "Esc"
+      ],
+      "t3": [
+        "W / S",
+        "방향키",
+        "A / D",
+        "마우스 드래그",
+        "Space",
+        "1 · 2 · 3 · Q",
+        "Esc"
+      ],
+      "t4": [
+        "W / S",
+        "방향키",
+        "A / D",
+        "T",
+        "L (누름 유지)",
+        "헬파이어",
+        "휠 · + −  /  V",
+        "Esc"
+      ],
+      "t5": [
+        "W / S",
+        "방향키",
+        "A / D",
+        "[ / ]",
+        "F / X",
+        "Esc"
+      ]
+    }
   },
   "advice": {
     "landingTooHard": "착륙이 거칩니다 ({fpm} fpm) — {max} fpm 이하로 다시 착륙하세요",
@@ -180,7 +227,8 @@
     "instant": "즉시 출격",
     "settings": "설정",
     "soon": "준비 중",
-    "firstTime": "처음이신가요? 훈련 1부터 시작하세요"
+    "firstTime": "처음이신가요? 훈련 1부터 시작하세요",
+    "campaignFirst": "임무 1부터 (캠페인 지도는 준비 중)"
   },
   "training": {
     "title": "훈련",
@@ -323,5 +371,94 @@
       "agm114k": "헬파이어",
       "agm114l": "헬파이어 L"
     }
+  },
+  "radio": {
+    "control": "컨트롤",
+    "steel6": "스틸 6",
+    "hound2": "하운드 2",
+    "rescue": "구조대"
+  },
+  "flight": {
+    "rotate": "가로로 돌려 주세요 — 비행은 가로 화면에서만 합니다"
+  },
+  "pause": {
+    "title": "일시정지",
+    "controls": "조작법",
+    "settings": "설정 (준비 중)",
+    "endMission": "임무 종료",
+    "toBriefing": "브리핑으로"
+  },
+  "briefing": {
+    "act": "{act}막",
+    "objectives": "목표",
+    "threats": "알려진 위협",
+    "weather": "기상",
+    "fog": "안개",
+    "wind": "바람 {dir}° {kt}kt",
+    "back": "뒤로",
+    "toLoadout": "로드아웃 ▶",
+    "mapLoading": "지도 준비 중…",
+    "time": {
+      "day": "주간",
+      "dusk": "해질녘",
+      "night": "야간",
+      "dawn": "새벽"
+    },
+    "kind": {
+      "recon": "무장 정찰",
+      "escort": "호위",
+      "cas": "근접항공지원",
+      "sead": "대공 제압",
+      "interdiction": "차단",
+      "csar": "전투 수색구조",
+      "strike": "공격",
+      "defense": "방어",
+      "training": "훈련",
+      "instant": "즉시 출격"
+    }
+  },
+  "loadout": {
+    "title": "로드아웃",
+    "wingtips": "날개 끝",
+    "stinger": "스팅어",
+    "lockedStinger": "임무 9에서 해금",
+    "gun": "기관포",
+    "fuel": "연료 {pct}%",
+    "weight": "총중량 {kg}kg",
+    "margin": "호버 여유",
+    "endurance": "예상 체공 {min}분",
+    "marginLevel": {
+      "good": "좋음",
+      "fair": "보통",
+      "poor": "나쁨"
+    },
+    "back": "브리핑",
+    "recommended": "권장 무장 적용",
+    "launch": "출격 ▶"
+  },
+  "debrief": {
+    "success": "임무 성공",
+    "fail": "임무 실패",
+    "aborted": "임무를 도중에 종료했습니다",
+    "objectives": "목표",
+    "flight": "비행",
+    "time": "비행 시간 {t}",
+    "landed": "FARP 착륙",
+    "notLanded": "착륙하지 않음",
+    "hitsTaken": "피격 {n}회",
+    "damaged": "손상 계통",
+    "lost": "기능 상실",
+    "kills": "격파",
+    "none": "없음",
+    "fratricide": "아군 오사 {f} · 민간 피해 {c}",
+    "weapons": "무장 (발사 · 명중)",
+    "weapon": {
+      "gun30": "기관포",
+      "hydra70": "로켓",
+      "agm114k": "헬파이어",
+      "agm114l": "헬파이어 L"
+    },
+    "retry": "다시 하기",
+    "done": "타이틀로"
   }
 }

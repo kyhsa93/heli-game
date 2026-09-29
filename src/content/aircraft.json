@@ -69,6 +69,7 @@
     "burnBase": 0.05,
     "burnPerCollective": 0.3,
     "burnScale": 1,
+    "campaignBurnScale": 0.35,
     "baseRefuelRate": 8
   },
   "weights": {

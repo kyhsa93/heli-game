@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type Point
 import { assets } from '../../assets/loader';
 import { GameAudio } from '../../audio/game';
 import { loadVoiceEnabled, saveVoiceEnabled } from '../../audio/voice';
-import { t, tList, tPairs } from '../../content/strings';
+import { hasString, t, tList, tPairs } from '../../content/strings';
 import { clamp } from '../../core/math';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../../core/units';
 import { FlightRenderer } from '../../render/renderer';
@@ -12,7 +12,9 @@ import { FlightSession } from '../../sim/session';
 import { farpUnder } from '../../sim/farp';
 import { FarpMenu } from '../flight/FarpMenu';
 import { MISSIONS } from '../../content/missions';
-import { missionSession } from '../../sim/mission/runtime';
+import { missionSession, type MissionRuntime } from '../../sim/mission/runtime';
+import type { LoadoutDef } from '../../sim/heli/loadout';
+import { reportFrom, type MissionReport } from '../report';
 import { DIFFICULTIES } from '../../sim/difficulty';
 import { loadDifficulty } from '../settings';
 import { zoomTads } from '../../sim/sensors/tads';
@@ -29,16 +31,20 @@ import { FlightInput } from '../../input/input';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
 import { VirtualStick } from '../components/VirtualStick';
 
-interface FlightProps { missionId: string; touch: boolean; onExit: () => void; onComplete: (id: string) => void }
+interface FlightProps { missionId: string; touch: boolean; loadout?: LoadoutDef; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
 
-export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
+export function Flight({ missionId, touch, loadout, onExit, onComplete, onMissionEnd }: FlightProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
   const msgRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
   const mission = MISSIONS[missionId];
-  const [session] = useState(() => mission ? missionSession(mission) : new FlightSession((Math.random() * 1e9) | 0, createObjective(missionId)));
+  const [session] = useState(() => mission ? missionSession(mission, loadout ?? null) : new FlightSession((Math.random() * 1e9) | 0, createObjective(missionId)));
+  const runtime = mission ? session.objective as MissionRuntime : null;
+  const radioRef = useRef<HTMLDivElement>(null);
+  const [showKeys, setShowKeys] = useState(false);
+  const [portrait, setPortrait] = useState(false);
   const sim = session.world;
   sim.difficulty = DIFFICULTIES[loadDifficulty()];
   const logRef = useRef(new MessageLog());
@@ -113,7 +119,20 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
 
   useEffect(() => {
     if (snap.mode === 'done') onComplete(missionId);
-  }, [snap.mode, missionId, onComplete]);
+    if (runtime && onMissionEnd && (snap.mode === 'done' || snap.mode === 'over')) {
+      const report = reportFrom(runtime);
+      if (snap.mode === 'over' && snap.crash) { report.success = false; report.reason = crashText(snap.crash.reason, snap.crash.value); }
+      const id = setTimeout(() => onMissionEnd(report), 600);
+      return () => clearTimeout(id);
+    }
+  }, [snap.mode, snap.crash, missionId, onComplete, onMissionEnd, runtime]);
+
+  useEffect(() => {
+    const check = () => setPortrait(touchRef.current && window.innerHeight > window.innerWidth);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const t1Pad = sim.pads[TrainingT1.nearestPad(sim)];
 
@@ -135,7 +154,18 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
           hudRef.current.textContent =
             `RAD ALT ${Math.round(Math.max(0, agl) * M_TO_FT)} ft · VS ${Math.round(h.vel.y * MS_TO_FPM)} fpm · ${Math.round(airspeed(h, sim.wind) * MS_TO_KT)} kt · COLL ${Math.round(h.collective * 100)}% · ROTOR ${Math.round(h.rpm * 100)}%`;
         }
-        if (missionRef.current) {
+        if (radioRef.current) {
+          const line = runtime?.radioNow;
+          radioRef.current.style.display = line ? '' : 'none';
+          if (line) radioRef.current.textContent = `${t(`radio.${line.from}`)}: ${line.text}`;
+        }
+        if (missionRef.current && runtime) {
+          const prim = runtime.objectives.filter(o => o.def.primary && o.state !== 'pending');
+          const done = prim.filter(o => o.state === 'done').length;
+          const next = runtime.objectives.find(o => o.state === 'active');
+          const dist = tp ? Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) : null;
+          missionRef.current.textContent = `◆ ${t('hud.objectives', { done, total: prim.length })}${next ? `\n${next.def.label}${dist !== null && (next.def.kind === 'reach' || next.def.kind === 'land') ? ` · ${dist >= 1000 ? (dist / 1000).toFixed(1) + 'km' : dist + 'm'}` : ''}` : ''}`;
+        } else if (missionRef.current) {
           missionRef.current.textContent = tp
             ? t(tp.area ? 'hud.targetArea' : 'hud.target', { name: tp.area && !tp.raw ? t(`targets.${tp.name}`) : tp.name, dist: Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) })
             : t('hud.practice');
@@ -235,6 +265,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         </div>
       )}
       <div className="messages" ref={msgRef} />
+      <div className="radio-sub" ref={radioRef} style={{ display: 'none' }} />
+      {portrait && snap.mode === 'play' && <div className="overlay"><div className="card"><h1>↻</h1><p className="sub">{t('flight.rotate')}</p></div></div>}
       {atFarp && <FarpMenu world={sim} />}
       <div className="hint" ref={hintRef} />
 
@@ -269,25 +301,51 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         </div>
       )}
 
-      {(help || snap.mode === 'brief') && (
+      {snap.mode === 'brief' && (
         <div className="overlay">
           <div className="card wide">
             <h1>{mission ? mission.title : t(`training.${missionId}.name`)}</h1>
-            <p className="sub">{mission ? mission.briefing.summary : t(`training.${missionId}.brief`, { pad: missionId === 't4' || missionId === 't5' ? sim.pads[TrainingT4.farPad(sim)].name : t1Pad.name, hits: T5_MAX_HITS, max: T1_MAX_FPM, need: missionId === 't4' ? T4_NEED : T3_NEED, gunNeed: T3_GUN_NEED, total: T3_TARGETS.length })}<br />{t('brief.introCollective')}</p>
-            <div className="keys">
-              {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
+            {mission ? (
+              <ul className="objs">{runtime!.mission.objectives.filter(o => !runtime!.mission.initialObjectives || runtime!.mission.initialObjectives.includes(o.id)).map(o => <li key={o.id} className={o.primary ? 'primary' : ''}>{o.primary ? '◆' : '◇'} {o.label}</li>)}</ul>
+            ) : (
+              <>
+                <p className="sub">{t(`training.${missionId}.brief`, { pad: missionId === 't4' || missionId === 't5' ? sim.pads[TrainingT4.farPad(sim)].name : t1Pad.name, hits: T5_MAX_HITS, max: T1_MAX_FPM, need: missionId === 't4' ? T4_NEED : T3_NEED, gunNeed: T3_GUN_NEED, total: T3_TARGETS.length })}<br />{t('brief.introCollective')}</p>
+                <div className="keys">
+                  {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').filter(([k]) => touch || !hasString(`brief.keysFor.${missionId}`) || tList(`brief.keysFor.${missionId}`).includes(k)).map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
+                </div>
+                <ul className="rules">
+                  {tList('brief.rules', { fpm: Math.round(LAND_DESCENT * MS_TO_FPM) }).map(r => <li key={r}>{r}</li>)}
+                </ul>
+              </>
+            )}
+            <button className="go" onClick={begin}>{t('brief.start')}</button> <button className="go secondary" onClick={onExit}>{t(mission ? 'pause.toBriefing' : 'brief.toList')}</button>
+          </div>
+        </div>
+      )}
+      {help && snap.mode === 'play' && (
+        <div className="overlay">
+          <div className="card wide">
+            <h1>{t('pause.title')}</h1>
+            <div className="pause-buttons">
+              <button className="go" onClick={() => setHelp(false)}>{t('brief.continue')}</button>
+              <button className="go secondary" onClick={() => setShowKeys(v => !v)}>{t('pause.controls')}</button>
+              <button className="go secondary" disabled>{t('pause.settings')}</button>
+              <button className="go secondary" onClick={toggleVoice}>{t(voiceOn ? 'brief.voiceOff' : 'brief.voiceOn')}</button>
+              <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button>
+              {runtime
+                ? <button className="go secondary" onClick={() => { setHelp(false); runtime.endNow(); }}>{t('pause.endMission')}</button>
+                : <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button>}
             </div>
-            <ul className="rules">
-              {tList('brief.rules', { fpm: Math.round(LAND_DESCENT * MS_TO_FPM) }).map(r => <li key={r}>{r}</li>)}
-            </ul>
-            {snap.mode === 'brief'
-              ? <><button className="go" onClick={begin}>{t('brief.start')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button></>
-              : <><button className="go" onClick={() => setHelp(false)}>{t('brief.continue')}</button> <button className="go secondary" onClick={toggleVoice}>{t(voiceOn ? 'brief.voiceOff' : 'brief.voiceOn')}</button> <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button></>}
+            {showKeys && (
+              <div className="keys">
+                {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {snap.mode === 'over' && !help && (
+      {snap.mode === 'over' && !help && !runtime && (
         <div className="overlay">
           <div className="card">
             <h1>{t(snap.failure ? 'fail.title' : 'crash.title')}</h1>
@@ -296,7 +354,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
           </div>
         </div>
       )}
-      {snap.mode === 'done' && (
+      {snap.mode === 'done' && !runtime && (
         <div className="overlay">
           <div className="card">
             <h1>{t('result.title')}</h1>

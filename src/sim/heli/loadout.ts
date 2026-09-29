@@ -74,3 +74,18 @@ export function hoverCollective(weightKg: number, maxThrustG = AIRCRAFT.maxThrus
 export function count(lo: Loadout, store: Store) {
   return PYLONS.reduce((n, p) => n + (lo.def.pylons[p] === store ? lo.rounds[p] : 0), 0);
 }
+
+export type HoverMargin = 'good' | 'fair' | 'poor';
+
+export function hoverMargin(collective: number): HoverMargin {
+  return collective < 0.65 ? 'good' : collective < 0.8 ? 'fair' : 'poor';
+}
+
+export function loadoutStats(def: LoadoutDef, burnScale = AIRCRAFT.fuel.campaignBurnScale) {
+  const lo = createLoadout(def);
+  const weight = grossWeight(lo, def.fuel, def.gunRounds);
+  const collective = hoverCollective(weight);
+  const f = AIRCRAFT.fuel;
+  const burn = (f.burnBase + f.burnPerCollective * collective) * f.burnScale * burnScale;
+  return { weight, collective, margin: hoverMargin(collective), enduranceMin: def.fuel / burn / 60 };
+}

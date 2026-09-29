@@ -16,6 +16,7 @@ export interface HeliState {
   thrustScale: number;
   damage: Damage;
   rotorFailIn: number | null;
+  fuelBurnScale: number;
 }
 
 const tmpEuler = new Euler(0, 0, 0, 'YXZ');
@@ -27,7 +28,7 @@ export function createHeli(pos: Vector3, yaw: number): HeliState {
     yaw, pitch: 0, roll: 0, pRate: 0, rRate: 0, yRate: 0,
     q: new Quaternion(), rpm: 0, engineOn: false, collective: 0, fuel: 100,
     landed: true, alive: true, touchdownDescent: 0, thrustScale: 1,
-    damage: createDamage(), rotorFailIn: null,
+    damage: createDamage(), rotorFailIn: null, fuelBurnScale: 1,
   };
   updateQ(h);
   return h;

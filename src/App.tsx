@@ -6,7 +6,11 @@ import { Credits } from './ui/screens/Credits';
 import { Loading } from './ui/screens/Loading';
 import { Title } from './ui/screens/Title';
 import { Training } from './ui/screens/Training';
-import { UiState } from './ui/state';
+import { isMission, UiState } from './ui/state';
+import { MISSION_IDS, MISSIONS } from './content/missions';
+import { Briefing } from './ui/mission/Briefing';
+import { Debrief } from './ui/mission/Debrief';
+import { Loadout } from './ui/mission/Loadout';
 
 const COMPLETED_KEY = 'heli-training-done';
 
@@ -54,12 +58,22 @@ export function App() {
 
   switch (screen.name) {
     case 'title':
-      return <Title trainingDone={completed.has('t1')} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} />;
+      return <Title trainingDone={completed.has('t1')} onCampaign={MISSION_IDS.length ? () => ui.go({ name: 'briefing', missionId: MISSION_IDS[0] }) : undefined} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} />;
+    case 'briefing':
+      return <Briefing mission={MISSIONS[screen.missionId]} onBack={() => ui.go({ name: 'title' })} onNext={() => ui.go({ name: 'loadout', missionId: screen.missionId })} />;
+    case 'loadout':
+      return <Loadout mission={MISSIONS[screen.missionId]} unlocked={new Set(MISSIONS[screen.missionId].unlocks ?? [])} onBack={() => ui.go({ name: 'briefing', missionId: screen.missionId })} onLaunch={def => ui.go({ name: 'flight', missionId: screen.missionId, loadout: def })} />;
+    case 'debrief':
+      if (!screen.report) return <Briefing mission={MISSIONS[screen.missionId]} onBack={() => ui.go({ name: 'title' })} onNext={() => ui.go({ name: 'loadout', missionId: screen.missionId })} />;
+      return <Debrief mission={MISSIONS[screen.missionId]} report={screen.report} onRetry={() => ui.go({ name: 'loadout', missionId: screen.missionId })} onDone={() => ui.go({ name: 'title' })} />;
     case 'credits':
       return <Credits onBack={() => ui.go({ name: 'title' })} />;
     case 'training':
       return <Training completed={completed} onBack={() => ui.go({ name: 'title' })} onPick={id => ui.go({ name: 'flight', missionId: id })} />;
     case 'flight':
-      return <Flight key={screen.missionId} missionId={screen.missionId} touch={touch} onExit={() => ui.go({ name: 'training' })} onComplete={complete} />;
+      return <Flight key={screen.missionId} missionId={screen.missionId} touch={touch} loadout={screen.loadout}
+        onExit={() => ui.go(isMission(screen.missionId) ? { name: 'briefing', missionId: screen.missionId } : { name: 'training' })}
+        onComplete={complete}
+        onMissionEnd={report => ui.go({ name: 'debrief', missionId: screen.missionId, report })} />;
   }
 }

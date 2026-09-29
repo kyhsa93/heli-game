@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
 import type { SimEvent } from '../events';
-import { GEAR_Y } from '../heli/airframe';
+import { AIRCRAFT, GEAR_Y } from '../heli/airframe';
 import { hoverCollective } from '../heli/loadout';
 import { updateQ } from '../heli/state';
 import type { Objective, ObjectiveState } from '../objective';
@@ -8,7 +8,23 @@ import { FlightSession } from '../session';
 import type { TerrainOptions } from '../terrain';
 import type { Unit } from '../units';
 import type { World } from '../world';
+import type { LoadoutDef } from '../heli/loadout';
+import type { SystemId } from '../heli/damage';
 import type { Action, Condition, MissionDef, ObjectiveDef, RadioFrom, UnitRef } from './schema';
+
+export interface MissionStats {
+  kills: Record<string, number>;
+  shots: Record<string, number>;
+  hits: Record<string, number>;
+  friendly: number;
+  civilian: number;
+  hitsTaken: number;
+  damaged: Partial<Record<SystemId, 'damaged' | 'destroyed'>>;
+}
+
+export function emptyStats(): MissionStats {
+  return { kills: {}, shots: {}, hits: {}, friendly: 0, civilian: 0, hitsTaken: 0, damaged: {} };
+}
 
 export const TRIGGER_HZ = 1;
 export const RADIO_SECONDS = 4;
@@ -40,7 +56,9 @@ export class MissionRuntime implements Objective {
   private flown = false;
   private world: World | null = null;
 
-  constructor(readonly mission: MissionDef) {
+  stats: MissionStats = emptyStats();
+
+  constructor(readonly mission: MissionDef, private loadout: LoadoutDef | null = null) {
     this.id = mission.id;
   }
 
@@ -60,7 +78,9 @@ export class MissionRuntime implements Objective {
     this.triggerClock = 0;
     this.failIn = null;
     this.flown = false;
-    world.applyLoadout(m.briefing.recommendedLoadout);
+    world.applyLoadout(this.loadout ?? m.briefing.recommendedLoadout);
+    world.player.fuelBurnScale = AIRCRAFT.fuel.campaignBurnScale;
+    this.stats = emptyStats();
     world.conditions = { ...world.conditions, night: m.environment.time === 'night', fog: m.environment.fog };
     world.cm.chaffUnlocked = !!m.unlocks?.includes('chaff') || world.cm.chaffUnlocked;
     for (const g of m.groups) {
@@ -221,6 +241,11 @@ export class MissionRuntime implements Objective {
     }
   }
 
+  endNow() {
+    const primaries = this.objectives.filter(o => o.def.primary);
+    this.finish(primaries.length > 0 && primaries.every(o => o.state === 'done' || (o.def.kind === 'land' && o.state === 'active')), 'aborted');
+  }
+
   private finish(success: boolean, reason?: string) {
     const w = this.world!;
     if (this.state !== 'active') return;
@@ -230,6 +255,7 @@ export class MissionRuntime implements Objective {
         timeSec: this.elapsed,
         primaryDone: this.objectives.filter(o => o.def.primary && o.state === 'done').length,
         secondaryDone: this.objectives.filter(o => !o.def.primary && o.state === 'done').length,
+        landed: this.landedAtFarp() ? 1 : 0,
       };
       w.emit({ t: 'objective', id: this.id, state: 'done' });
     } else {
@@ -285,9 +311,24 @@ export class MissionRuntime implements Objective {
     if (primaries.length && primaries.every(o => o.state === 'done') && (!this.mission.farps.length || this.landedAtFarp())) this.finish(true);
   }
 
+  private record(e: SimEvent, world: World) {
+    const st = this.stats;
+    if (e.t === 'fire' && e.owner === 0) st.shots[e.weapon] = (st.shots[e.weapon] ?? 0) + 1;
+    else if (e.t === 'impact' && e.unit !== undefined && (e.weapon === 'gun30' || e.weapon === 'hydra70' || e.weapon === 'agm114k' || e.weapon === 'agm114l')) {
+      const u = world.unit(e.unit);
+      if (u && u.side !== 'coalition') st.hits[e.weapon] = (st.hits[e.weapon] ?? 0) + 1;
+    } else if (e.t === 'unitDestroyed' && e.byPlayer) {
+      if (e.side === 'veros') st.kills[e.defId] = (st.kills[e.defId] ?? 0) + 1;
+      else if (e.side === 'coalition') st.friendly++;
+      else st.civilian++;
+    } else if (e.t === 'systemDamaged') st.damaged[e.system] = e.level;
+    else if (e.t === 'playerHit' || (e.t === 'missileEnd' && e.hit)) st.hitsTaken++;
+  }
+
   onEvent(e: SimEvent, world: World) {
     this.world = world;
     if (this.state !== 'active') return;
+    this.record(e, world);
     if (e.t === 'landed' || e.t === 'unitDestroyed' || e.t === 'identified') for (const o of this.objectives) this.evaluateObjective(o);
   }
 
@@ -303,6 +344,6 @@ export function missionTerrain(m: MissionDef): TerrainOptions {
   };
 }
 
-export function missionSession(m: MissionDef) {
-  return new FlightSession(m.environment.seed, new MissionRuntime(m), missionTerrain(m));
+export function missionSession(m: MissionDef, loadout: LoadoutDef | null = null) {
+  return new FlightSession(m.environment.seed, new MissionRuntime(m, loadout), missionTerrain(m));
 }

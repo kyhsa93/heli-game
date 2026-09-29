@@ -7,7 +7,7 @@ import type { HeliState } from './state';
 export function burnFuel(h: HeliState, collective: number, dt: number, emit: Emit) {
   if (!h.engineOn) return;
   const f = AIRCRAFT.fuel;
-  h.fuel = Math.max(0, h.fuel - (f.burnBase + f.burnPerCollective * collective * h.rpm) * f.burnScale * leakFactor(h.damage) * dt);
+  h.fuel = Math.max(0, h.fuel - (f.burnBase + f.burnPerCollective * collective * h.rpm) * f.burnScale * h.fuelBurnScale * leakFactor(h.damage) * dt);
   if (h.fuel <= 0) { h.engineOn = false; emit({ t: 'engine', on: false, cause: 'fuel' }); }
 }
 
