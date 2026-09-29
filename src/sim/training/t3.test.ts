@@ -29,7 +29,7 @@ function autoGunner(w: World) {
   const bearing = aimToward(h, alive[0].pos).yaw;
   w.controls.pedal = Math.max(-1, Math.min(1, -bearing * 2));
   w.commands.fire = dist < 650;
-  w.controls.collective = Math.min(1, Math.max(0, hoverCollective - h.vel.y * 0.3));
+  w.controls.collective = Math.min(1, Math.max(0, hoverCollective(w) - h.vel.y * 0.3));
 }
 
 describe('training T3 — gunnery range', () => {

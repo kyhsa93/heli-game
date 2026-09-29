@@ -1,6 +1,7 @@
 import { Vector3 } from 'three';
 import type { SimEvent } from '../events';
-import { G3, GEAR_Y, MAX_THRUST } from '../heli/airframe';
+import { GEAR_Y } from '../heli/airframe';
+import { CLEAN_LOADOUT, hoverCollective, type LoadoutDef } from '../heli/loadout';
 import { updateQ } from '../heli/state';
 import type { Objective, ObjectiveState } from '../objective';
 import type { World } from '../world';
@@ -14,6 +15,7 @@ export const T3_TARGETS: readonly [string, number, number][] = [
 ];
 export const T3_NEED = 7;
 export const T3_START_DISTANCE = 700;
+export const T3_LOADOUT: LoadoutDef = { ...CLEAN_LOADOUT, gunRounds: 1200, fuel: 60 };
 
 export class TrainingT3 implements Objective {
   readonly id = 't3';
@@ -27,6 +29,7 @@ export class TrainingT3 implements Objective {
   private startTime = 0;
 
   start(world: World) {
+    world.applyLoadout(T3_LOADOUT);
     this.rangePad = TrainingT1.nearestPad(world);
     const pad = world.pads[this.rangePad], base = world.pads[0];
     world.target = { x: pad.x, y: pad.y, z: pad.z, name: pad.name };
@@ -46,7 +49,7 @@ export class TrainingT3 implements Objective {
     h.pitch = h.roll = h.pRate = h.rRate = h.yRate = 0;
     h.engineOn = true; h.rpm = 1; h.landed = false;
     updateQ(h);
-    world.controls.collective = G3 / MAX_THRUST;
+    world.controls.collective = hoverCollective(world.grossWeight);
     this.state = 'active';
     this.result = {};
     this.destroyed = this.shots = this.hits = 0;

@@ -40,7 +40,7 @@ describe('flight', () => {
     const { world: sim } = makeWorld();
     const b = sim.pads[0];
     airborneAt(sim, b.x, b.z, b.y + 60);
-    sim.controls.collective = hoverCollective;
+    sim.controls.collective = hoverCollective(sim);
     run(sim, 4);
     expect(Math.abs(sim.player.vel.y)).toBeLessThan(1);
     expect(sim.player.alive).toBe(true);

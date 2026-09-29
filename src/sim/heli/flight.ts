@@ -29,7 +29,7 @@ export function stepFlight(h: HeliState, c: Controls, env: FlightEnv, dt: number
   const ge = AIRCRAFT.groundEffect, ceil = AIRCRAFT.ceiling;
   const ground = height < ge.height ? 1 + ge.gain * (1 - Math.max(0, height) / ge.height) : 1;
   const ceiling = h.pos.y > ceil.start ? Math.max(0, 1 - (h.pos.y - ceil.start) / ceil.fade) : 1;
-  const thrust = MAX_THRUST * collective * h.rpm * h.rpm * ground * ceiling;
+  const thrust = MAX_THRUST * h.thrustScale * collective * h.rpm * h.rpm * ground * ceiling;
 
   if (h.landed) {
     h.vel.set(0, 0, 0);

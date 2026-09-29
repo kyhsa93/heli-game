@@ -1,9 +1,11 @@
 import type { SimEvent } from './events';
-import { G3, MAX_THRUST } from './heli/airframe';
+import { hoverCollective as hoverFor } from './heli/loadout';
 import { agl, updateQ } from './heli/state';
 import { STEP, World } from './world';
 
-export const hoverCollective = G3 / MAX_THRUST;
+export function hoverCollective(world: World) {
+  return hoverFor(world.grossWeight);
+}
 
 export function makeWorld(seed = 7) {
   const world = new World({ seed });
@@ -20,7 +22,7 @@ export function run(world: World, seconds: number, each?: () => void) {
 export function holdClimb(world: World, target: number) {
   return () => {
     const err = target - world.player.vel.y;
-    world.controls.collective = Math.min(1, Math.max(0, hoverCollective + err * 0.3));
+    world.controls.collective = Math.min(1, Math.max(0, hoverCollective(world) + err * 0.3));
   };
 }
 
@@ -36,7 +38,7 @@ export function descend(world: World, hold?: { x: number; z: number }) {
     }
     const target = -Math.min(4, Math.max(1, agl(h, world.terrain) * 0.3));
     const err = target - h.vel.y;
-    c.collective = Math.min(1, Math.max(0, hoverCollective + err * 0.3));
+    c.collective = Math.min(1, Math.max(0, hoverCollective(world) + err * 0.3));
   };
 }
 

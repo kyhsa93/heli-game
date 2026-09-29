@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { DEG } from '../core/math';
 import { updateQ } from '../sim/heli/state';
-import { airborneAt } from '../sim/testing';
+import { airborneAt, hoverCollective } from '../sim/testing';
 import { STEP, World } from '../sim/world';
 import { BURN_SECONDS, Effects } from './effects';
 
@@ -18,16 +18,16 @@ describe('Effects pool (M1-5)', () => {
     for (let i = 0; i < 8; i++) w.spawnUnit('truck', p.x + (i - 4) * 12, p.z - 150);
     w.commands.aim = { yaw: 0, pitch: -20 * DEG };
     w.commands.fire = true;
-    w.arms.gunAmmo = 100000;
     let peak = 0;
     for (let frame = 0; frame < 60 * 60; frame++) {
       for (let s = 0; s < 2; s++) {
-        w.controls.collective = Math.min(1, Math.max(0, 1 / 1.7 - w.player.vel.y * 0.3));
+        w.controls.collective = Math.min(1, Math.max(0, hoverCollective(w) - w.player.vel.y * 0.3));
         w.step(STEP);
       }
       fx.update(STEP * 2, w);
       peak = Math.max(peak, fx.activeParticles);
       w.commands.aim.yaw = Math.sin(frame / 60) * 0.3;
+      w.arms.gunAmmo = 1000;
     }
     expect(w.arms.shots).toBeGreaterThan(500);
     expect(peak).toBeLessThanOrEqual(fx.capacity);

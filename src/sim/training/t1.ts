@@ -1,5 +1,6 @@
 import { MS_TO_FPM } from '../../core/units';
 import type { SimEvent } from '../events';
+import { CLEAN_LOADOUT } from '../heli/loadout';
 import type { Objective, ObjectiveState } from '../objective';
 import type { World } from '../world';
 
@@ -24,6 +25,7 @@ export class TrainingT1 implements Objective {
   }
 
   start(world: World) {
+    world.applyLoadout(CLEAN_LOADOUT);
     const best = TrainingT1.nearestPad(world);
     this.targetPad = best;
     const p = world.pads[best];

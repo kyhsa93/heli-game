@@ -12,6 +12,7 @@ export interface HeliState {
   rpm: number; engineOn: boolean; collective: number; fuel: number;
   landed: boolean; alive: boolean;
   touchdownDescent: number;
+  thrustScale: number;
 }
 
 const tmpEuler = new Euler(0, 0, 0, 'YXZ');
@@ -22,7 +23,7 @@ export function createHeli(pos: Vector3, yaw: number): HeliState {
     pos: pos.clone(), vel: new Vector3(),
     yaw, pitch: 0, roll: 0, pRate: 0, rRate: 0, yRate: 0,
     q: new Quaternion(), rpm: 0, engineOn: false, collective: 0, fuel: 100,
-    landed: true, alive: true, touchdownDescent: 0,
+    landed: true, alive: true, touchdownDescent: 0, thrustScale: 1,
   };
   updateQ(h);
   return h;

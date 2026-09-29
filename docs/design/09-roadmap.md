@@ -46,7 +46,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 
 ## M2. 센서와 유도무기
 
-- [ ] [#18](https://github.com/kyhsa93/heli-game/issues/18) **M2-1 로드아웃 데이터·무게**: `sim/heli/loadout.ts`, 03장 무게 공식, 실효 추력 반영. *완료*: 무거운 로드아웃에서 호버 콜렉티브가 03장 예시값 ±0.02.
+- [x] [#18](https://github.com/kyhsa93/heli-game/issues/18) **M2-1 로드아웃 데이터·무게**: `sim/heli/loadout.ts`, 03장 무게 공식, 실효 추력 반영. *완료*: 무거운 로드아웃에서 호버 콜렉티브가 03장 예시값 ±0.02.
 - [ ] [#19](https://github.com/kyhsa93/heli-game/issues/19) **M2-2 외형에 로드아웃 반영**: 파일런별 메시 교체, 발사 시 한 발씩 사라짐. *완료*: 스크린샷(조종석 옆 시점 포함).
 - [ ] [#20](https://github.com/kyhsa93/heli-game/issues/20) **M2-3 로켓**: 연사, 조향 큐, 면 피해. *완료*: 연사 수·간격 테스트, 반경 피해 테스트.
 - [ ] [#21](https://github.com/kyhsa93/heli-game/issues/21) **M2-4 TADS 모드**: 두 번째 카메라, 렌더 타깃, 줌 단계, TV/FLIR 셰이더, TADS 화면 UI(07장 7.5절), TADS 중 자동 호버. *완료*: 줌 단계별·FLIR 스크린샷, TADS 중 기체 위치 이동 < 2m/10초 테스트.

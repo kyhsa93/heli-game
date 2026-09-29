@@ -4,6 +4,7 @@ import { rng } from '../core/math';
 import type { SimEvent } from './events';
 import { BASE_REFUEL_RATE, GEAR_Y } from './heli/airframe';
 import { clampToArea, collide, stepFlight } from './heli/flight';
+import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
 import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
@@ -29,6 +30,8 @@ export class World {
   units: Unit[] = [];
   projectiles: Projectile[] = [];
   arms: Arms = createArms();
+  loadoutDef: LoadoutDef = STANDARD_LOADOUT;
+  loadout: Loadout = createLoadout(STANDARD_LOADOUT);
   commands = { fire: false, aim: { yaw: 0, pitch: 0 } as Aim };
   private nextUnitId = 1;
   private nextProjectileId = 1;
@@ -49,8 +52,24 @@ export class World {
     this.controls = { cyclicX: 0, cyclicY: 0, pedal: 0, collective: 0 };
     this.atBoundary = false;
     this.refuelNoted = false;
-    this.arms = createArms();
+    this.applyLoadout(this.loadoutDef);
     this.commands = { fire: false, aim: { yaw: 0, pitch: 0 } };
+  }
+
+  applyLoadout(def: LoadoutDef) {
+    this.loadoutDef = def;
+    this.loadout = createLoadout(def);
+    this.arms = createArms(def.gunRounds);
+    this.player.fuel = def.fuel;
+    this.updateWeight();
+  }
+
+  get grossWeight() {
+    return grossWeight(this.loadout, this.player.fuel, this.arms.gunAmmo);
+  }
+
+  updateWeight() {
+    this.player.thrustScale = thrustScale(this.grossWeight);
   }
 
   emit = (e: SimEvent) => { this.events.emit(e); };
@@ -115,6 +134,7 @@ export class World {
 
     const h = this.player;
     if (this.active && h.alive) {
+      this.updateWeight();
       const phase = stepFlight(h, this.controls, this, dt, this.emit);
       if (phase === 'ground') this.onGround(dt);
       else {

@@ -4,7 +4,7 @@ import { DEG } from '../../core/math';
 import type { SimEvent } from '../events';
 import { G3 } from '../heli/airframe';
 import { updateQ } from '../heli/state';
-import { airborneAt } from '../testing';
+import { airborneAt, hoverCollective } from '../testing';
 import { STEP, World } from '../world';
 import { aimDirection, aimToward, gunInLimits, muzzlePosition } from './arms';
 import { WEAPONS } from './damage';
@@ -25,7 +25,7 @@ function setup() {
 function hover(w: World, seconds: number, each?: () => void) {
   for (let i = 0; i < seconds * 120; i++) {
     each?.();
-    w.controls.collective = Math.min(1, Math.max(0, 1 / 1.7 - w.player.vel.y * 0.3));
+    w.controls.collective = Math.min(1, Math.max(0, hoverCollective(w) - w.player.vel.y * 0.3));
     w.step(STEP);
   }
 }
