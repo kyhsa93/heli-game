@@ -340,7 +340,8 @@
     "title": "훈련 실패",
     "laserBreak": "유도 중인 미사일의 레이저가 끊겼습니다. 명중할 때까지 L을 누르고 있으세요.",
     "failed": "목표를 달성하지 못했습니다",
-    "tooManyHits": "피격이 너무 많았습니다. 지형 뒤로 숨고 위협 방향을 피해 다시 가 보세요."
+    "tooManyHits": "피격이 너무 많았습니다. 지형 뒤로 숨고 위협 방향을 피해 다시 가 보세요.",
+    "friendlyFire": "아군을 세 번 공격해 임무에서 해임됐습니다"
   },
   "targets": {
     "RKT": "로켓 표적 구역"
@@ -459,6 +460,20 @@
       "agm114l": "헬파이어 L"
     },
     "retry": "다시 하기",
-    "done": "타이틀로"
+    "done": "타이틀로",
+    "score": "점수 {n}",
+    "par": "기준 {n}",
+    "scoreLines": "점수 내역",
+    "line": {
+      "primary": "주 목표",
+      "secondary": "보조 목표",
+      "kills": "격파",
+      "efficiency": "무장 효율 (헬파이어·로켓)",
+      "noDamage": "피해 없이 귀환",
+      "landed": "FARP 착륙",
+      "time": "시간 보너스",
+      "friendly": "아군 오사",
+      "civilian": "민간 피해"
+    }
   }
 }

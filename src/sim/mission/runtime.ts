@@ -11,6 +11,7 @@ import type { World } from '../world';
 import type { LoadoutDef } from '../heli/loadout';
 import type { SystemId } from '../heli/damage';
 import type { Action, Condition, MissionDef, ObjectiveDef, RadioFrom, UnitRef } from './schema';
+import { FRIENDLY_FAIL, scoreMission, type Score } from './scoring';
 
 export interface MissionStats {
   kills: Record<string, number>;
@@ -81,6 +82,7 @@ export class MissionRuntime implements Objective {
     world.applyLoadout(this.loadout ?? m.briefing.recommendedLoadout);
     world.player.fuelBurnScale = AIRCRAFT.fuel.campaignBurnScale;
     this.stats = emptyStats();
+    this.score = null;
     world.conditions = { ...world.conditions, night: m.environment.time === 'night', fog: m.environment.fog };
     world.cm.chaffUnlocked = !!m.unlocks?.includes('chaff') || world.cm.chaffUnlocked;
     for (const g of m.groups) {
@@ -241,28 +243,46 @@ export class MissionRuntime implements Objective {
     }
   }
 
+  computeScore(success: boolean): Score {
+    const s = this.stats;
+    return scoreMission({
+      success,
+      primaryDone: this.objectives.filter(o => o.def.primary && o.state === 'done').length,
+      primaryTotal: this.objectives.filter(o => o.def.primary).length,
+      secondaryDone: this.objectives.filter(o => !o.def.primary && o.state === 'done').length,
+      kills: s.kills, shots: s.shots, hits: s.hits, hitsTaken: s.hitsTaken,
+      damagedSystems: Object.keys(s.damaged).length,
+      landed: !!this.world && this.flown && this.landedAtFarp(),
+      timeSec: this.elapsed, parTimeSec: this.mission.parTimeSec,
+      friendly: s.friendly, civilian: s.civilian,
+    }, this.mission.par);
+  }
+
   endNow() {
     const primaries = this.objectives.filter(o => o.def.primary);
     this.finish(primaries.length > 0 && primaries.every(o => o.state === 'done' || (o.def.kind === 'land' && o.state === 'active')), 'aborted');
   }
 
-  private finish(success: boolean, reason?: string) {
+  score: Score | null = null;
+
+  private finish(success: boolean, reason?: string, code = 'mission') {
     const w = this.world!;
     if (this.state !== 'active') return;
+    this.score = this.computeScore(success);
     if (success) {
       this.state = 'done';
       this.result = {
         timeSec: this.elapsed,
         primaryDone: this.objectives.filter(o => o.def.primary && o.state === 'done').length,
         secondaryDone: this.objectives.filter(o => !o.def.primary && o.state === 'done').length,
-        landed: this.landedAtFarp() ? 1 : 0,
+        landed: this.flown && this.landedAtFarp() ? 1 : 0,
       };
       w.emit({ t: 'objective', id: this.id, state: 'done' });
     } else {
       this.state = 'failed';
-      this.failure = 'mission';
+      this.failure = code;
       this.failureText = reason;
-      w.emit({ t: 'objective', id: this.id, state: 'failed', reason: 'mission' });
+      w.emit({ t: 'objective', id: this.id, state: 'failed', reason: code });
     }
   }
 
@@ -319,7 +339,7 @@ export class MissionRuntime implements Objective {
       if (u && u.side !== 'coalition') st.hits[e.weapon] = (st.hits[e.weapon] ?? 0) + 1;
     } else if (e.t === 'unitDestroyed' && e.byPlayer) {
       if (e.side === 'veros') st.kills[e.defId] = (st.kills[e.defId] ?? 0) + 1;
-      else if (e.side === 'coalition') st.friendly++;
+      else if (e.side === 'coalition') { st.friendly++; if (st.friendly >= FRIENDLY_FAIL) this.finish(false, undefined, 'friendlyFire'); }
       else st.civilian++;
     } else if (e.t === 'systemDamaged') st.damaged[e.system] = e.level;
     else if (e.t === 'playerHit' || (e.t === 'missileEnd' && e.hit)) st.hitsTaken++;

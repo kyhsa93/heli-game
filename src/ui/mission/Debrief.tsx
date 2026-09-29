@@ -17,6 +17,8 @@ export function Debrief({ mission, report, onRetry, onDone }: { mission: Mission
         <p className="kicker">{mission.title}</p>
         <h1 className={report.success ? 'ok' : 'bad'}>{t(report.success ? 'debrief.success' : 'debrief.fail')}</h1>
         {report.reason && report.reason !== 'aborted' && <p className="sub">{report.reason}</p>}
+        {!report.reason && report.failure && report.failure !== 'mission' && <p className="sub">{t(`fail.${report.failure}`)}</p>}
+        <div className="grade-row"><span className={`grade g${report.score.grade}`}>{report.score.grade}</span><span className="score-total">{t('debrief.score', { n: report.score.total.toLocaleString('en-US') })}<small>{t('debrief.par', { n: mission.par.toLocaleString('en-US') })}</small></span></div>
         {report.reason === 'aborted' && <p className="sub">{t('debrief.aborted')}</p>}
         <div className="room-grid">
           <div className="room-text">
@@ -32,6 +34,10 @@ export function Debrief({ mission, report, onRetry, onDone }: { mission: Mission
             <h2>{t('debrief.kills')}</h2>
             <p className="para">{kills.length ? kills.map(([k, n]) => `${t(`units.${k}`)} ${n}`).join(' · ') : t('debrief.none')}</p>
             {(s.friendly > 0 || s.civilian > 0) && <p className="para bad">{t('debrief.fratricide', { f: s.friendly, c: s.civilian })}</p>}
+            <h2>{t('debrief.scoreLines')}</h2>
+            <table className="stats"><tbody>
+              {report.score.lines.map(l => <tr key={l.key}><td>{t(`debrief.line.${l.key}`)}</td><td className={l.points < 0 ? 'neg' : ''}>{l.points > 0 ? '+' : ''}{l.points}</td></tr>)}
+            </tbody></table>
             <h2>{t('debrief.weapons')}</h2>
             <table className="stats"><tbody>
               {WEAPONS.filter(w => s.shots[w]).map(w => <tr key={w}><td>{t(`debrief.weapon.${w}`)}</td><td>{s.shots[w]}</td><td>{s.hits[w] ?? 0}</td></tr>)}

@@ -121,7 +121,7 @@ export function Flight({ missionId, touch, loadout, onExit, onComplete, onMissio
     if (snap.mode === 'done') onComplete(missionId);
     if (runtime && onMissionEnd && (snap.mode === 'done' || snap.mode === 'over')) {
       const report = reportFrom(runtime);
-      if (snap.mode === 'over' && snap.crash) { report.success = false; report.reason = crashText(snap.crash.reason, snap.crash.value); }
+      if (snap.mode === 'over' && snap.crash) { report.success = false; report.reason = crashText(snap.crash.reason, snap.crash.value); report.score = runtime.computeScore(false); }
       const id = setTimeout(() => onMissionEnd(report), 600);
       return () => clearTimeout(id);
     }

@@ -140,6 +140,12 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .margin.poor i, .margin.poor b { background: #ef476f; color: #fff; }
 .stats { border-collapse: collapse; font-size: 14px; color: #cdd8e8; }
 .stats td { padding: 2px 12px 2px 0; }
+.stats td.neg { color: #ef476f; }
+.grade-row { display: flex; align-items: center; gap: 16px; margin: 8px 0 4px; }
+.grade { font-size: 56px; font-weight: 800; line-height: 1; width: 72px; text-align: center; border: 2px solid currentColor; border-radius: 12px; padding: 4px 0; }
+.grade.gS { color: #ffd166; } .grade.gA { color: #06d6a0; } .grade.gB { color: #4cc9f0; } .grade.gC { color: #aebbd0; } .grade.gF { color: #ef476f; }
+.score-total { display: flex; flex-direction: column; font-size: 22px; font-weight: 700; }
+.score-total small { font-size: 13px; color: #aebbd0; font-weight: 400; }
 .radio-sub { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); max-width: min(760px, calc(100vw - 32px));
   background: rgba(6, 12, 22, .72); color: #e8eef7; padding: 6px 12px; border-radius: 8px; font-size: 16px; pointer-events: none; z-index: 3; text-align: center; }
 .mission { white-space: pre-line; }
