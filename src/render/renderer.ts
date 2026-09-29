@@ -9,7 +9,9 @@ import type { FlightInput } from '../input/input';
 import { Instruments } from './cockpit/instruments';
 import { buildHeli, type HeliModel } from './heliModel';
 import { assets } from '../assets/loader';
+import { UNITS_GROUP } from '../assets/manifest';
 import { Effects, fallbackAtlas } from './effects';
+import { UnitRenderer } from './unitRenderer';
 import { drawIhadss } from './ihadss';
 import { buildWorld, type WorldScene } from './scene';
 
@@ -27,6 +29,7 @@ export interface RendererOptions {
 
 export class FlightRenderer {
   view: View = 'cockpit';
+  debugCamera: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
   hud = true;
   audio: RotorAudio | null = null;
   readonly model: HeliModel;
@@ -46,6 +49,8 @@ export class FlightRenderer {
   private tmp = new THREE.Vector3();
   private tmp2 = new THREE.Vector3();
   readonly effects: Effects;
+  readonly units = new UnitRenderer();
+  private unitAssetsRequested = false;
   private offEvents: () => void;
 
   constructor(private opts: RendererOptions) {
@@ -69,11 +74,22 @@ export class FlightRenderer {
     this.model.head.add(this.camera);
     this.effects = new Effects(assets.get<THREE.Texture>('tex.particles') ?? fallbackAtlas());
     this.scene.scene.add(this.effects.group);
+    this.scene.scene.add(this.units.group);
     this.offEvents = session.world.events.onAny(e => this.effects.onEvent(e, session.world));
 
     this.resize();
     window.addEventListener('resize', this.resize);
     this.raf = requestAnimationFrame(this.tick);
+  }
+
+  private loadUnitModels() {
+    this.unitAssetsRequested = true;
+    void assets.loadGroup(UNITS_GROUP).then(report => {
+      for (const id of report.loaded) {
+        const gltf = assets.get<{ scene: THREE.Object3D }>(id);
+        if (gltf) this.units.setModel(id.replace('model.', ''), gltf.scene);
+      }
+    });
   }
 
   toggleView() {
@@ -120,10 +136,14 @@ export class FlightRenderer {
     model.pedalL.position.z = -3.18 + c.pedal * 0.05;
     model.pedalR.position.z = -3.18 - c.pedal * 0.05;
 
-    const cockpit = this.view === 'cockpit';
+    const cockpit = this.view === 'cockpit' && !this.debugCamera;
     const speed = airspeed(h, world.wind);
     model.shell.visible = !cockpit;
-    if (cockpit) {
+    if (this.debugCamera) {
+      if (camera.parent !== scn.scene) scn.scene.add(camera);
+      camera.position.copy(this.debugCamera.pos);
+      camera.lookAt(this.debugCamera.look);
+    } else if (cockpit) {
       if (camera.parent !== model.head) { model.head.add(camera); camera.position.set(0, 0, 0); }
       const vib = h.rpm * (0.0012 + speed * 0.00003) * (h.landed ? 0.5 : 1);
       model.head.position.set(
@@ -170,6 +190,8 @@ export class FlightRenderer {
     scn.sky.position.copy(this.tmp);
     (scn.sky.material as THREE.ShaderMaterial).uniforms.time.value = now * 0.001;
 
+    if (world.units.length && !this.unitAssetsRequested) this.loadUnitModels();
+    this.units.update(world);
     this.effects.update(steps * STEP, world);
     this.instruments.draw(world, this.frame++ % 3);
     this.renderer.render(scn.scene, camera);
@@ -191,6 +213,7 @@ export class FlightRenderer {
     cancelAnimationFrame(this.raf);
     this.offEvents();
     this.effects.dispose();
+    this.units.dispose();
     window.removeEventListener('resize', this.resize);
     this.scene.dispose();
     this.instruments.dispose();

@@ -9,3 +9,10 @@
 | fonts/karda-sans-regular.woff2 | Pretendard (Regular) → "Karda Sans" | Kil Hyung-jin (orioncactus), Adobe, The Inter Project Authors 외 | https://github.com/orioncactus/pretendard | OFL-1.1 | 게임 문자열에 쓰인 글자만 남긴 서브셋. OFL 예약 이름 'Pretendard' 규정에 따라 "Karda Sans"로 이름 변경 | 2026-09-29 |
 | fonts/karda-sans-bold.woff2 | Pretendard (Bold) → "Karda Sans" | Kil Hyung-jin (orioncactus), Adobe, The Inter Project Authors 외 | https://github.com/orioncactus/pretendard | OFL-1.1 | 게임 문자열에 쓰인 글자만 남긴 서브셋. OFL 예약 이름 'Pretendard' 규정에 따라 "Karda Sans"로 이름 변경 | 2026-09-29 |
 | textures/particles.png | Smoke Particles + Particle Pack (합성 아틀라스) | Kenney (kenney.nl) | https://kenney.nl/assets/smoke-particles , https://kenney.nl/assets/particle-pack | CC0 | explosion·blackSmoke·whitePuff·flash(Smoke Particles)와 muzzle·spark·fire(Particle Pack) 16장을 512² 4×4 아틀라스로 합치고 256색 양자화 | 2026-09-29 |
+| models/tank.glb | Tank | KolosStudios | https://poly.pizza/m/egcLMSGiuA | CC-BY-3.0 | meshopt 압축·텍스처 축소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
+| models/truck.glb | Truckk | KolosStudios | https://poly.pizza/m/jHwRymyg2C | CC-BY-3.0 | meshopt 압축·텍스처 축소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
+| models/fuel_truck.glb | Truck Tank | KolosStudios | https://poly.pizza/m/64ayx6pW3O | CC-BY-3.0 | meshopt 압축·텍스처 축소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
+| models/soldier.glb | Soldier | KolosStudios | https://poly.pizza/m/XT8jgwSesV | CC-BY-3.0 | meshopt 압축·텍스처 축소, 애니메이션·스킨 제거, 폴리곤 30%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
+| models/apc.glb | Tank | Quaternius | https://poly.pizza/m/FA5daiyZQq | CC0 | meshopt 압축·텍스처 축소, 애니메이션·스킨 제거, 폴리곤 30%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
+| models/technical.glb | Pickup Truck | Quaternius | https://poly.pizza/m/qn4grQgHm8 | CC0 | meshopt 압축·텍스처 축소, 폴리곤 40%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
+| models/civ_car.glb | SUV | Quaternius | https://poly.pizza/m/xsMtZhBkxL | CC0 | meshopt 압축·텍스처 축소, 폴리곤 40%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |

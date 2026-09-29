@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { assets } from './assets/loader';
 import { BOOT_GROUP } from './assets/manifest';
 import { Flight } from './ui/screens/Flight';
+import { Credits } from './ui/screens/Credits';
 import { Loading } from './ui/screens/Loading';
 import { Title } from './ui/screens/Title';
 import { Training } from './ui/screens/Training';
@@ -53,7 +54,9 @@ export function App() {
 
   switch (screen.name) {
     case 'title':
-      return <Title trainingDone={completed.has('t1')} onTraining={() => ui.go({ name: 'training' })} />;
+      return <Title trainingDone={completed.has('t1')} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} />;
+    case 'credits':
+      return <Credits onBack={() => ui.go({ name: 'title' })} />;
     case 'training':
       return <Training completed={completed} onBack={() => ui.go({ name: 'title' })} onPick={id => ui.go({ name: 'flight', missionId: id })} />;
     case 'flight':

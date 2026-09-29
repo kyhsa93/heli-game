@@ -6,6 +6,7 @@ describe('screen routing', () => {
     ['', { name: 'title' }],
     ['#/title', { name: 'title' }],
     ['#/training', { name: 'training' }],
+    ['#/credits', { name: 'credits' }],
     ['#/flight/t1', { name: 'flight', missionId: 't1' }],
     ['#/flight/t9', { name: 'title' }],
     ['#/nonsense', { name: 'title' }],

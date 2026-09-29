@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { parseCredits } from './credits';
 import { ASSETS, BOOT_BUDGET_BYTES, BOOT_GROUP } from './manifest';
 
 const ROOT = join(__dirname, '../../public/assets');
@@ -11,13 +12,6 @@ function walk(dir: string): string[] {
     const p = join(dir, f);
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
-}
-
-export function parseCredits(md: string) {
-  return md.split('\n')
-    .filter(l => l.startsWith('|') && !/^\|\s*-/.test(l) && !l.includes('| 파일 |'))
-    .map(l => l.split('|').slice(1, -1).map(c => c.trim()))
-    .map(([file, title, author, url, license, modified, checked]) => ({ file, title, author, url, license, modified, checked }));
 }
 
 describe('external asset credits (10-external-assets.md 10.8)', () => {

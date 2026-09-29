@@ -1,6 +1,7 @@
 export type Screen =
   | { name: 'title' }
   | { name: 'training' }
+  | { name: 'credits' }
   | { name: 'flight'; missionId: string };
 
 export const TRAININGS = ['t1', 't2', 't3', 't4', 't5'] as const;
@@ -9,6 +10,7 @@ export const AVAILABLE_MISSIONS = new Set(['t1']);
 export function parseHash(hash: string): Screen {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   if (parts[0] === 'training') return { name: 'training' };
+  if (parts[0] === 'credits') return { name: 'credits' };
   if (parts[0] === 'flight' && parts[1] && AVAILABLE_MISSIONS.has(parts[1])) return { name: 'flight', missionId: parts[1] };
   return { name: 'title' };
 }
@@ -17,6 +19,7 @@ export function toHash(screen: Screen): string {
   switch (screen.name) {
     case 'title': return '#/title';
     case 'training': return '#/training';
+    case 'credits': return '#/credits';
     case 'flight': return `#/flight/${screen.missionId}`;
   }
 }
