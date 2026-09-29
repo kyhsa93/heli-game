@@ -28,6 +28,7 @@ import { FlightInput } from '../../input/input';
 import { SettingsPanel } from './SettingsScreen';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
 import { VirtualStick } from '../components/VirtualStick';
+import { Pinch } from '../../input/pinch';
 
 const COACH_SECONDS = 7;
 const STICK_RADIUS = { S: 46, M: 56, L: 70 } as const;
@@ -84,6 +85,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
   const toggleView = () => rendererRef.current?.toggleView();
   const toggleSensor = () => { if (sim.conditions.time !== 'night') sim.tads.sensor = sim.tads.sensor === 'tv' ? 'flir' : 'tv'; };
   const [tadsOn, setTadsOn] = useState(false);
+  const [, setTouchKey] = useState('');
   const [atFarp, setAtFarp] = useState(false);
   const [, setFarpTick] = useState(0);
 
@@ -109,6 +111,10 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
       case 'weapon3': sim.selectWeapon(3); break;
       case 'weapon4': sim.selectWeapon(4); break;
       case 'weaponNext': sim.nextWeapon(); break;
+      case 'weaponPrev': sim.nextWeapon(-1); break;
+      case 'padA': if (sim.player.landed || !sim.player.engineOn) sim.toggleEngine(); else sim.dropFlare(); break;
+      case 'padRB': if (sim.tads.active) zoomTads(sim.tads, 1); else sim.nextWeapon(); break;
+      case 'padLB': if (sim.tads.active) zoomTads(sim.tads, -1); else sim.nextFcrTarget(); break;
       case 'view': if (sim.tads.active) toggleSensor(); else toggleView(); break;
       case 'tads': sim.toggleTads(); break;
       case 'flare': sim.dropFlare(); break;
@@ -213,6 +219,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
         }
         log.tick(simDt);
         setTadsOn(sim.tads.active);
+        if (touchRef.current) setTouchKey(`${sim.player.engineOn}|${sim.player.landed}|${sim.arms.selected}|${sim.fcr.unlocked}|${sim.cm.chaffUnlocked}|${!!sim.wingman}`);
         const farp = session.mode === 'play' && h.alive && h.landed && farpUnder(sim) >= 0;
         setAtFarp(farp);
         if (farp) setFarpTick(n => (n + 1) % 1000);
@@ -278,29 +285,41 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
   });
 
   const drag = useRef<{ id: number; x: number; y: number; sx: number; sy: number } | null>(null);
-  const onPointerDown = (e: RPointerEvent) => { drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY }; };
+  const pinch = useRef(new Pinch());
+  const onPointerDown = (e: RPointerEvent) => {
+    if (pinch.current.down(e.pointerId, e.clientX, e.clientY)) { drag.current = null; return; }
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY };
+  };
   const onPointerMove = (e: RPointerEvent) => {
+    const step = pinch.current.move(e.pointerId, e.clientX, e.clientY);
+    if (step) { if (sim.tads.active) zoomTads(sim.tads, step); return; }
     const d = drag.current;
-    if (!d || d.id !== e.pointerId) return;
+    if (!d || d.id !== e.pointerId || pinch.current.active) return;
     input.look(e.clientX - d.x, e.clientY - d.y);
     d.x = e.clientX; d.y = e.clientY;
   };
   const onPointerUp = (e: RPointerEvent) => {
+    pinch.current.up(e.pointerId);
     const d = drag.current;
     if (d?.id !== e.pointerId) return;
     drag.current = null;
     if (Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 6) rendererRef.current?.clickAt(e.clientX, e.clientY);
   };
+  const press = (fn: () => void) => (e: RPointerEvent) => { e.preventDefault(); e.stopPropagation(); fn(); };
+  const hold = (set: (on: boolean) => void) => ({
+    onPointerDown: (e: RPointerEvent) => { e.preventDefault(); e.stopPropagation(); set(true); },
+    onPointerUp: () => set(false), onPointerCancel: () => set(false), onPointerLeave: () => set(false),
+  });
 
   return (
-    <div className="flight3d">
+    <div className={touch ? 'flight3d touch' : 'flight3d'}>
       <div
         ref={mountRef}
         className="viewport"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerCancel={() => { drag.current = null; }}
+        onPointerCancel={e => { drag.current = null; pinch.current.up(e.pointerId); }}
         onDoubleClick={() => input.centerView()}
         onWheel={e => { if (sim.tads.active) zoomTads(sim.tads, e.deltaY < 0 ? 1 : -1); }}
       />
@@ -329,30 +348,28 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
         <div className="sticks">
           <VirtualStick className={`stick left size-${settings.controls.touchStickSize}`} radius={STICK_RADIUS[settings.controls.touchStickSize]} label={t('touch.leftStick')} onMove={(x, y) => { input.touch.lx = x; input.touch.ly = y; }} />
           <VirtualStick className={`stick right size-${settings.controls.touchStickSize}`} radius={STICK_RADIUS[settings.controls.touchStickSize]} label={t('touch.rightStick')} onMove={(x, y) => { input.touch.rx = x; input.touch.ry = y; }} />
-          <button className="tbtn engine" onPointerDown={e => { e.preventDefault(); sim.toggleEngine(); }}>{t('touch.engine')}</button>
-          <button className="tbtn view" onPointerDown={e => { e.preventDefault(); toggleView(); }}>{t('touch.view')}</button>
-          <button className="tbtn tads" onPointerDown={e => { e.preventDefault(); sim.toggleTads(); }}>{t('touch.tads')}</button>
+          <button className="tbtn pause" aria-label={t('touch.pause')} onPointerDown={press(() => setHelp(true))}>≡</button>
+          {(!sim.player.engineOn || sim.player.landed) && <button className="tbtn engine" onPointerDown={press(() => sim.toggleEngine())}>{t('touch.engine')}</button>}
+          <div className="tcol">
+            <button className={`tbtn${tadsOn ? ' on' : ''}`} onPointerDown={press(() => sim.toggleTads())}>{t('touch.tads')}</button>
+            {sim.fcr.unlocked && <button className="tbtn" onPointerDown={press(() => sim.fcrScan())}>{t('touch.fcr')}</button>}
+            {sim.fcr.unlocked && <button className="tbtn" onPointerDown={press(() => sim.nextFcrTarget())}>{t('touch.target')}</button>}
+            <button className="tbtn" onPointerDown={press(() => sim.nextWeapon())}>{t(`touch.weapon.${sim.arms.selected}`)}</button>
+            {sim.wingman && sim.wingmanMenu && <button className="tbtn" onPointerDown={press(() => setRadioOpen(v => !v))}>{t('touch.radio')}</button>}
+          </div>
+          <div className="tcm">
+            <button className="tbtn" onPointerDown={press(() => sim.dropFlare())}>{t('touch.flare')}</button>
+            {sim.cm.chaffUnlocked && <button className="tbtn" onPointerDown={press(() => sim.dropChaff())}>{t('touch.chaff')}</button>}
+          </div>
           {tadsOn && (
             <div className="tads-row">
-              <button className="tbtn" onPointerDown={e => { e.preventDefault(); zoomTads(sim.tads, -1); }}>{t('touch.zoomOut')}</button>
-              <button className="tbtn" onPointerDown={e => { e.preventDefault(); zoomTads(sim.tads, 1); }}>{t('touch.zoomIn')}</button>
-              <button className="tbtn" onPointerDown={e => { e.preventDefault(); toggleSensor(); }}>{t('touch.sensor')}</button>
-              <button
-                className="tbtn laser"
-                onPointerDown={e => { e.preventDefault(); input.touchLaser = true; }}
-                onPointerUp={() => { input.touchLaser = false; }}
-                onPointerCancel={() => { input.touchLaser = false; }}
-                onPointerLeave={() => { input.touchLaser = false; }}
-              >{t('touch.laser')}</button>
+              <button className="tbtn" onPointerDown={press(() => zoomTads(sim.tads, -1))}>{t('touch.zoomOut')}</button>
+              <button className="tbtn" onPointerDown={press(() => zoomTads(sim.tads, 1))}>{t('touch.zoomIn')}</button>
+              <button className="tbtn" onPointerDown={press(toggleSensor)}>{t('touch.sensor')}</button>
             </div>
           )}
-          <button
-            className="tbtn fire"
-            onPointerDown={e => { e.preventDefault(); input.touchFire = true; }}
-            onPointerUp={e => { e.preventDefault(); input.touchFire = false; }}
-            onPointerCancel={() => { input.touchFire = false; }}
-            onPointerLeave={() => { input.touchFire = false; }}
-          >{t('touch.fire')}</button>
+          <button className="tbtn laser" {...hold(on => { input.touchLaser = on; })}>{t('touch.laser')}</button>
+          <button className="tbtn fire" {...hold(on => { input.touchFire = on; })}>{t('touch.fire')}</button>
         </div>
       )}
 
@@ -385,6 +402,8 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
               <button className="go" onClick={() => setHelp(false)}>{t('brief.continue')}</button>
               <button className="go secondary" onClick={() => setShowKeys(v => !v)}>{t('pause.controls')}</button>
               <button className="go secondary" onClick={() => setShowSettings(v => !v)}>{t('pause.settings')}</button>
+              {touch && <button className="go secondary" onClick={() => { toggleView(); setHelp(false); }}>{t('pause.view')}</button>}
+              {touch && <button className="go secondary" onClick={() => sim.toggleEngine()}>{t(sim.player.engineOn ? 'pause.engineOff' : 'pause.engineOn')}</button>}
               <button className="go secondary" onClick={toggleVoice}>{t(voiceOn ? 'brief.voiceOff' : 'brief.voiceOn')}</button>
               <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button>
               {runtime && !training && <button className="go secondary" onClick={() => { setHelp(false); runtime.endNow(); }}>{t('pause.endMission')}</button>}

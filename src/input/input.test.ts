@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { World } from '../sim/world';
-import { commandForKey, FLIGHT_KEYS, KEY_COMMANDS } from './bindings';
+import { commandForKey, FLIGHT_KEYS, GAMEPAD_BUTTONS, KEY_COMMANDS, PAD_HEAD_LOOK } from './bindings';
+import { Pinch } from './pinch';
 import { FlightInput } from './input';
 
 describe('key bindings (07-ui-ux.md 7.6)', () => {
@@ -59,5 +60,62 @@ describe('FlightInput', () => {
     expect(world.controls.collective).toBeCloseTo(0.45, 2);
     frame(input, world, ['KeyW', 'ShiftLeft'], 1);
     expect(world.controls.collective).toBeCloseTo(0.45 + 0.135, 2);
+  });
+});
+
+describe('gamepad (07 7.6)', () => {
+  const pad = (axes: number[], pressed: number[] = []) => ({ connected: true, axes, buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: pressed.includes(i) })) });
+
+  it('maps the standard layout to combat commands', () => {
+    expect(GAMEPAD_BUTTONS[7]).toBe('fire');
+    expect(GAMEPAD_BUTTONS[6]).toBe('laser');
+    expect(GAMEPAD_BUTTONS[5]).toBe('padRB');
+    expect(GAMEPAD_BUTTONS[4]).toBe('padLB');
+    expect(GAMEPAD_BUTTONS[0]).toBe('padA');
+    expect([GAMEPAD_BUTTONS[1], GAMEPAD_BUTTONS[2], GAMEPAD_BUTTONS[3]]).toEqual(['flare', 'chaff', 'view']);
+    expect([GAMEPAD_BUTTONS[12], GAMEPAD_BUTTONS[13], GAMEPAD_BUTTONS[14], GAMEPAD_BUTTONS[15]]).toEqual(['tads', 'fcr', 'weaponPrev', 'weaponNext']);
+    expect(GAMEPAD_BUTTONS[9]).toBe('pause');
+  });
+
+  it('fires with RT, lases with LT and sends button presses once', () => {
+    const world = new World({ seed: 1 }), input = new FlightInput();
+    const got: string[] = [];
+    input.onCommand = c => got.push(c);
+    let p = pad([0, 0, 0, 0], [7, 6, 1]);
+    input.gamepads = () => [p];
+    input.update(world, 1 / 60); input.update(world, 1 / 60);
+    expect(world.commands.fire).toBe(true);
+    expect(world.commands.laser).toBe(true);
+    expect(got).toEqual(['flare', 'laser', 'fire']);
+    p = pad([0, 0, 0, 0]);
+    input.update(world, 1 / 60);
+    expect(world.commands.fire).toBe(false);
+  });
+
+  it('turns the head with the right stick while it is pressed in, instead of the cyclic', () => {
+    const world = new World({ seed: 1 }), input = new FlightInput();
+    input.gamepads = () => [pad([0, 0, 0.9, 0])];
+    input.update(world, 0.1);
+    expect(world.controls.cyclicX).toBeGreaterThan(0.8);
+    expect(input.headYaw).toBe(0);
+    input.gamepads = () => [pad([0, 0, 0.9, -0.6], [PAD_HEAD_LOOK])];
+    for (let i = 0; i < 10; i++) input.update(world, 0.05);
+    expect(world.controls.cyclicX).toBe(0);
+    expect(input.headYaw).toBeLessThan(-0.5);
+    expect(input.headPitch).toBeGreaterThan(0.2);
+  });
+});
+
+describe('pinch zoom (07 7.6)', () => {
+  it('steps zoom in and out as two fingers spread and close', () => {
+    const p = new Pinch();
+    expect(p.down(1, 100, 100)).toBe(false);
+    expect(p.down(2, 200, 100)).toBe(true);
+    expect(p.move(2, 220, 100)).toBe(0);
+    expect(p.move(2, 240, 100)).toBe(1);
+    expect(p.move(2, 150, 100)).toBe(-1);
+    p.up(2);
+    expect(p.active).toBe(false);
+    expect(p.move(1, 0, 0)).toBe(0);
   });
 });

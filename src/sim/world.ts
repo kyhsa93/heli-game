@@ -233,9 +233,9 @@ export class World {
     this.emit({ t: 'fcr', state: 'done', mode: f.mode, count: f.targets.length });
   }
 
-  nextWeapon() {
+  nextWeapon(step: 1 | -1 = 1) {
     const list = this.availableWeapons();
-    this.setWeapon(list[(list.indexOf(this.arms.selected) + 1) % list.length]);
+    this.setWeapon(list[(list.indexOf(this.arms.selected) + step + list.length) % list.length]);
   }
 
   private setWeapon(id: WeaponId) {

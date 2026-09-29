@@ -1,7 +1,9 @@
 import { clamp } from '../core/math';
 import { slewTads, type Tads } from '../sim/sensors/tads';
 import type { World } from '../sim/world';
-import { FLIGHT_KEYS, GAMEPAD_BUTTONS, KEY_COMMANDS, type Command } from './bindings';
+import { FLIGHT_KEYS, GAMEPAD_BUTTONS, KEY_COMMANDS, PAD_HEAD_LOOK, PAD_HEAD_RATE, type Command } from './bindings';
+
+export interface PadLike { connected: boolean; axes: readonly number[]; buttons: readonly { pressed: boolean }[] }
 
 export interface TouchSticks { lx: number; ly: number; rx: number; ry: number }
 
@@ -22,6 +24,8 @@ export class FlightInput {
   touchFire = false;
   touchLaser = false;
   private tads: Tads | null = null;
+  headLook = false;
+  gamepads: () => readonly (PadLike | null)[] = () => (typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : []);
 
   held(cmd: Command) {
     for (const k of this.keys) if (KEY_COMMANDS[k] === cmd) return true;
@@ -48,14 +52,22 @@ export class FlightInput {
     collRate += -this.touch.ly * 0.5;
 
     let padFire = false, padLaser = false;
-    const pads = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
-    const gp = pads && Array.from(pads).find(p => p && p.connected);
+    const gp = Array.from(this.gamepads() ?? []).find(p => p && p.connected);
     if (gp) {
       pedal += dz(gp.axes[0] ?? 0);
       collRate += -dz(gp.axes[1] ?? 0) * 0.5;
-      cyclicX += dz(gp.axes[2] ?? 0);
-      cyclicY += -dz(gp.axes[3] ?? 0);
       const pressed = gp.buttons.map(b => b.pressed);
+      this.headLook = pressed[PAD_HEAD_LOOK] ?? false;
+      const rx = dz(gp.axes[2] ?? 0), ry = dz(gp.axes[3] ?? 0);
+      if (this.headLook) {
+        const k = PAD_HEAD_RATE * dt * (this.tads?.active ? this.tadsScale * 0.6 : this.lookScale);
+        const sy = this.invertY ? -ry : ry;
+        if (this.tads?.active) slewTads(this.tads, -rx * k, -sy * k);
+        else { this.headYaw = clamp(this.headYaw - rx * k, -2.2, 2.2); this.headPitch = clamp(this.headPitch - sy * k, -1.1, 0.7); }
+      } else {
+        cyclicX += rx;
+        cyclicY += -ry;
+      }
       pressed.forEach((on, i) => {
         const cmd = GAMEPAD_BUTTONS[i];
         if (cmd && on && !this.padButtons[i]) this.onCommand?.(cmd);

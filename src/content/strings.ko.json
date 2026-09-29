@@ -73,7 +73,20 @@
     "zoomIn": "줌 +",
     "zoomOut": "줌 −",
     "sensor": "주간/열상",
-    "laser": "레이저"
+    "laser": "레이저",
+    "pause": "일시정지",
+    "fcr": "FCR",
+    "target": "표적",
+    "radio": "무전",
+    "flare": "플레어",
+    "chaff": "채프",
+    "weapon": {
+      "gun30": "기관포",
+      "hydra70": "로켓",
+      "agm114k": "헬파이어",
+      "agm114l": "헬파이어 L",
+      "stinger": "스팅어"
+    }
   },
   "brief": {
     "title": "AH-64 조종석",
@@ -391,9 +404,12 @@
   "pause": {
     "title": "일시정지",
     "controls": "조작법",
-    "settings": "설정 (준비 중)",
+    "settings": "설정",
     "endMission": "임무 종료",
-    "toBriefing": "브리핑으로"
+    "toBriefing": "브리핑으로",
+    "view": "외부 시점 전환",
+    "engineOn": "엔진 시동",
+    "engineOff": "엔진 정지"
   },
   "briefing": {
     "act": "{act}막",
