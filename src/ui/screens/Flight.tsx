@@ -69,7 +69,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
   const snap = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
   const toggleView = () => rendererRef.current?.toggleView();
-  const toggleSensor = () => { sim.tads.sensor = sim.tads.sensor === 'tv' ? 'flir' : 'tv'; };
+  const toggleSensor = () => { if (sim.conditions.time !== 'night') sim.tads.sensor = sim.tads.sensor === 'tv' ? 'flir' : 'tv'; };
   const [tadsOn, setTadsOn] = useState(false);
   const [atFarp, setAtFarp] = useState(false);
   const [, setFarpTick] = useState(0);
@@ -99,6 +99,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
       case 'view': if (sim.tads.active) toggleSensor(); else toggleView(); break;
       case 'tads': sim.toggleTads(); break;
       case 'flare': sim.dropFlare(); break;
+      case 'pnvs': if (rendererRef.current) rendererRef.current.pnvs = !rendererRef.current.pnvs; break;
       case 'chaff': sim.dropChaff(); break;
       case 'fcr': sim.fcrScan(); break;
       case 'fcrMode': sim.setFcrMode(); break;

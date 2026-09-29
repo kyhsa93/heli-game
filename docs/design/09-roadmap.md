@@ -93,7 +93,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 ## M6. 환경
 
 - [x] [#52](https://github.com/kyhsa93/heli-game/issues/52) **M6-1 시간대**: 새벽·해질녘·야간 조명, 계기판 조명.
-- [ ] [#53](https://github.com/kyhsa93/heli-game/issues/53) **M6-2 PNVS 열상 오버레이**(야간 비행용, 키 `N`).
+- [x] [#53](https://github.com/kyhsa93/heli-game/issues/53) **M6-2 PNVS 열상 오버레이**(야간 비행용, 키 `N`).
 - [ ] [#54](https://github.com/kyhsa93/heli-game/issues/54) **M6-3 안개**, 탐지·TADS 가시거리 영향.
 - [ ] [#55](https://github.com/kyhsa93/heli-game/issues/55) **M6-4 탐조등**(야간 대공 진지).
 

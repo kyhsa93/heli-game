@@ -13,6 +13,8 @@ uniform float flir;
 uniform float time;
 uniform float noise;
 uniform vec2 res;
+uniform vec3 tint;
+uniform float opacity;
 varying vec2 vUv;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main() {
@@ -30,7 +32,7 @@ void main() {
   v += (hash(px + fract(time) * 91.0) - 0.5) * noise;
   v *= 0.93 + 0.07 * sin(vUv.y * res.y * 3.14159);
   float vig = smoothstep(1.25, 0.55, length(vUv - 0.5) * 1.6);
-  gl_FragColor = vec4(vec3(v * vig), 1.0);
+  gl_FragColor = vec4(vec3(v * vig) * tint, opacity);
 }
 `;
 
@@ -45,7 +47,8 @@ export class TadsView {
   constructor() {
     this.post = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, depthTest: false, depthWrite: false,
-      uniforms: { tImage: { value: this.target.texture }, flir: { value: 0 }, time: { value: 0 }, noise: { value: 0.07 }, res: { value: new THREE.Vector2(2, 2) } },
+      uniforms: { tImage: { value: this.target.texture }, flir: { value: 0 }, time: { value: 0 }, noise: { value: 0.07 }, res: { value: new THREE.Vector2(2, 2) }, tint: { value: new THREE.Color(1, 1, 1) }, opacity: { value: 1 } },
+      transparent: true,
     });
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.post);
     quad.frustumCulled = false;
@@ -69,15 +72,33 @@ export class TadsView {
     this.camera.updateProjectionMatrix();
   }
 
+  follow(cam: THREE.PerspectiveCamera) {
+    cam.getWorldPosition(this.camera.position);
+    cam.getWorldQuaternion(this.camera.quaternion);
+    this.camera.fov = cam.fov;
+    this.camera.aspect = cam.aspect;
+    this.camera.updateProjectionMatrix();
+  }
+
   render(renderer: THREE.WebGLRenderer, scene: THREE.Scene, t: Tads, time: number, output: THREE.WebGLRenderTarget | null = null, noise = 0.07) {
-    this.post.uniforms.noise.value = noise;
-    this.post.uniforms.flir.value = t.sensor === 'flir' ? 1 : 0;
-    this.post.uniforms.time.value = time;
+    this.renderImage(renderer, scene, t.sensor === 'flir', time, output, noise);
+  }
+
+  renderImage(renderer: THREE.WebGLRenderer, scene: THREE.Scene, flir: boolean, time: number, output: THREE.WebGLRenderTarget | null = null, noise = 0.07, overlay: { tint: number; opacity: number } | null = null) {
+    const u = this.post.uniforms;
+    u.noise.value = noise;
+    u.flir.value = flir ? 1 : 0;
+    u.time.value = time;
+    (u.tint.value as THREE.Color).setHex(overlay?.tint ?? 0xffffff);
+    u.opacity.value = overlay?.opacity ?? 1;
     renderer.setRenderTarget(this.target);
     renderer.clear();
     renderer.render(scene, this.camera);
     renderer.setRenderTarget(output);
+    const auto = renderer.autoClear;
+    if (overlay) renderer.autoClear = false;
     renderer.render(this.postScene, this.postCam);
+    renderer.autoClear = auto;
     renderer.setRenderTarget(null);
   }
 

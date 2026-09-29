@@ -110,3 +110,16 @@ describe('TADS (04-weapons-and-sensors.md 4.4)', () => {
     expect(world.controls.cyclicY).toBe(1);
   });
 });
+
+describe('TADS at night (06 6.1)', () => {
+  it('only offers FLIR once it is dark', () => {
+    const { world } = makeWorld();
+    airborneAt(world, 0, 0, world.terrain.surfaceAt(0, 0) + 200);
+    world.tads.sensor = 'tv';
+    world.step(1 / 120);
+    expect(world.tads.sensor).toBe('tv');
+    world.conditions.time = 'night';
+    world.step(1 / 120);
+    expect(world.tads.sensor).toBe('flir');
+  });
+});

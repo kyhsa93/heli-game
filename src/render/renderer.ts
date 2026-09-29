@@ -19,6 +19,8 @@ import { RingGates } from './rings';
 import { TIME_PRESETS } from './timeOfDay';
 
 const PANEL_LIGHT = 1.6;
+const PNVS_SCALE = 0.5;
+const PNVS_OVERLAY = { tint: 0x9dffb0, opacity: 0.82 };
 import { drawIhadss } from './ihadss';
 import { hellfireSolution, longbowSolution } from '../sim/weapons/hellfire';
 import { aseThreats } from '../sim/sensors/ase';
@@ -73,6 +75,9 @@ export class FlightRenderer {
   readonly farp: FarpProps;
   readonly tads = new TadsView();
   private mpdTads = new TadsView();
+  private pnvsView = new TadsView();
+  pnvs = false;
+  private pnvsAuto = false;
   private mpdTarget = new THREE.WebGLRenderTarget(MPD_TADS, MPD_TADS);
   private mpdPixels = new Uint8Array(MPD_TADS * MPD_TADS * 4);
   private mpdCanvas: HTMLCanvasElement | null = null;
@@ -153,6 +158,7 @@ export class FlightRenderer {
     this.camera.updateProjectionMatrix();
     this.effects?.setScale(h, this.camera.fov);
     this.tads.setSize(w * dpr, h * dpr);
+    this.pnvsView.setSize(w * dpr * PNVS_SCALE, h * dpr * PNVS_SCALE);
   };
 
   private tick = (now: number) => {
@@ -234,7 +240,11 @@ export class FlightRenderer {
     (scn.shadow.material as THREE.MeshBasicMaterial).opacity = 0.4 * (1 - clamp(agl / 90, 0, 1));
 
     const time = world.conditions.time ?? 'day';
-    if (scn.time !== time) { scn.setTime(time); this.panelLight.intensity = TIME_PRESETS[time].panelLight * PANEL_LIGHT; }
+    if (scn.time !== time) {
+      scn.setTime(time);
+      this.panelLight.intensity = TIME_PRESETS[time].panelLight * PANEL_LIGHT;
+      if (time === 'night' && !this.pnvsAuto) { this.pnvs = true; this.pnvsAuto = true; }
+    }
     camera.getWorldPosition(this.tmp);
     scn.sky.position.copy(this.tmp);
     scn.stars.position.copy(this.tmp);
@@ -253,12 +263,15 @@ export class FlightRenderer {
     }
     this.instruments.draw(world, this.frame++ % 3);
     if (tads) this.renderTads(now, flir);
-    else this.renderer.render(scn.scene, camera);
+    else {
+      this.renderer.render(scn.scene, camera);
+      if (this.pnvs && cockpit && h.alive && !this.debugCamera && h.damage.sensors > 0) this.renderPnvs(now);
+    }
 
     const og = this.overlayCtx;
     og.clearRect(0, 0, overlay.width, overlay.height);
     if (tads) drawTads(og, mount.clientWidth, mount.clientHeight, world);
-    else if (cockpit && this.hud && h.alive && session.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, world, camera);
+    else if (cockpit && this.hud && h.alive && session.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, world, camera, this.pnvs && h.damage.sensors > 0);
     if (cockpit && !tads && h.damage.cockpit <= DAMAGED) drawCanopyCracks(og, mount.clientWidth, mount.clientHeight, 1 - h.damage.cockpit / DAMAGED);
 
     this.audio?.update({
@@ -308,26 +321,47 @@ export class FlightRenderer {
   }
 
   private renderTadsInto(view: TadsView, now: number, flir: boolean, output: THREE.WebGLRenderTarget | null) {
-    const { scene, sky, beam } = this.scene, world = this.opts.session.world;
-    const fog = scene.fog as THREE.Fog, bg = scene.background;
-    const saved = { near: fog.near, far: fog.far, color: fog.color.clone(), root: this.model.root.visible, beam: beam.visible, sky: sky.visible, shadow: this.scene.shadow.visible };
+    const world = this.opts.session.world;
+    this.sensorPass(flir, 2500, 9000, () => {
+      view.aim(world.player, world.tads);
+      this.scene.sky.position.copy(view.camera.position);
+      view.render(this.renderer, this.scene.scene, world.tads, now * 0.001, output, world.player.damage.sensors <= DAMAGED ? 0.3 : 0.07);
+    });
+  }
+
+  private renderPnvs(now: number) {
+    const world = this.opts.session.world;
+    this.units.update(world, true);
+    this.sensorPass(true, 1200, 4500, () => {
+      this.pnvsView.follow(this.camera);
+      this.scene.sky.position.copy(this.pnvsView.camera.position);
+      this.pnvsView.renderImage(this.renderer, this.scene.scene, true, now * 0.001, null, world.player.damage.sensors <= DAMAGED ? 0.3 : 0.1, PNVS_OVERLAY);
+    });
+    this.units.update(world, false);
+  }
+
+  private sensorPass(flir: boolean, near: number, far: number, draw: () => void) {
+    const scn = this.scene, { scene, sky, beam, stars } = scn;
+    const fog = scene.fog as THREE.Fog, bg = scene.background, time = scn.time;
+    const saved = { near: fog.near, far: fog.far, color: fog.color.clone(), root: this.model.root.visible, beam: beam.visible, sky: sky.visible, shadow: scn.shadow.visible, stars: stars.visible };
+    if (flir && time !== 'day') scn.setTime('day');
     this.model.root.visible = false;
     beam.visible = false;
-    this.scene.shadow.visible = false;
-    fog.near = 2500; fog.far = 9000;
-    if (flir) { sky.visible = false; scene.background = this.black; fog.color.copy(this.flirFog); }
-    view.aim(world.player, world.tads);
-    sky.position.copy(view.camera.position);
-    view.render(this.renderer, scene, world.tads, now * 0.001, output, world.player.damage.sensors <= DAMAGED ? 0.3 : 0.07);
-    fog.near = saved.near; fog.far = saved.far; fog.color.copy(saved.color);
+    scn.shadow.visible = false;
+    fog.near = near; fog.far = far;
+    if (flir) { sky.visible = false; stars.visible = false; scene.background = this.black; fog.color.copy(this.flirFog); }
+    draw();
     scene.background = bg;
-    this.model.root.visible = saved.root; beam.visible = saved.beam; sky.visible = saved.sky; this.scene.shadow.visible = saved.shadow;
+    if (flir && time !== 'day') scn.setTime(time);
+    fog.near = saved.near; fog.far = saved.far; fog.color.copy(saved.color);
+    this.model.root.visible = saved.root; beam.visible = saved.beam; sky.visible = saved.sky; scn.shadow.visible = saved.shadow; stars.visible = saved.stars;
   }
 
   dispose() {
     cancelAnimationFrame(this.raf);
     this.tads.dispose();
     this.mpdTads.dispose();
+    this.pnvsView.dispose();
     this.mpdTarget.dispose();
     this.offEvents();
     this.effects.dispose();

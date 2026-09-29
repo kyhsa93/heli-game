@@ -384,6 +384,7 @@ export class World {
         const l = tadsLocal(h, this.tads);
         this.commands.aim.yaw = l.az; this.commands.aim.pitch = l.el;
       }
+      if (this.conditions.time === 'night') this.tads.sensor = 'flir';
       this.stepSensors(dt);
       this.stepFcr(dt);
       const pressed = this.commands.fire && !this.arms.trigger;

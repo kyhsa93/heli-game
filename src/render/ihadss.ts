@@ -30,7 +30,7 @@ function project(camera: THREE.Camera, p: THREE.Vector3, w: number, h: number) {
   return { x: (tmp.x + 1) / 2 * w, y: (1 - tmp.y) / 2 * h };
 }
 
-export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, world: World, camera: THREE.Camera) {
+export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, world: World, camera: THREE.Camera, pnvs = false) {
   const u = clamp(Math.min(w, h) / 700, 0.6, 1.4);
   const cx = w / 2, cy = h / 2;
   const heli = world.player;
@@ -129,6 +129,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
   if (heli.fuel < 10) warns.push('FUEL LOW');
   for (const w of damageWarnings(heli.damage)) if (/OUT|FIRE|LAND NOW|TAIL ROTOR/.test(w)) warns.push(w === 'LAND NOW' && heli.rotorFailIn !== null ? `LAND NOW ${Math.ceil(heli.rotorFailIn)}` : w);
   if (warns.length && Math.sin(world.time * 8) > 0) g.fillText(warns.join('  '), cx, cy + 150 * u);
+  if (pnvs) { g.textAlign = 'left'; g.fillText('PNVS', cx - 190 * u, cy - 110 * u); }
   g.restore();
 }
 
