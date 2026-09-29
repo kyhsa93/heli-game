@@ -29,7 +29,21 @@ export interface UnitDef {
 
 export const UNIT_DEFS = unitsJson as unknown as Record<string, UnitDef>;
 
-export interface AiState { awareness: number; state: 'idle' | 'alert' | 'engage' | 'search' | 'retreat' }
+export type RadarMode = 'search' | 'acquire' | 'track';
+
+export interface AiState {
+  awareness: number;
+  state: 'idle' | 'alert' | 'engage' | 'search' | 'retreat';
+  detected: boolean;
+  lastSeen: Vector3 | null;
+  lastSeenAt: number;
+  radar: RadarMode;
+  radarTimer: number;
+}
+
+export function createAiState(): AiState {
+  return { awareness: 0, state: 'idle', detected: false, lastSeen: null, lastSeenAt: -Infinity, radar: 'search', radarTimer: 0 };
+}
 
 export interface Unit {
   id: number;

@@ -8,11 +8,13 @@ import { clampToArea, collide, stepFlight } from './heli/flight';
 import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
 import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
+import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
+import { LosCache } from './los';
 import { castRay, createLaser, crosshairUnit, unitCenter, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
 import { constrainTads, createTads, lookAngles, tadsDirection, tadsFovDeg, tadsLocal, tadsPosition, type Tads } from './sensors/tads';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
-import { UNIT_DEFS, type Unit } from './units';
+import { createAiState, UNIT_DEFS, type Unit } from './units';
 import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
 import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
 import { integrate, PLAYER_OWNER, segmentHitsTerrain, segmentHitsUnit, type Projectile } from './weapons/projectile';
@@ -45,6 +47,9 @@ export class World {
   laser: Laser = createLaser();
   identify: { unitId: number | null; time: number } = { unitId: null, time: 0 };
   assists: Assists = { ...DEFAULT_ASSISTS };
+  conditions: Conditions = { night: false, fog: false, playerRadar: false };
+  readonly los: LosCache;
+  private aiClock = 0;
   tads: Tads = createTads();
   hold: Hold | null = null;
   private nextUnitId = 1;
@@ -56,6 +61,7 @@ export class World {
   constructor(opts: { seed: number }) {
     this.rng = rng(opts.seed);
     this.terrain = new Terrain(opts.seed);
+    this.los = new LosCache(this.terrain);
     this.resetPlayer();
   }
 
@@ -111,7 +117,7 @@ export class World {
     const u: Unit = {
       id: this.nextUnitId++, defId, def, side: def.side, missionId: opts.missionId, group: opts.group,
       pos: new Vector3(x, y, z), yaw, vel: new Vector3(), hp: def.hp, alive: true,
-      ai: { awareness: 0, state: 'idle' }, weaponCooldown: 0, identified: false,
+      ai: createAiState(), weaponCooldown: 0, identified: false,
     };
     this.units.push(u);
     return u;
@@ -167,6 +173,8 @@ export class World {
   }
 
   clearCombat() {
+    this.los.clear();
+    this.aiClock = 0;
     this.units = [];
     this.projectiles = [];
     this.missiles = [];
@@ -232,6 +240,10 @@ export class World {
     }
     this.stepProjectiles(dt);
     this.stepMissiles(dt);
+    if (this.active) {
+      this.aiClock += dt;
+      while (this.aiClock >= AI_TICK - 1e-9) { this.aiClock -= AI_TICK; stepAwareness(this, this.los, this.conditions); }
+    }
     this.events.flush();
   }
 
