@@ -8,7 +8,9 @@ import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
 import { UNIT_DEFS, type Unit } from './units';
-import { explode, WEAPONS } from './weapons/damage';
+import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, type Aim, type Arms } from './weapons/arms';
+import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
+import { integrate, PLAYER_OWNER, segmentHitsTerrain, segmentHitsUnit, type Projectile } from './weapons/projectile';
 
 export const STEP = 1 / 120;
 
@@ -25,7 +27,11 @@ export class World {
   active = false;
   readonly events = new EventBus<SimEvent>();
   units: Unit[] = [];
+  projectiles: Projectile[] = [];
+  arms: Arms = createArms();
+  commands = { fire: false, aim: { yaw: 0, pitch: 0 } as Aim };
   private nextUnitId = 1;
+  private nextProjectileId = 1;
   private atBoundary = false;
   private refuelNoted = false;
 
@@ -43,6 +49,8 @@ export class World {
     this.controls = { cyclicX: 0, cyclicY: 0, pedal: 0, collective: 0 };
     this.atBoundary = false;
     this.refuelNoted = false;
+    this.arms = createArms();
+    this.commands = { fire: false, aim: { yaw: 0, pitch: 0 } };
   }
 
   emit = (e: SimEvent) => { this.events.emit(e); };
@@ -112,8 +120,68 @@ export class World {
         collide(h, this.terrain, this.emit);
         if (h.landed && !wasLanded) this.refuelNoted = false;
       }
+      this.stepGun(dt);
     }
+    this.stepProjectiles(dt);
     this.events.flush();
+  }
+
+  private stepGun(dt: number) {
+    const a = this.arms, h = this.player;
+    a.gunTimer = Math.max(0, a.gunTimer - dt);
+    if (!this.commands.fire || a.selected !== 'gun30' || !h.alive) return;
+    if (!gunInLimits(this.commands.aim)) return;
+    const w = WEAPONS.gun30;
+    while (a.gunTimer <= 0 && a.gunAmmo > 0) {
+      const dir = aimDirection(h, this.commands.aim);
+      const spread = (w.dispersionMrad ?? 0) / 1000 * (Math.hypot(h.vel.x, h.vel.z) > 10.3 ? 1.5 : 1);
+      const ang = this.rng() * Math.PI * 2, rad = Math.sqrt(this.rng()) * spread;
+      const side = new Vector3(0, 1, 0).cross(dir).normalize();
+      const up = dir.clone().cross(side).normalize();
+      dir.addScaledVector(side, Math.cos(ang) * rad).addScaledVector(up, Math.sin(ang) * rad).normalize();
+      const pos = muzzlePosition(h);
+      const tracer = a.shots % 5 === 0;
+      this.projectiles.push({
+        id: this.nextProjectileId++, weapon: 'gun30', pos, vel: dir.clone().multiplyScalar(w.speed).add(h.vel),
+        owner: PLAYER_OWNER, life: (w.maxRange / w.speed) * 3, drag: w.drag ?? 0, tracer,
+      });
+      this.emit({ t: 'fire', weapon: 'gun30', pos: pos.clone(), dir: dir.clone(), owner: PLAYER_OWNER, tracer });
+      a.gunAmmo--;
+      a.shots++;
+      a.gunTimer += GUN_INTERVAL;
+    }
+  }
+
+  private stepProjectiles(dt: number) {
+    const list = this.projectiles;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const p = list[i];
+      const a = integrate(p, dt).clone();
+      const b = p.pos;
+      let bestT = Infinity, bestUnit: Unit | null = null;
+      for (const u of this.units) {
+        if (!u.alive) continue;
+        const t = segmentHitsUnit(a, b, u);
+        if (t !== null && t < bestT) { bestT = t; bestUnit = u; }
+      }
+      const tg = segmentHitsTerrain(a, b, this.terrain);
+      let done = p.life <= 0;
+      if (bestUnit && (tg === null || bestT <= tg)) {
+        const at = a.clone().lerp(b, bestT);
+        const w = WEAPONS[p.weapon];
+        const byPlayer = p.owner === PLAYER_OWNER;
+        hitUnit(this, bestUnit, w, byPlayer);
+        explodeWeapon(this, at, w, byPlayer, bestUnit);
+        this.emit({ t: 'impact', weapon: p.weapon, pos: at, unit: bestUnit.id, ground: false });
+        done = true;
+      } else if (tg !== null) {
+        const at = a.clone().lerp(b, tg);
+        explodeWeapon(this, at, WEAPONS[p.weapon], p.owner === PLAYER_OWNER);
+        this.emit({ t: 'impact', weapon: p.weapon, pos: at, ground: true });
+        done = true;
+      }
+      if (done) { list[i] = list[list.length - 1]; list.pop(); }
+    }
   }
 
   private onGround(dt: number) {

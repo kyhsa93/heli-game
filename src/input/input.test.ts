@@ -42,6 +42,16 @@ describe('FlightInput', () => {
     expect(world.controls.pedal).toBe(0);
   });
 
+  it('fires while Space is held and aims where the head looks', () => {
+    const world = new World({ seed: 1 }), input = new FlightInput();
+    input.headYaw = 0.3; input.headPitch = -0.2;
+    frame(input, world, ['Space'], 0.1);
+    expect(world.commands.fire).toBe(true);
+    expect(world.commands.aim).toEqual({ yaw: 0.3, pitch: -0.2 });
+    frame(input, world, [], 0.1);
+    expect(world.commands.fire).toBe(false);
+  });
+
   it('holds the collective where it was left and makes Shift fine', () => {
     const world = new World({ seed: 1 }), input = new FlightInput();
     frame(input, world, ['KeyW'], 1);
