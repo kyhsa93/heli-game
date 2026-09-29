@@ -69,7 +69,6 @@ src/
       schema.ts         # MissionDef 타입 + 검증
       runtime.ts        # 목표·트리거·무전 큐
       scoring.ts        # 점수·평점
-      freeflight.ts     # 현재 보급품 운송 규칙 (자유 비행 모드)
   render/               # three.js. sim 상태를 읽기만 함. sim에 쓰지 않음
     renderer.ts         # WebGLRenderer, 카메라, 프레임 렌더 조립
     scene.ts, sky.ts, water.ts

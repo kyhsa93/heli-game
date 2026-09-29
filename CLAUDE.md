@@ -18,7 +18,7 @@ npm test         # vitest만
 
 ## 반드시 지킬 것
 
-- `npm run check`가 통과해야 한다. 기존 테스트(`src/sim3d/sim.test.ts`, `src/sw.test.ts`)는 회귀 기준이다.
+- `npm run check`가 통과해야 한다. 기존 테스트(`src/sim3d/sim.test.ts`, `src/sw.test.ts`)는 회귀 기준이다(로드맵 M0-2가 삭제하는 화물 배달 테스트만 예외).
 - 게임 규칙(sim)은 렌더·DOM·React에 의존하지 않는다. 결정론 유지: sim 안에서 `Math.random` 금지, 월드 RNG만.
 - `public/sw.js`는 아무것도 캐시하지 않고 항상 `cache: 'no-store'`로 받는다. 이 정책을 바꾸지 않는다.
 - 외부 에셋 파일(모델·이미지·음원)을 추가하지 않는다. 모델은 코드 도형, 텍스처는 캔버스, 소리는 WebAudio 합성.

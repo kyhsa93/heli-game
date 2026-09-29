@@ -15,7 +15,6 @@
   ├─ 캠페인 ─→ [캠페인 지도] ─→ [브리핑] ─→ [로드아웃] ─→ [비행] ─→ [디브리핑] ─→ [캠페인 지도]
   ├─ 훈련 ───→ [훈련 목록] ──→ [브리핑(짧음)] ─────────────→ [비행] ─→ [결과] ─→ [훈련 목록]
   ├─ 즉시 출격 ─→ [즉시 출격 설정(위협 수준·시간대)] ───────→ [비행] ─→ [결과] ─→ [타이틀]
-  ├─ 자유 비행 ─→ [비행 (현재 게임)]
   └─ 설정 ───→ [설정]
 
 [비행] 중 Esc / 일시정지 버튼 → [일시정지 메뉴: 계속 / 설정 / 조작법 / 임무 재시작 / 임무 종료]
@@ -38,7 +37,6 @@
 │   ▶ 캠페인          3막 · 임무 4/12 · 대위                  │
 │     훈련            3/5 완료                               │
 │     즉시 출격                                              │
-│     자유 비행                                              │
 │     설정                                                  │
 │                                                v1.0 · PWA │
 └──────────────────────────────────────────────────────────┘
@@ -236,7 +234,7 @@ EUFD(가운데 주황 화면)는 현재처럼 경고 목록 + 연료·NR·TQ. 03
 ```ts
 interface Settings {
   difficulty: 'easy' | 'normal' | 'hard';
-  assists: { sas: boolean; altitudeHold: boolean; autoHover: boolean; skipStartup: boolean; lenientLanding: boolean; autoIdentify: boolean; autoCountermeasures: boolean; infiniteAmmo: boolean };
+  assists: { sas: boolean; altitudeHold: boolean; autoHover: boolean; skipStartup: boolean; lenientLanding: boolean; autoIdentify: boolean; autoCountermeasures: boolean };
   controls: { lookSensitivity: number; invertLookY: boolean; tadsSensitivity: number; touchStickSize: 'S' | 'M' | 'L' };
   display: { fov: number; ihadssBrightness: number; quality: 'low' | 'medium' | 'high'; showFps: boolean };
   audio: { master: number; voiceWarnings: boolean; radioSubtitles: true };
