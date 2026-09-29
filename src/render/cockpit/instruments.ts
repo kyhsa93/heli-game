@@ -11,6 +11,7 @@ import { drawFlt } from './pages/flt';
 import { drawTsd } from './pages/tsd';
 import { drawWpn } from './pages/wpn';
 import { drawTadsPage } from './pages/tads';
+import { drawAse } from './pages/ase';
 
 export { bearingDeg, headingDeg, hoverVector } from './pages/common';
 
@@ -70,6 +71,7 @@ export class Instruments {
       case 'TSD': drawTsd(g, world, this.relief, PAGE_LABELS, sel); break;
       case 'WPN': drawWpn(g, world, PAGE_LABELS, sel); break;
       case 'TADS': drawTadsPage(g, world, this.tadsImage, PAGE_LABELS, sel); break;
+      case 'ASE': drawAse(g, world, PAGE_LABELS, sel); break;
     }
     s.texture.needsUpdate = true;
   }

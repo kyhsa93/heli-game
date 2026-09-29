@@ -5,6 +5,7 @@ import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { agl as aglOf, airspeed } from '../sim/heli/state';
 import { gunInLimits } from '../sim/weapons/arms';
 import { damageWarnings } from '../sim/heli/damage';
+import { aseThreats, missileInbound } from '../sim/sensors/ase';
 import { predictGunImpact } from '../sim/weapons/ballistics';
 import { count } from '../sim/heli/loadout';
 import { EYE } from '../sim/heli/airframe';
@@ -112,8 +113,11 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
     g.fillText(`${tp.name} ${d > 999 ? (d / 1000).toFixed(1) + 'K' : Math.round(d)}`, sp.x, sp.y - r - 6 * u);
   }
 
+  drawThreatArcs(g, w, h, u, world, camera);
+
   g.textAlign = 'center';
   const warns: string[] = [];
+  if (missileInbound(world)) warns.push('MISSILE');
   if (!heli.engineOn && heli.alive && world.active && !heli.landed) warns.push('ENGINE OUT');
   if (heli.rpm < 0.85 && !heli.landed) warns.push('LOW ROTOR RPM');
   if (heli.fuel < 10) warns.push('FUEL LOW');
@@ -229,5 +233,28 @@ function drawHellfire(g: CanvasRenderingContext2D, w: number, h: number, u: numb
   }
   g.textAlign = 'right';
   g.fillText(tadsWeaponStatus(world), w / 2 + 190 * u, h / 2 + 132 * u);
+  g.restore();
+}
+
+function drawThreatArcs(g: CanvasRenderingContext2D, w: number, h: number, u: number, world: World, camera: THREE.Camera) {
+  const threats = aseThreats(world);
+  if (!threats.length) return;
+  camera.getWorldDirection(camDir);
+  const heli = world.player;
+  const view = Math.atan2(-camDir.x, -camDir.z) - heli.yaw;
+  const R = Math.min(w, h) * 0.44, cx = w / 2, cy = h / 2;
+  const blink = Math.sin(world.time * 10) > 0;
+  g.save();
+  for (const t of threats) {
+    const a = -(t.bearing - view);
+    const loud = t.state !== 'search';
+    if (loud && !blink && t.state !== 'missile') continue;
+    g.lineWidth = (loud ? 4 : 2) * u;
+    const span = loud ? 0.18 : 0.1;
+    g.beginPath(); g.arc(cx, cy, R, a - Math.PI / 2 - span, a - Math.PI / 2 + span); g.stroke();
+    g.font = `bold ${Math.round((loud ? 20 : 15) * u)}px "B612 Mono", monospace`;
+    g.textAlign = 'center';
+    g.fillText(t.symbol, cx + Math.cos(a - Math.PI / 2) * (R - 22 * u), cy + Math.sin(a - Math.PI / 2) * (R - 22 * u) + 6 * u);
+  }
   g.restore();
 }

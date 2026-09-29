@@ -44,10 +44,11 @@ export interface AiState {
   stateTimer: number;
   fireAcc: number;
   cover: Vector3 | null;
+  jammed: number;
 }
 
 export function createAiState(): AiState {
-  return { awareness: 0, state: 'idle', detected: false, lastSeen: null, lastSeenAt: -Infinity, radar: 'search', radarTimer: 0, aimTimer: 0, blindTimer: 0, stateTimer: 0, fireAcc: 0, cover: null };
+  return { awareness: 0, state: 'idle', detected: false, lastSeen: null, lastSeenAt: -Infinity, radar: 'search', radarTimer: 0, aimTimer: 0, blindTimer: 0, stateTimer: 0, fireAcc: 0, cover: null, jammed: 0 };
 }
 
 export interface Unit {

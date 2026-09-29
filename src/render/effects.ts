@@ -251,6 +251,10 @@ export class Effects {
         this.smoke.spawn(at, this.jitter(1.5), 1.6 + this.rnd(), 0.8, 3.5, 0.5, CELL.dust[(this.rnd() * 4) | 0], 0.4, 1);
       }
     }
+    for (const f of world.flares) {
+      this.glow.spawn(f.pos, new THREE.Vector3(), 0.06, 3, 2, 1, CELL.flash);
+      this.smoke.spawn(f.pos, this.jitter(1), 1.8, 0.8, 3, 0.5, CELL.dust[(this.rnd() * 4) | 0], 0.5, 1);
+    }
     let mi = 0;
     for (const m of world.enemyMissiles) {
       if (mi < 24) {

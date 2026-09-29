@@ -9,8 +9,8 @@ describe('MPD pages (07-ui-ux.md 7.4)', () => {
   it('starts FLT left, TSD right and cycles each side independently', () => {
     const m = new MpdState();
     expect([m.left, m.right]).toEqual(['FLT', 'TSD']);
-    const seen = [m.next('left'), m.next('left'), m.next('left')];
-    expect(seen).toEqual(['TSD', 'WPN', 'TADS']);
+    const seen = [m.next('left'), m.next('left'), m.next('left'), m.next('left')];
+    expect(seen).toEqual(['TSD', 'WPN', 'TADS', 'ASE']);
     expect(m.next('left')).toBe('FLT');
     expect(m.right).toBe('TSD');
   });

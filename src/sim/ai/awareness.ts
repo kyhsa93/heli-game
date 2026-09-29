@@ -95,6 +95,7 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
     const dist = eye.distanceTo(h.pos);
     if (u.def.detect === 'radar' && u.def.radar) {
       const r = u.def.radar;
+      if (u.ai.jammed > 0) { u.ai.jammed = Math.max(0, u.ai.jammed - dt); setRadar(world, u, 'search'); continue; }
       const seen = dist <= r.search && los.radar(u.id, eye, h.pos, world.time);
       if (!seen) {
         setRadar(world, u, 'search');

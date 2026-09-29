@@ -59,6 +59,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
       case 'weaponNext': sim.nextWeapon(); break;
       case 'view': if (sim.tads.active) toggleSensor(); else toggleView(); break;
       case 'tads': sim.toggleTads(); break;
+      case 'flare': sim.dropFlare(); break;
+      case 'chaff': sim.dropChaff(); break;
       case 'mpdLeftNext': rendererRef.current?.mpd.next('left'); break;
       case 'mpdRightNext': rendererRef.current?.mpd.next('right'); break;
       case 'zoomIn': zoomTads(sim.tads, 1); break;

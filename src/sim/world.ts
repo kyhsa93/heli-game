@@ -15,6 +15,7 @@ import { stepBrains } from './ai/brain';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
 import { LosCache } from './los';
 import { castRay, createLaser, crosshairUnit, unitCenter, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
+import { CHAFF_JAM, createCountermeasures, decoyChaff, decoyFlare, FLARE_LIFE, FLARE_PER_DROP, type Countermeasures, type Flare } from './sensors/ase';
 import { constrainTads, createTads, lookAngles, tadsDirection, tadsFovDeg, tadsLocal, tadsPosition, type Tads } from './sensors/tads';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
 import { createAiState, UNIT_DEFS, type Unit } from './units';
@@ -44,6 +45,8 @@ export class World {
   projectiles: Projectile[] = [];
   missiles: Missile[] = [];
   enemyMissiles: EnemyMissile[] = [];
+  flares: Flare[] = [];
+  cm: Countermeasures = createCountermeasures();
   remoteLasers: { unitId: number; until: number }[] = [];
   arms: Arms = createArms();
   loadoutDef: LoadoutDef = STANDARD_LOADOUT;
@@ -86,6 +89,8 @@ export class World {
     this.identify = { unitId: null, time: 0 };
     this.tads = createTads();
     this.hold = null;
+    this.flares = [];
+    this.cm = createCountermeasures();
   }
 
   applyLoadout(def: LoadoutDef) {
@@ -232,6 +237,7 @@ export class World {
     this.projectiles = [];
     this.missiles = [];
     this.enemyMissiles = [];
+    this.flares = [];
     this.remoteLasers = [];
   }
 
@@ -296,6 +302,7 @@ export class World {
     this.stepProjectiles(dt);
     this.stepMissiles(dt);
     this.stepEnemyMissiles(dt);
+    this.stepCountermeasures(dt);
     if (this.active) {
       this.aiClock += dt;
       while (this.aiClock >= AI_TICK - 1e-9) { this.aiClock -= AI_TICK; stepAwareness(this, this.los, this.conditions); stepBrains(this); }
@@ -452,6 +459,54 @@ export class World {
     this.emit({ t: 'missileWarning', id: m.id, kind: m.kind, from: from.clone(), owner: u.id });
     this.emit({ t: 'fire', weapon, pos: from.clone(), dir: m.vel.clone().normalize(), owner: u.id, tracer: false });
     return m;
+  }
+
+  dropFlare(auto = false) {
+    const h = this.player, cm = this.cm;
+    if (!h.alive || !this.active || cm.flares < FLARE_PER_DROP) return false;
+    cm.flares -= FLARE_PER_DROP;
+    let decoyed = 0;
+    const fresh: Flare[] = [];
+    for (let i = 0; i < FLARE_PER_DROP; i++) {
+      const side = i % 2 ? 1 : -1;
+      const vel = new Vector3(side * 12, -4, 18).applyQuaternion(h.q).add(h.vel);
+      const f = { pos: h.pos.clone().add(new Vector3(side * 1.5, -1, 2).applyQuaternion(h.q)), vel, life: FLARE_LIFE };
+      fresh.push(f);
+      this.flares.push(f);
+    }
+    for (const m of this.enemyMissiles) if (decoyFlare(this, m, fresh[decoyed % fresh.length])) decoyed++;
+    this.emit({ t: 'countermeasure', kind: 'flare', decoyed, auto });
+    return true;
+  }
+
+  dropChaff(auto = false) {
+    const h = this.player, cm = this.cm;
+    if (!h.alive || !this.active || !cm.chaffUnlocked || cm.chaff < 1) return false;
+    cm.chaff--;
+    let decoyed = 0;
+    for (const m of this.enemyMissiles) if (decoyChaff(this, m)) decoyed++;
+    for (const u of this.units) if (u.alive && u.def.radar && (u.ai.radar === 'track' || u.ai.radar === 'acquire')) u.ai.jammed = CHAFF_JAM;
+    this.emit({ t: 'countermeasure', kind: 'chaff', decoyed, auto });
+    return true;
+  }
+
+  private stepCountermeasures(dt: number) {
+    for (let i = this.flares.length - 1; i >= 0; i--) {
+      const f = this.flares[i];
+      f.life -= dt;
+      f.vel.y -= 9.81 * dt;
+      f.vel.multiplyScalar(1 - 0.4 * dt);
+      f.pos.addScaledVector(f.vel, dt);
+      if (f.life <= 0) this.flares.splice(i, 1);
+    }
+    for (const m of this.enemyMissiles) if (m.target && !this.flares.some(f => f.pos === m.target)) { m.target = null; m.guiding = false; }
+    const cm = this.cm;
+    if (!this.assists.autoCountermeasures) return;
+    for (const m of this.enemyMissiles) {
+      if (cm.handled.has(m.id) || !m.guiding || m.target) continue;
+      cm.handled.add(m.id);
+      if (m.kind === 'ir') this.dropFlare(true); else this.dropChaff(true);
+    }
   }
 
   private stepEnemyMissiles(dt: number) {

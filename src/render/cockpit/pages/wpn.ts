@@ -59,8 +59,8 @@ export function drawWpn(g: CanvasRenderingContext2D, world: World, labels: reado
     g.textAlign = 'left'; g.font = `bold 17px ${MONO}`; g.fillStyle = GREEN;
     g.fillText(`SEL  ${wpnSelected(world)}`, 64, 368);
     g.fillText('CODE A 1688', 64, 396);
-    g.fillStyle = DIM;
-    g.fillText('FLR --  CHF --', 64, 424);
+    g.fillStyle = GREEN;
+    g.fillText(`FLR ${world.cm.flares}  CHF ${world.cm.chaffUnlocked ? world.cm.chaff : '--'}`, 64, 424);
     g.textAlign = 'right'; g.fillStyle = world.player.alive ? GREEN : AMBER;
     g.fillText(world.player.alive ? 'ARM' : 'SAFE', 448, 368);
   });

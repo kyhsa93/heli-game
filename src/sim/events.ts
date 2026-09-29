@@ -25,7 +25,8 @@ export type SimEvent =
   | { t: 'playerHit'; by: number; weapon: string; damage: number }
   | { t: 'systemDamaged'; system: SystemId; level: 'damaged' | 'destroyed' }
   | { t: 'missileWarning'; id: number; kind: 'ir' | 'radar'; from: Vector3; owner: number }
-  | { t: 'missileEnd'; id: number; hit: boolean };
+  | { t: 'missileEnd'; id: number; hit: boolean }
+  | { t: 'countermeasure'; kind: 'flare' | 'chaff'; decoyed: number; auto: boolean };
 
 export type AdviceCode = 'landingTooHard' | 'wrongPad';
 
