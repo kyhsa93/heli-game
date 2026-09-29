@@ -1,5 +1,6 @@
 import { RWR_PATTERN, rwrGateOn, type RwrLevel } from './rwr';
 
+export const MASTER_GAIN = 0.55;
 export const LOCK_HZ = 1150;
 export const IR_SEEK_HZ = 520;
 export const IR_LOCK_HZ = 1900;
@@ -32,6 +33,7 @@ export class RotorAudio {
   private rwrOsc!: OscillatorNode;
   private rwrGain!: GainNode;
   private muted = false;
+  private volume = 1;
   private synthBus: GainNode;
   private loop: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   private start: AudioBufferSourceNode | null = null;
@@ -39,7 +41,7 @@ export class RotorAudio {
   constructor(ctx?: AudioContext) {
     this.ctx = ctx ?? new AudioContext();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.55;
+    this.master.gain.value = MASTER_GAIN;
     this.master.connect(this.ctx.destination);
     this.synthBus = this.ctx.createGain();
     this.synthBus.connect(this.master);
@@ -142,8 +144,17 @@ export class RotorAudio {
 
   toggleMute() {
     this.muted = !this.muted;
-    this.master.gain.setTargetAtTime(this.muted ? 0 : 0.55, this.ctx.currentTime, 0.05);
+    this.applyVolume();
     return this.muted;
+  }
+
+  setVolume(v: number) {
+    this.volume = Math.min(1, Math.max(0, v));
+    this.applyVolume();
+  }
+
+  private applyVolume() {
+    this.master.gain.setTargetAtTime(this.muted ? 0 : MASTER_GAIN * this.volume, this.ctx.currentTime, 0.05);
   }
 
   update(s: AudioState) {

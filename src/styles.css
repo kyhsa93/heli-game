@@ -184,3 +184,17 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .radio-menu button.on { border-color: #4cc9f0; color: #4cc9f0; }
 .radio-menu small { color: #8fa0b5; font-size: 12px; }
 .hint.done { color: #06d6a0; }
+.stick.size-S { width: 110px; height: 110px; }
+.stick.size-L { width: 160px; height: 160px; }
+.settings section { margin-bottom: 8px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, .08); color: #cdd8e8; font-size: 14px; flex-wrap: wrap; }
+.setting-row .choice button { padding: 6px 10px; min-height: 36px; }
+.slider { display: flex; align-items: center; gap: 10px; }
+.slider input { width: 160px; accent-color: #ffd166; }
+.slider b { min-width: 48px; text-align: right; color: #ffd166; }
+.para.dim { color: #8fa0b5; font-size: 13px; }
+.credit-list h2 { font-size: 15px; margin: 12px 0 4px; color: #ffd166; }
+.credit-list h2 small { display: inline; color: #8fa0b5; font-weight: 400; }
+.overlay .settings { text-align: left; max-height: 55vh; overflow-y: auto; margin-bottom: 8px; }
+.credit-list { max-height: 60vh; overflow-y: auto; text-align: left; }
+.credit-list ul { max-height: none; overflow: visible; }

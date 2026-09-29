@@ -16,6 +16,8 @@ import { FarpProps } from './farp';
 import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
 import { RingGates } from './rings';
+import { QUALITY } from './quality';
+import type { Settings } from '../save/campaign';
 import { SearchlightBeams } from './searchlights';
 import { TIME_PRESETS } from './timeOfDay';
 import { FOG_FLIR_RANGE, FOG_TV_RANGE } from '../sim/sensors/laser';
@@ -85,6 +87,11 @@ export class FlightRenderer {
   private mpdPixels = new Uint8Array(MPD_TADS * MPD_TADS * 4);
   private mpdCanvas: HTMLCanvasElement | null = null;
   mpdVideo = true;
+  private pixelCap = 2;
+  private baseFov = 72;
+  ihadssAlpha = 1;
+  showFps = false;
+  private fps = { frames: 0, since: 0, value: 0, calls: 0, triangles: 0 };
   private mpdVideoAt = -Infinity;
   private raycaster = new THREE.Raycaster();
   private flirFog = new THREE.Color(0x151515);
@@ -96,6 +103,7 @@ export class FlightRenderer {
     const { mount, overlay, session } = opts;
     this.renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
     this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    this.renderer.info.autoReset = false;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(this.renderer.domElement);
 
@@ -146,6 +154,21 @@ export class FlightRenderer {
     });
   }
 
+  applySettings(s: Settings) {
+    const q = QUALITY[s.display.quality];
+    this.pixelCap = q.pixelRatio;
+    this.mpdVideo = q.mpdVideo;
+    this.scene.setTreeFraction(q.trees);
+    this.baseFov = s.display.fov;
+    this.ihadssAlpha = s.display.ihadssBrightness;
+    this.showFps = s.display.showFps;
+    this.resize();
+  }
+
+  get drawCalls() { return this.fps.calls; }
+  get triangles() { return this.fps.triangles; }
+  get fpsValue() { return this.fps.value; }
+
   toggleView() {
     this.view = this.view === 'cockpit' ? 'chase' : 'cockpit';
   }
@@ -154,11 +177,12 @@ export class FlightRenderer {
     const { mount, overlay } = this.opts;
     const w = mount.clientWidth, h = mount.clientHeight;
     this.renderer.setSize(w, h);
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(this.pixelCap, window.devicePixelRatio || 1);
+    this.renderer.setPixelRatio(dpr);
     overlay.width = w * dpr; overlay.height = h * dpr;
     this.overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.camera.aspect = w / h;
-    this.camera.fov = w >= h ? 72 : Math.min(100, 2 * Math.atan(Math.tan(37 * Math.PI / 180) * h / w) * 180 / Math.PI);
+    this.camera.fov = w >= h ? this.baseFov : Math.min(100, 2 * Math.atan(Math.tan(this.baseFov / 2 * Math.PI / 180) * h / w) * 180 / Math.PI);
     this.camera.updateProjectionMatrix();
     this.effects?.setScale(h, this.camera.fov);
     this.tads.setSize(w * dpr, h * dpr);
@@ -276,8 +300,18 @@ export class FlightRenderer {
     const og = this.overlayCtx;
     og.clearRect(0, 0, overlay.width, overlay.height);
     if (tads) drawTads(og, mount.clientWidth, mount.clientHeight, world);
-    else if (cockpit && this.hud && h.alive && session.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, world, camera, this.pnvs && h.damage.sensors > 0);
+    else if (cockpit && this.hud && h.alive && session.mode !== 'brief') { og.globalAlpha = this.ihadssAlpha; drawIhadss(og, mount.clientWidth, mount.clientHeight, world, camera, this.pnvs && h.damage.sensors > 0); og.globalAlpha = 1; }
     if (cockpit && !tads && h.damage.cockpit <= DAMAGED) drawCanopyCracks(og, mount.clientWidth, mount.clientHeight, 1 - h.damage.cockpit / DAMAGED);
+    const f = this.fps;
+    f.frames++;
+    f.calls = this.renderer.info.render.calls;
+    f.triangles = this.renderer.info.render.triangles;
+    if (now - f.since >= 500) { f.value = f.frames * 1000 / (now - f.since); f.frames = 0; f.since = now; }
+    if (this.showFps) {
+      og.save(); og.font = 'bold 13px "B612 Mono", monospace'; og.textAlign = 'right'; og.fillStyle = '#e8eef7'; og.shadowColor = 'rgba(0,0,0,0.9)'; og.shadowBlur = 3;
+      og.fillText(`${Math.round(f.value)} FPS · ${f.calls} DC`, mount.clientWidth - 12, 20); og.restore();
+    }
+    this.renderer.info.reset();
 
     this.audio?.update({
       rpm: h.alive ? h.rpm : 0, collective: h.collective, airspeed: speed,

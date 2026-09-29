@@ -1,4 +1,5 @@
 export type DifficultyLevel = 'easy' | 'normal' | 'hard';
+export const DIFFICULTY_LEVELS: readonly DifficultyLevel[] = ['easy', 'normal', 'hard'];
 
 export interface Difficulty { level: DifficultyLevel; enemyAccuracy: number; enemyReaction: number; damageTaken: number; detection: number }
 

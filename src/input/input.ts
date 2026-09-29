@@ -11,6 +11,9 @@ const dz = (v: number) => (Math.abs(v) < DEAD ? 0 : (v - Math.sign(v) * DEAD) / 
 export class FlightInput {
   readonly keys = new Set<string>();
   readonly touch: TouchSticks = { lx: 0, ly: 0, rx: 0, ry: 0 };
+  lookScale = 1;
+  tadsScale = 1;
+  invertY = false;
   headYaw = 0;
   headPitch = -0.1;
   private cx = 0;
@@ -76,9 +79,10 @@ export class FlightInput {
   }
 
   look(dx: number, dy: number) {
-    if (this.tads?.active) { slewTads(this.tads, -dx * 0.004, -dy * 0.004); return; }
-    this.headYaw = clamp(this.headYaw - dx * 0.005, -2.2, 2.2);
-    this.headPitch = clamp(this.headPitch - dy * 0.005, -1.1, 0.7);
+    const sy = this.invertY ? -dy : dy;
+    if (this.tads?.active) { slewTads(this.tads, -dx * 0.004 * this.tadsScale, -sy * 0.004 * this.tadsScale); return; }
+    this.headYaw = clamp(this.headYaw - dx * 0.005 * this.lookScale, -2.2, 2.2);
+    this.headPitch = clamp(this.headPitch - sy * 0.005 * this.lookScale, -1.1, 0.7);
   }
 
   centerView() { this.headYaw = 0; this.headPitch = -0.1; }

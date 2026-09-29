@@ -84,5 +84,6 @@ export class GameAudio {
   }
   resume() { return this.rotor.resume(); }
   toggleMute() { return this.rotor.toggleMute(); }
+  setVolume(v: number) { this.rotor.setVolume(v); }
   dispose() { this.rotor.dispose(); }
 }

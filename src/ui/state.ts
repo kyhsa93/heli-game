@@ -8,6 +8,7 @@ export type Screen =
   | { name: 'title' }
   | { name: 'training' }
   | { name: 'credits' }
+  | { name: 'settings' }
   | { name: 'campaign'; missionId?: string }
   | { name: 'briefing'; missionId: string }
   | { name: 'loadout'; missionId: string }
@@ -24,6 +25,7 @@ export function parseHash(hash: string): Screen {
   const id = parts[1];
   if (parts[0] === 'training') return { name: 'training' };
   if (parts[0] === 'credits') return { name: 'credits' };
+  if (parts[0] === 'settings') return { name: 'settings' };
   if (parts[0] === 'campaign') return id && CAMPAIGN_IDS.includes(id) ? { name: 'campaign', missionId: id } : { name: 'campaign' };
   if (parts[0] === 'instant' || id === 'instant') return { name: 'instant' };
   if (id && isMission(id) && (parts[0] === 'briefing' || parts[0] === 'flight' || parts[0] === 'debrief')) return { name: 'briefing', missionId: id };
@@ -38,6 +40,7 @@ export function toHash(screen: Screen): string {
     case 'title': return '#/title';
     case 'training': return '#/training';
     case 'credits': return '#/credits';
+    case 'settings': return '#/settings';
     case 'campaign': return screen.missionId ? `#/campaign/${screen.missionId}` : '#/campaign';
     case 'instant': return '#/instant';
     case 'briefing': return `#/briefing/${screen.missionId}`;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BACKUP_KEY, freshSave, LEGACY, loadSave, rankFor, recordInstant, recordMission, recordTip, recordTraining, SAVE_KEY, storeSave, unlockedFor } from './campaign';
+import { BACKUP_KEY, freshSave, hasSave, LEGACY, loadSave, rankFor, recordInstant, recordMission, recordTip, recordTraining, SAVE_KEY, storeSave, unlockedFor, withDeviceDefaults } from './campaign';
 import { memoryStorage, type KeyValue } from './storage';
 
 describe('campaign save (02 2.5)', () => {
@@ -91,5 +91,31 @@ describe('tips seen', () => {
     expect(s.tips).toEqual(['rwr']);
     storeSave(s, store);
     expect(loadSave(store).tips).toEqual(['rwr']);
+  });
+});
+
+describe('settings (07 7.8)', () => {
+  it('stores every settings group and clamps what it reads back', () => {
+    const store = memoryStorage();
+    const s = freshSave();
+    s.settings.controls = { lookSensitivity: 1.6, invertLookY: true, tadsSensitivity: 0.6, touchStickSize: 'L' };
+    s.settings.display = { fov: 84, ihadssBrightness: 0.7, quality: 'medium', showFps: true };
+    s.settings.audio = { master: 0.4 };
+    storeSave(s, store);
+    expect(loadSave(store).settings).toEqual(s.settings);
+    store.setItem(SAVE_KEY, JSON.stringify({ ...s, settings: { ...s.settings, controls: { lookSensitivity: 99, touchStickSize: 'XL' }, display: { fov: 10, quality: 'ultra' }, audio: { master: -3 } } }));
+    const back = loadSave(store).settings;
+    expect(back.controls).toEqual({ lookSensitivity: 2, invertLookY: false, tadsSensitivity: 1, touchStickSize: 'M' });
+    expect(back.display).toMatchObject({ fov: 60, quality: 'high', showFps: false });
+    expect(back.audio.master).toBe(0);
+  });
+
+  it('picks low quality for a phone on first run only', () => {
+    const store = memoryStorage();
+    expect(hasSave(store)).toBe(false);
+    expect(withDeviceDefaults(freshSave(), { mobile: true }).settings.display.quality).toBe('low');
+    expect(withDeviceDefaults(freshSave(), { mobile: false }).settings.display.quality).toBe('high');
+    storeSave(freshSave(), store);
+    expect(hasSave(store)).toBe(true);
   });
 });

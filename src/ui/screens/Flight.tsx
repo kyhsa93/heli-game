@@ -25,10 +25,12 @@ import { hellfireSolution } from '../../sim/weapons/hellfire';
 import { rocketSolution } from '../../sim/weapons/rockets';
 import { commandForKey, PREVENT_DEFAULT, type Command } from '../../input/bindings';
 import { FlightInput } from '../../input/input';
+import { SettingsPanel } from './SettingsScreen';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
 import { VirtualStick } from '../components/VirtualStick';
 
 const COACH_SECONDS = 7;
+const STICK_RADIUS = { S: 46, M: 56, L: 70 } as const;
 
 interface FlightProps { missionId: string; mission?: MissionDef; touch: boolean; loadout?: LoadoutDef; settings?: Settings; unlocked?: ReadonlySet<UnlockId>; tips?: ReadonlySet<string> | null; onTip?: (tip: string) => void; onSettings?: (s: Settings) => void; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
 
@@ -44,9 +46,12 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
   const runtime = mission ? session.objective as MissionRuntime : null;
   const radioRef = useRef<HTMLDivElement>(null);
   const coachRef = useRef<{ text: string; until: number } | null>(null);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
   const onTipRef = useRef(onTip);
   onTipRef.current = onTip;
   const [showKeys, setShowKeys] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [portrait, setPortrait] = useState(false);
   const sim = session.world;
   sim.difficulty = DIFFICULTIES[settings.difficulty];
@@ -56,6 +61,14 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
   const rendererRef = useRef<FlightRenderer | null>(null);
   const [input] = useState(() => new FlightInput());
   const audioRef = useRef<GameAudio | null>(null);
+  useEffect(() => {
+    rendererRef.current?.applySettings(settings);
+    input.lookScale = settings.controls.lookSensitivity;
+    input.tadsScale = settings.controls.tadsSensitivity;
+    input.invertY = settings.controls.invertLookY;
+    audioRef.current?.setVolume(settings.audio.master);
+    if (audioRef.current) audioRef.current.voice.enabled = settings.voiceWarnings;
+  }, [settings]);
   const touchRef = useRef(touch);
   touchRef.current = touch;
   const [hud, setHud] = useState(true);
@@ -123,6 +136,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
       try {
         audioRef.current = new GameAudio();
         audioRef.current.voice.enabled = settings.voiceWarnings;
+        audioRef.current.setVolume(settings.audio.master);
         void audioRef.current.loadSamples(id => assets.get<ArrayBuffer>(id));
       } catch { audioRef.current = null; }
     }
@@ -230,6 +244,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
       },
     });
     rendererRef.current = r;
+    r.applySettings(settingsRef.current);
     input.onCommand = cmd => runCommandRef.current(cmd);
     if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, renderer: r, model: r.model, weapons: { rocketSolution, sightPoint, hellfireSolution } } });
     return () => {
@@ -312,8 +327,8 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
 
       {touch && snap.mode === 'play' && (
         <div className="sticks">
-          <VirtualStick className="stick left" label={t('touch.leftStick')} onMove={(x, y) => { input.touch.lx = x; input.touch.ly = y; }} />
-          <VirtualStick className="stick right" label={t('touch.rightStick')} onMove={(x, y) => { input.touch.rx = x; input.touch.ry = y; }} />
+          <VirtualStick className={`stick left size-${settings.controls.touchStickSize}`} radius={STICK_RADIUS[settings.controls.touchStickSize]} label={t('touch.leftStick')} onMove={(x, y) => { input.touch.lx = x; input.touch.ly = y; }} />
+          <VirtualStick className={`stick right size-${settings.controls.touchStickSize}`} radius={STICK_RADIUS[settings.controls.touchStickSize]} label={t('touch.rightStick')} onMove={(x, y) => { input.touch.rx = x; input.touch.ry = y; }} />
           <button className="tbtn engine" onPointerDown={e => { e.preventDefault(); sim.toggleEngine(); }}>{t('touch.engine')}</button>
           <button className="tbtn view" onPointerDown={e => { e.preventDefault(); toggleView(); }}>{t('touch.view')}</button>
           <button className="tbtn tads" onPointerDown={e => { e.preventDefault(); sim.toggleTads(); }}>{t('touch.tads')}</button>
@@ -369,12 +384,13 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
             <div className="pause-buttons">
               <button className="go" onClick={() => setHelp(false)}>{t('brief.continue')}</button>
               <button className="go secondary" onClick={() => setShowKeys(v => !v)}>{t('pause.controls')}</button>
-              <button className="go secondary" disabled>{t('pause.settings')}</button>
+              <button className="go secondary" onClick={() => setShowSettings(v => !v)}>{t('pause.settings')}</button>
               <button className="go secondary" onClick={toggleVoice}>{t(voiceOn ? 'brief.voiceOff' : 'brief.voiceOn')}</button>
               <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button>
               {runtime && !training && <button className="go secondary" onClick={() => { setHelp(false); runtime.endNow(); }}>{t('pause.endMission')}</button>}
               {(!runtime || training) && <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button>}
             </div>
+            {showSettings && <SettingsPanel settings={settings} onChange={s2 => onSettings?.(s2)} />}
             {showKeys && (
               <div className="keys">
                 {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}

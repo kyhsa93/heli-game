@@ -4,6 +4,7 @@ import { PAD_R, type Pad3, type Terrain } from '../sim/terrain';
 import { roadMesh, TerrainChunks } from './terrainChunks';
 import type { TimeOfDay } from '../sim/ai/awareness';
 import { starField, TIME_PRESETS } from './timeOfDay';
+import { treeOrder } from './quality';
 
 export const SKY_HORIZON = new THREE.Color(0xbcd6ea);
 export const FOG_GREY = new THREE.Color(0xb4b8bc);
@@ -24,6 +25,7 @@ export interface WorldScene {
   shadow: THREE.Mesh;
   terrain: TerrainChunks;
   stars: THREE.Points;
+  setTreeFraction(f: number): void;
   time: TimeOfDay;
   fog: boolean;
   setTime(time: TimeOfDay, fog?: boolean): void;
@@ -124,7 +126,8 @@ function trees(t: Terrain) {
   const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.18, 0.25, 1, 5), new THREE.MeshLambertMaterial({ color: 0x5a4330 }), n);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
   const c = new THREE.Color();
-  t.trees.forEach((tr, i) => {
+  treeOrder(n).forEach((k, i) => {
+    const tr = t.trees[k];
     p.set(tr.x, tr.y + tr.h * 0.25 + tr.h * 0.375, tr.z); s.set(tr.r, tr.h * 0.75, tr.r);
     m.compose(p, q, s); canopy.setMatrixAt(i, m);
     c.setHSL(0.27 + (i % 7) * 0.012, 0.45, 0.2 + (i % 5) * 0.025); canopy.setColorAt(i, c);
@@ -208,7 +211,8 @@ export function buildWorld(t: Terrain, detail: THREE.Texture | null = null): Wor
   water.rotation.x = -Math.PI / 2;
   scene.add(water);
 
-  for (const m of trees(t)) scene.add(m);
+  const treeMeshes = trees(t);
+  for (const m of treeMeshes) scene.add(m);
   scene.add(buildings(t));
   scene.add(bridges(t));
 
@@ -231,6 +235,7 @@ export function buildWorld(t: Terrain, detail: THREE.Texture | null = null): Wor
 
   const view: WorldScene = {
     scene, sky, pads, beam, shadow, terrain, stars, time: 'day', fog: false,
+    setTreeFraction(f: number) { for (const m of treeMeshes) m.count = Math.round(t.trees.length * Math.min(1, Math.max(0, f))); },
     setTime(time: TimeOfDay, fogBank = view.fog) {
       const p = TIME_PRESETS[time];
       view.time = time;

@@ -12,3 +12,15 @@ export function parseCredits(md: string): CreditRow[] {
   }
   return rows;
 }
+
+export const CREDIT_CATEGORIES = ['fonts', 'textures', 'models', 'audio', 'other'] as const;
+export type CreditCategory = typeof CREDIT_CATEGORIES[number];
+
+export function creditCategory(file: string): CreditCategory {
+  const dir = file.split('/')[0];
+  return (CREDIT_CATEGORIES as readonly string[]).includes(dir) ? dir as CreditCategory : 'other';
+}
+
+export function creditGroups(rows: readonly CreditRow[]): [CreditCategory, CreditRow[]][] {
+  return CREDIT_CATEGORIES.map(c => [c, rows.filter(r => creditCategory(r.file) === c)] as [CreditCategory, CreditRow[]]).filter(([, list]) => list.length > 0);
+}

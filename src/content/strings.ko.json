@@ -328,7 +328,14 @@
     "title": "크레딧",
     "intro": "이 게임은 아래 외부 에셋을 사용합니다. 모두 상업적 이용이 허용된 라이선스입니다.",
     "source": "출처",
-    "open": "크레딧"
+    "open": "크레딧",
+    "category": {
+      "fonts": "글꼴",
+      "textures": "텍스처",
+      "models": "3D 모델",
+      "audio": "소리",
+      "other": "기타"
+    }
   },
   "sides": {
     "veros": "VPA",
@@ -542,5 +549,47 @@
     "night": "야간이다. 헬멧에 PNVS 열상이 켜져 있다(N으로 끄고 켠다). TADS도 열상만 된다.",
     "wingman": "하운드 2가 네 오른쪽 뒤에 붙는다. 네가 겨누지 않은 표적을 맡는다.",
     "wingmanMenu": "이제 G로 하운드 2에게 지시할 수 있다 — 편대, 내 표적, 자유 교전, 대공 제압, 귀환."
+  },
+  "settings": {
+    "title": "설정",
+    "on": "켬",
+    "off": "끔",
+    "section": {
+      "game": "게임",
+      "controls": "조작",
+      "display": "화면",
+      "audio": "소리"
+    },
+    "item": {
+      "difficulty": "난이도",
+      "autoIdentify": "자동 식별 (광각에서도 즉시)",
+      "autoCountermeasures": "자동 대응책 (미사일 경보 때 투하)",
+      "lookSensitivity": "시선 감도",
+      "invertLookY": "시선 상하 반전",
+      "tadsSensitivity": "TADS 감도",
+      "touchStickSize": "터치 스틱 크기",
+      "fov": "시야각",
+      "ihadssBrightness": "헬멧 심볼 밝기",
+      "quality": "그래픽 품질",
+      "showFps": "FPS 표시",
+      "master": "전체 음량",
+      "voiceWarnings": "음성 경고"
+    },
+    "stick": {
+      "S": "작게",
+      "M": "보통",
+      "L": "크게"
+    },
+    "quality": {
+      "low": "낮음",
+      "medium": "보통",
+      "high": "높음"
+    },
+    "subtitlesAlways": "무전은 항상 자막으로도 나옵니다.",
+    "difficulty": {
+      "easy": "쉬움",
+      "normal": "보통",
+      "hard": "어려움"
+    }
   }
 }

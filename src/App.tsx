@@ -5,6 +5,7 @@ import { Flight } from './ui/screens/Flight';
 import { Credits } from './ui/screens/Credits';
 import { Loading } from './ui/screens/Loading';
 import { Title } from './ui/screens/Title';
+import { SettingsScreen } from './ui/screens/SettingsScreen';
 import { Campaign } from './ui/screens/Campaign';
 import { Training } from './ui/screens/Training';
 import { isMission, UiState } from './ui/state';
@@ -14,13 +15,13 @@ import { Debrief } from './ui/mission/Debrief';
 import { Loadout } from './ui/mission/Loadout';
 import { InstantSetup } from './ui/mission/InstantSetup';
 import { generateInstant } from './sim/mission/instant';
-import { campaignProgress, loadSave, missionAvailable, recordTip, recordInstant, recordMission, recordTraining, storeSave, unlockedFor } from './save/campaign';
+import { campaignProgress, hasSave, withDeviceDefaults, loadSave, missionAvailable, recordTip, recordInstant, recordMission, recordTraining, storeSave, unlockedFor } from './save/campaign';
 
 export function App() {
   const [ui] = useState(() => new UiState());
   const screen = useSyncExternalStore(ui.subscribe, ui.getSnapshot);
   const [touch, setTouch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
-  const [save, setSave] = useState(() => loadSave());
+  const [save, setSave] = useState(() => (hasSave() ? loadSave() : withDeviceDefaults(loadSave(), { mobile: window.matchMedia('(pointer: coarse)').matches || Math.min(window.screen.width, window.screen.height) < 600 })));
   useEffect(() => { storeSave(save); }, [save]);
   const completed = new Set(Object.keys(save.training));
   const [boot, setBoot] = useState(0);
@@ -52,7 +53,9 @@ export function App() {
 
   switch (screen.name) {
     case 'title':
-      return <Title trainingDone={completed.has('t1')} onFirstFlight={() => ui.go({ name: 'flight', missionId: 't1' })} progress={campaignProgress(save)} onInstant={() => ui.go({ name: 'instant' })} onCampaign={() => ui.go({ name: 'campaign' })} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} />;
+      return <Title trainingDone={completed.has('t1')} onFirstFlight={() => ui.go({ name: 'flight', missionId: 't1' })} progress={campaignProgress(save)} onInstant={() => ui.go({ name: 'instant' })} onCampaign={() => ui.go({ name: 'campaign' })} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} onSettings={() => ui.go({ name: 'settings' })} />;
+    case 'settings':
+      return <SettingsScreen settings={save.settings} onChange={settings => setSave(prev => ({ ...prev, settings }))} onCredits={() => ui.go({ name: 'credits' })} onBack={() => ui.go({ name: 'title' })} />;
     case 'instant':
       return <InstantSetup best={save.instantBest} onBack={() => ui.go({ name: 'title' })} onGo={threat => ui.go({ name: 'flight', missionId: 'instant', mission: generateInstant({ seed: (Math.random() * 1e9) | 0, threat, time: 'day' }) })} />;
     case 'campaign':
