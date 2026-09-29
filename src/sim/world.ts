@@ -8,6 +8,7 @@ import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
 import { UNIT_DEFS, type Unit } from './units';
+import { explode, WEAPONS } from './weapons/damage';
 
 export const STEP = 1 / 120;
 
@@ -81,6 +82,15 @@ export class World {
       u.alive = false;
       u.vel.set(0, 0, 0);
       this.emit({ t: 'unitDestroyed', id: u.id, defId: u.defId, side: u.side, byPlayer });
+      const sec = u.def.secondaryExplosion;
+      if (sec) {
+        explode(this, u.pos.clone().setY(u.pos.y + u.def.size[1] / 2), sec.damage, sec.radius, WEAPONS.secondary.penetration, byPlayer, u);
+        if (sec.chain) {
+          for (const o of this.units) {
+            if (o.alive && o.def.secondaryExplosion?.chain && o.pos.distanceTo(u.pos) <= sec.radius) this.damageUnit(o, o.hp, byPlayer);
+          }
+        }
+      }
     }
   }
 

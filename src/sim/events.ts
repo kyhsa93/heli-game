@@ -1,3 +1,4 @@
+import type { Vector3 } from 'three';
 import type { Side } from './units';
 
 export type CrashReason =
@@ -12,6 +13,7 @@ export type SimEvent =
   | { t: 'boundary' }
   | { t: 'objective'; id: string; state: 'done' | 'failed' }
   | { t: 'unitDestroyed'; id: number; defId: string; side: Side; byPlayer: boolean }
+  | { t: 'explosion'; pos: Vector3; size: number }
   | { t: 'advice'; code: AdviceCode; value?: number };
 
 export type AdviceCode = 'landingTooHard' | 'wrongPad';

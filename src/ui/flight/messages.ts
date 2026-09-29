@@ -24,7 +24,7 @@ export function eventMessage(e: SimEvent): Omit<Message, 'life'> | null {
       return { text: t(`advice.${e.code}`, { fpm: Math.round(e.value ?? 0), max: T1_MAX_FPM }), color: '#ffd166' };
     case 'objective':
       return e.state === 'done' ? { text: t('msg.objectiveDone'), color: '#06d6a0' } : { text: t('msg.objectiveFailed'), color: '#ef476f' };
-    case 'crash': case 'unitDestroyed': return null;
+    case 'crash': case 'unitDestroyed': case 'explosion': return null;
   }
 }
 

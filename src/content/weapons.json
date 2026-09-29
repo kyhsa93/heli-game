@@ -1,0 +1,28 @@
+{
+  "gun30": {
+    "guidance": "ballistic", "ammo": [300, 600, 1200], "minRange": 0, "maxRange": 2000, "effectiveRange": 1500,
+    "speed": 805, "drag": 0.0012, "damage": 12, "splashRadius": 3, "splashDamage": 4, "penetration": 2,
+    "rate": 10.4, "dispersionMrad": 5
+  },
+  "hydra70": {
+    "guidance": "ballistic", "ammoPerPod": 19, "minRange": 300, "maxRange": 5000, "effectiveRange": 3000,
+    "speed": 700, "drag": 0.0006, "damage": 60, "splashRadius": 12, "splashDamage": 25, "penetration": 2,
+    "salvo": [1, 2, 4], "salvoInterval": 0.1, "dispersionMrad": 8
+  },
+  "agm114k": {
+    "guidance": "laser", "ammoPerLauncher": 4, "minRange": 500, "maxRange": 8000,
+    "speed": 420, "damage": 400, "splashRadius": 6, "splashDamage": 50, "penetration": 5, "minInterval": 0.8
+  },
+  "agm114l": {
+    "guidance": "radar", "ammoPerLauncher": 4, "minRange": 500, "maxRange": 8000,
+    "speed": 400, "damage": 400, "splashRadius": 6, "splashDamage": 50, "penetration": 5, "minInterval": 0.8
+  },
+  "stinger": {
+    "guidance": "ir", "ammo": [2], "minRange": 300, "maxRange": 5000,
+    "speed": 750, "damage": 150, "splashRadius": 3, "splashDamage": 40, "penetration": 1, "minInterval": 1
+  },
+  "secondary": {
+    "guidance": "none", "minRange": 0, "maxRange": 0, "speed": 0,
+    "damage": 0, "splashRadius": 0, "splashDamage": 0, "penetration": 3
+  }
+}
