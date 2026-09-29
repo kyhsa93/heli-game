@@ -6,7 +6,11 @@
 
 - React 19 + TypeScript 7 (strict) + Vite 8 + three.js 0.186. 테스트 vitest 5.
 - 새 런타임 의존성은 추가하지 않는 것이 원칙이다. 꼭 필요하면 이유를 커밋 메시지에 쓴다. (ECS 라이브러리, 물리 엔진, 상태 관리 라이브러리 **쓰지 않음** — 필요한 만큼 직접 만든다.)
-- 외부 에셋 파일(모델, 텍스처 이미지, 음원) 없음. 모델은 코드로 만든 기본 도형, 텍스처는 캔버스로 그림, 소리는 WebAudio 합성.
+- **외부 에셋은 [10-external-assets.md](10-external-assets.md)에서 채택된 것만** 쓴다(2026-09-29 소유자 결정: 권장안 전체 채택). 사운드·폰트·파티클·지면 디테일·차량/보병/소품 모델이 대상이고, 자기 기체 아파치 외형·조종석·계기·벙커·연료 블래더·ZSU계 대공포는 계속 코드로 만든다. 운영 규칙(10.8절 요약):
+  - 파일은 `public/assets/<분류>/`, 출처는 `public/assets/CREDITS.md`(제목·작가·URL·라이선스·수정 여부·확인 날짜). 게임 안 크레딧 화면이 이 내용을 보여 준다.
+  - 허용 라이선스는 CC0·퍼블릭 도메인·CC-BY 3.0/4.0·OFL·MIT·Apache-2.0·ISC. 추가 전에 상세 페이지에서 라이선스를 다시 확인한다.
+  - GLB는 `gltf-transform`(devDependency, `scripts/`에서만 사용 — 번들에 안 들어감)으로 meshopt 압축·텍스처 축소, 런타임 디코더는 three에 포함된 `GLTFLoader` + `meshopt_decoder`를 쓴다(새 런타임 의존성 없음), 오디오는 모노 MP3 64~96kbps, 폰트는 사용 글자만 뽑은 woff2. 원본 고용량 파일은 저장소에 넣지 않는다.
+  - 에셋 로드 실패 시 코드 도형·합성음으로 폴백해 게임은 계속 동작한다.
 - 배포: `main` push → GitHub Actions(`.github/workflows/deploy.yml`)가 `npm ci && npm run check` 후 GitHub Pages에 배포. 경로 `base: '/heli-game/'`.
 - PWA: `public/sw.js`는 **아무것도 캐시하지 않고 모든 요청을 `cache: 'no-store'`로** 받는다(소유자 요구사항). 캐시 전략을 바꾸지 말 것. 그 결과 첫 로드 용량이 매번 발생하므로 **번들 크기를 의식**한다(8.7절 예산).
 
@@ -86,7 +90,7 @@ src/
   audio/
     rotor.ts            # (sim3d/audio.ts 이동)
     sfx.ts              # 효과음 합성, 이벤트 버스 구독
-    voice.ts            # speechSynthesis 경고
+    voice.ts            # 음성 경고 (녹음 파일 재생, 없으면 speechSynthesis)
   input/
     input.ts            # 키보드·패드·터치 → 비행 입력 + 전투 명령
     bindings.ts         # 07장 조작표
@@ -102,6 +106,11 @@ src/
     strings.ko.json
   save/
     storage.ts          # localStorage try/catch 래퍼, 버전 이관
+  assets/
+    manifest.ts         # 에셋 목록 (첫 로드 / 임무별), 경로, 폴백 지정
+    loader.ts           # GLB·오디오·텍스처 로드, 진행률, 실패 시 폴백
+public/assets/          # 채택된 외부 에셋 (가공본) + CREDITS.md
+scripts/                # 에셋 가공 스크립트 (폰트 서브셋, GLB 압축, 오디오 인코딩) — 빌드에 포함 안 됨
 ```
 
 ### 의존 규칙 (지켜야 테스트가 가능하다)
@@ -202,7 +211,7 @@ type SimEvent =
 ## 8.6 렌더링 지침
 
 - **유닛**: 유형별 `InstancedMesh` 1개(부품이 여럿이면 부품별 1개). 파괴된 유닛은 잔해용 인스턴스 메시로 옮김. 포탑 회전 같은 부품 움직임은 부품별 인스턴스 행렬로.
-- **효과**: 폭발·연기·불·예광탄은 미리 만든 풀(각 64~256개)에서 꺼내 쓴다. 매 프레임 `new` 금지. 연기는 빌보드 스프라이트(캔버스로 그린 원형 그라디언트 텍스처).
+- **효과**: 폭발·연기·불·예광탄은 미리 만든 풀(각 64~256개)에서 꺼내 쓴다. 매 프레임 `new` 금지. 연기·폭발·섬광은 Kenney 파티클(CC0)로 만든 512² 스프라이트 아틀라스 1장(10장 10.5절).
 - **TADS**: `WebGLRenderTarget` 하나, TADS 카메라는 기체의 TADS 터릿 위치에 붙인다. FLIR은 후처리 셰이더: 유닛은 `userData.heat`(엔진 켜짐 1.0, 보병 0.7, 잔해 불 1.0)로 흰색, 지형은 높이·경사 기반 회색 — **열상용 별도 머티리얼 오버라이드**(`scene.overrideMaterial` 대신 레이어 + 머티리얼 교체)로 구현.
 - **지형 청크**: 2km 청크, 가까운 청크는 12.5m 격자(161×161 정점), 먼 청크는 50m. 청크 경계 틈은 스커트(아래로 내린 테두리)로 가린다.
 - **조종석**은 기존처럼 기체 모델의 자식. 로그 깊이 버퍼(`logarithmicDepthBuffer: true`)는 유지 — 근평면 0.05m와 원평면 7km를 같이 쓰기 위해 필요.
@@ -217,6 +226,8 @@ type SimEvent =
 | 동시 유닛 | ≤ 150 | 임무 검증기가 경고 |
 | 발사체 | ≤ 300, 미사일 ≤ 24 | 풀 크기 |
 | JS 번들 (gzip) | ≤ 350KB (현재 약 230KB) | `vite build` 출력 |
+| 첫 로드 에셋 (사운드·폰트·파티클·지면 디테일) | ≤ 600KB | `public/assets` 크기 검사 테스트 |
+| 임무 하나의 지연 로드 에셋 (차량·보병·소품 모델) | ≤ 1MB | 임무 검증기가 합산 |
 | 임무 JSON | 개당 ≤ 40KB | 빌드 시 검사 |
 
 ## 8.8 테스트와 검증
