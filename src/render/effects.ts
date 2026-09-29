@@ -252,6 +252,19 @@ export class Effects {
       }
     }
     let mi = 0;
+    for (const m of world.enemyMissiles) {
+      if (mi < 24) {
+        this.mq.setFromUnitVectors(this.mz, m.vel.clone().normalize());
+        this.missileMesh.setMatrixAt(mi++, this.mm.compose(m.pos, this.mq, this.one));
+      }
+      if (m.age > 6) continue;
+      this.glow.spawn(m.pos, new THREE.Vector3(), 0.05, 1.2, 0.6, 1, CELL.fire);
+      const n = Math.min(8, Math.ceil(m.vel.length() * dt / 6));
+      for (let i = 0; i < n; i++) {
+        const at = m.pos.clone().addScaledVector(m.vel, -dt * (i + this.rnd()) / n);
+        this.smoke.spawn(at, this.jitter(1.2), 2.5 + this.rnd(), 1, 5, 0.6, CELL.dust[(this.rnd() * 4) | 0], 0.3, 1);
+      }
+    }
     for (const m of world.missiles) {
       if (mi < 24) {
         this.mq.setFromUnitVectors(this.mz, m.vel.clone().normalize());

@@ -105,3 +105,22 @@ export function hiddenPair(world: World) {
   }
   throw new Error('no hidden pair');
 }
+
+export function popupPair(world: World, dist = 2500, low = 25, high = 300, shadow = 0) {
+  for (let i = 0; i < 4000; i++) {
+    const x = ((i * 7919) % 173) / 173 * HALF * 1.4 - HALF * 0.7, z = ((i * 104729) % 181) / 181 * HALF * 1.4 - HALF * 0.7;
+    if (world.terrain.heightAt(x, z) < 1) continue;
+    const ang = (i % 8) * Math.PI / 4;
+    const px = x + Math.sin(ang) * dist, pz = z + Math.cos(ang) * dist;
+    if (Math.abs(px) > HALF - 100 || Math.abs(pz) > HALF - 100) continue;
+    const eye = new Vector3(x, world.terrain.surfaceAt(x, z) + 4, z);
+    const g = world.terrain.surfaceAt(px, pz);
+    const lowP = new Vector3(px, g + low, pz), highP = new Vector3(px, g + high, pz);
+    if (terrainClear(world.terrain, eye, lowP) || !terrainClear(world.terrain, eye, highP)) continue;
+    let hidden = true;
+    for (let k = 0.05; k <= shadow && hidden; k += 0.05) hidden = !terrainClear(world.terrain, eye.clone().lerp(highP, k), lowP);
+    if (!hidden) continue;
+    return { unit: new Vector3(x, 0, z), low: lowP, high: highP };
+  }
+  throw new Error('no pop-up pair');
+}

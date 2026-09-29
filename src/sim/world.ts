@@ -22,6 +22,7 @@ import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SA
 import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
 import { integrate, PLAYER_OWNER, segmentHitsTerrain, segmentHitsUnit, type Projectile } from './weapons/projectile';
 import { hellfireSolution, launchHellfire } from './weapons/hellfire';
+import { stepEnemyMissile, threatDef, type EnemyMissile } from './weapons/enemyMissile';
 import { HELLFIRE, hellfireLaunchers, stepMissile, type LaserSpot, type Missile } from './weapons/missile';
 import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SALVO_INTERVAL } from './weapons/rockets';
 
@@ -42,6 +43,7 @@ export class World {
   units: Unit[] = [];
   projectiles: Projectile[] = [];
   missiles: Missile[] = [];
+  enemyMissiles: EnemyMissile[] = [];
   remoteLasers: { unitId: number; until: number }[] = [];
   arms: Arms = createArms();
   loadoutDef: LoadoutDef = STANDARD_LOADOUT;
@@ -229,6 +231,7 @@ export class World {
     this.units = [];
     this.projectiles = [];
     this.missiles = [];
+    this.enemyMissiles = [];
     this.remoteLasers = [];
   }
 
@@ -292,6 +295,7 @@ export class World {
     }
     this.stepProjectiles(dt);
     this.stepMissiles(dt);
+    this.stepEnemyMissiles(dt);
     if (this.active) {
       this.aiClock += dt;
       while (this.aiClock >= AI_TICK - 1e-9) { this.aiClock -= AI_TICK; stepAwareness(this, this.los, this.conditions); stepBrains(this); }
@@ -431,6 +435,36 @@ export class World {
         done = true;
       }
       if (done) { list[i] = list[list.length - 1]; list.pop(); }
+    }
+  }
+
+  launchEnemyMissile(u: Unit, weapon: string): EnemyMissile {
+    const w = threatDef(weapon);
+    const from = new Vector3(u.pos.x, u.pos.y + u.def.size[1] + 1, u.pos.z);
+    const dir = this.player.pos.clone().sub(from).normalize();
+    dir.y = Math.max(dir.y, 0.15);
+    dir.normalize();
+    const m: EnemyMissile = {
+      id: this.nextMissileId++, weapon, kind: w.guidance === 'radar' ? 'radar' : 'ir', owner: u.id,
+      pos: from.clone(), vel: dir.multiplyScalar(40), age: 0, guiding: true, blind: 0, launcher: from.clone(), target: null,
+    };
+    this.enemyMissiles.push(m);
+    this.emit({ t: 'missileWarning', id: m.id, kind: m.kind, from: from.clone(), owner: u.id });
+    this.emit({ t: 'fire', weapon, pos: from.clone(), dir: m.vel.clone().normalize(), owner: u.id, tracer: false });
+    return m;
+  }
+
+  private stepEnemyMissiles(dt: number) {
+    const list = this.enemyMissiles, h = this.player;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const m = list[i];
+      const r = stepEnemyMissile(m, this.terrain, h.pos, h.vel, dt);
+      if (!r.detonate && !r.miss) continue;
+      const w = threatDef(m.weapon);
+      if (r.detonate && h.alive) this.blastPlayer(m.pos, w.damage);
+      this.emit({ t: 'explosion', pos: m.pos.clone(), size: r.detonate ? 6 : 4 });
+      this.emit({ t: 'missileEnd', id: m.id, hit: r.detonate });
+      list[i] = list[list.length - 1]; list.pop();
     }
   }
 

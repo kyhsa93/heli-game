@@ -31,6 +31,10 @@ export interface WeaponDef {
   seekerHalfAngleDeg?: number;
   loalWindow?: number;
   maxFlight?: number;
+  fuse?: number;
+  maxG?: number;
+  navConstant?: number;
+  irLostSeconds?: number;
 }
 
 export const WEAPONS = weaponsJson as unknown as Record<string, WeaponDef>;

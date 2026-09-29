@@ -23,6 +23,21 @@
     "guidance": "ir", "ammo": [2], "minRange": 300, "maxRange": 5000,
     "speed": 750, "damage": 150, "splashRadius": 3, "splashDamage": 40, "penetration": 1, "minInterval": 1
   },
+  "sa_ir": {
+    "guidance": "ir", "minRange": 500, "maxRange": 4500,
+    "speed": 650, "damage": 250, "splashRadius": 0, "splashDamage": 0, "penetration": 1,
+    "burnTime": 2.5, "drag": 0.00035, "maxFlight": 14, "fuse": 6, "maxG": 25, "navConstant": 3, "irLostSeconds": 2
+  },
+  "sam_radar": {
+    "guidance": "radar", "minRange": 1500, "maxRange": 10000,
+    "speed": 850, "damage": 350, "splashRadius": 0, "splashDamage": 0, "penetration": 2,
+    "burnTime": 4, "drag": 0.0002, "maxFlight": 25, "fuse": 10, "maxG": 25, "navConstant": 3
+  },
+  "heli_aam": {
+    "guidance": "ir", "minRange": 300, "maxRange": 3000,
+    "speed": 700, "damage": 200, "splashRadius": 0, "splashDamage": 0, "penetration": 1,
+    "burnTime": 2, "drag": 0.0004, "maxFlight": 10, "fuse": 5, "maxG": 25, "navConstant": 3, "irLostSeconds": 2
+  },
   "secondary": {
     "guidance": "none", "minRange": 0, "maxRange": 0, "speed": 0,
     "damage": 0, "splashRadius": 0, "splashDamage": 0, "penetration": 3

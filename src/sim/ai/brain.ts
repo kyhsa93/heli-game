@@ -90,6 +90,23 @@ function fire(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
   }
 }
 
+export function missileWeapons(u: Unit) {
+  return u.def.weapons.filter(w => w.kind === 'missileIR' || w.kind === 'missileRadar');
+}
+
+function launchMissiles(world: World, u: Unit, dist: number, dt: number) {
+  u.weaponCooldown = Math.max(0, u.weaponCooldown - dt);
+  if (u.weaponCooldown > 0) return;
+  for (const w of missileWeapons(u)) {
+    if (dist > w.range || dist < w.minRange) continue;
+    if (w.kind === 'missileRadar' && u.ai.radar !== 'track') continue;
+    if (u.def.move?.stationaryToFire && u.vel.lengthSq() > 0.01) continue;
+    world.launchEnemyMissile(u, w.id);
+    u.weaponCooldown = 1 / w.rate;
+    return;
+  }
+}
+
 export function stepBrain(world: World, u: Unit, dt = AI_TICK) {
   const ai = u.ai, h = world.player;
   ai.stateTimer += dt;
@@ -117,6 +134,7 @@ export function stepBrain(world: World, u: Unit, dt = AI_TICK) {
       ai.blindTimer = 0;
       if (ai.aimTimer > 0) { ai.aimTimer -= dt; break; }
       fire(world, u, eye, dist, dt);
+      launchMissiles(world, u, dist, dt);
       break;
     }
     case 'search':
