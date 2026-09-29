@@ -34,3 +34,22 @@ export function eventMessage(e: SimEvent): Omit<Message, 'life'> | null {
     case 'crash': return null;
   }
 }
+
+export class MessageLog {
+  items: Message[] = [];
+
+  push(m: Omit<Message, 'life'>) {
+    if (this.items.some(x => x.text === m.text)) return;
+    this.items.push({ ...m, life: 3 });
+    if (this.items.length > 4) this.items.shift();
+  }
+
+  tick(simDt: number) {
+    for (const m of this.items) m.life -= simDt;
+    this.items = this.items.filter(m => m.life > 0);
+  }
+
+  clear() {
+    this.items = [];
+  }
+}

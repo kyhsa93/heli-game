@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { clamp } from '../core/math';
-import { bearingDeg, headingDeg, hoverVector } from './instruments';
+import { bearingDeg, headingDeg, hoverVector } from './cockpit/instruments';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { agl as aglOf, airspeed } from '../sim/heli/state';
 import type { World } from '../sim/world';

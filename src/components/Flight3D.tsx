@@ -1,21 +1,13 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
-import * as THREE from 'three';
-import { RotorAudio } from '../sim3d/audio';
-import { buildHeli } from '../sim3d/heliModel';
-import { crashText, eventMessage, type Message } from './messages';
+import { RotorAudio } from '../audio/rotor';
 import { clamp } from '../core/math';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
-import { FlightInput } from '../sim3d/input';
-import { Instruments } from '../sim3d/instruments';
-import { buildWorld } from '../sim3d/scene';
-import { drawIhadss } from '../sim3d/ihadss';
-import { BLADES, EYE, ROTOR_HZ } from '../sim/heli/airframe';
-import { agl as aglOf, airspeed } from '../sim/heli/state';
+import { FlightRenderer } from '../render/renderer';
+import { airspeed } from '../sim/heli/state';
 import { FlightSession } from '../sim/session';
-import { STEP } from '../sim/world';
+import { FlightInput } from '../sim3d/input';
+import { crashText, eventMessage, MessageLog } from './messages';
 import { VirtualStick } from './VirtualStick';
-
-type View = 'cockpit' | 'chase';
 
 export function Flight3D({ touch }: { touch: boolean }) {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -25,10 +17,10 @@ export function Flight3D({ touch }: { touch: boolean }) {
   const hintRef = useRef<HTMLDivElement>(null);
   const [session] = useState(() => new FlightSession((Math.random() * 1e9) | 0));
   const sim = session.world;
-  const messagesRef = useRef<Message[]>([]);
+  const logRef = useRef(new MessageLog());
+  const rendererRef = useRef<FlightRenderer | null>(null);
   const [input] = useState(() => new FlightInput());
   const audioRef = useRef<RotorAudio | null>(null);
-  const viewRef = useRef<View>('cockpit');
   const touchRef = useRef(touch);
   touchRef.current = touch;
   const [hud, setHud] = useState(true);
@@ -39,198 +31,74 @@ export function Flight3D({ touch }: { touch: boolean }) {
   const [muted, setMuted] = useState(false);
   const snap = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
-  const toggleView = () => { viewRef.current = viewRef.current === 'cockpit' ? 'chase' : 'cockpit'; };
+  const toggleView = () => rendererRef.current?.toggleView();
 
   const begin = () => {
     if (!audioRef.current) {
       try { audioRef.current = new RotorAudio(); } catch { audioRef.current = null; }
     }
+    if (rendererRef.current) rendererRef.current.audio = audioRef.current;
     void audioRef.current?.resume();
     input.centerView();
-    messagesRef.current = [];
+    logRef.current.clear();
     session.start();
   };
 
   useEffect(() => {
-    const mount = mountRef.current!;
-    const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    mount.appendChild(renderer.domElement);
+    if (rendererRef.current) rendererRef.current.hud = hud;
+  }, [hud]);
 
-    const scn = buildWorld(sim.terrain);
-    const model = buildHeli();
-    scn.scene.add(model.root);
-    const inst = new Instruments(sim);
-    const tex = inst.textures();
-    for (const key of Object.keys(tex) as (keyof typeof tex)[]) {
-      const mat = model.screens[key].material as THREE.MeshBasicMaterial;
-      mat.map = tex[key];
-      mat.needsUpdate = true;
-    }
-    const overlay = ihadssRef.current!;
-    const og = overlay.getContext('2d')!;
-
-    const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 7000);
-    model.head.add(camera);
-    const chasePos = new THREE.Vector3();
-    let chaseInit = false;
-
-    const resize = () => {
-      const w = mount.clientWidth, h = mount.clientHeight;
-      renderer.setSize(w, h);
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      overlay.width = w * dpr; overlay.height = h * dpr;
-      og.setTransform(dpr, 0, 0, dpr, 0, 0);
-      camera.aspect = w / h;
-      camera.fov = w >= h ? 72 : Math.min(100, 2 * Math.atan(Math.tan(37 * Math.PI / 180) * h / w) * 180 / Math.PI);
-      camera.updateProjectionMatrix();
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, view: viewRef, model } });
+  useEffect(() => {
+    const log = logRef.current;
     const offEvents = sim.events.onAny(e => {
       const m = eventMessage(e);
-      if (!m) return;
-      const list = messagesRef.current;
-      if (list.some(x => x.text === m.text)) return;
-      list.push({ ...m, life: 3 });
-      if (list.length > 4) list.shift();
+      if (m) log.push(m);
     });
+    const r = new FlightRenderer({
+      mount: mountRef.current!,
+      overlay: ihadssRef.current!,
+      session,
+      input,
+      onFrame: ({ simDt, cockpit, agl }) => {
+        const h = sim.player, tp = sim.target;
+        if (hudRef.current) {
+          hudRef.current.style.display = !cockpit && hudOnRef.current ? '' : 'none';
+          hudRef.current.textContent =
+            `RAD ALT ${Math.round(Math.max(0, agl) * M_TO_FT)} ft · VS ${Math.round(h.vel.y * MS_TO_FPM)} fpm · ${Math.round(airspeed(h, sim.wind) * MS_TO_KT)} kt · COLL ${Math.round(h.collective * 100)}% · ROTOR ${Math.round(h.rpm * 100)}%`;
+        }
+        if (missionRef.current) {
+          missionRef.current.textContent = tp
+            ? `목표: ${tp.name} 패드 (${Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z))} m)`
+            : '비행 연습';
+          missionRef.current.style.color = '#06d6a0';
+        }
+        log.tick(simDt);
+        if (msgRef.current) {
+          msgRef.current.replaceChildren(...log.items.map(m => {
+            const el = document.createElement('div');
+            el.textContent = m.text; el.style.color = m.color; el.style.opacity = String(clamp(m.life, 0, 1));
+            return el;
+          }));
+        }
+        if (hintRef.current) {
+          let hint = '';
+          if (session.mode === 'play' && h.alive) {
+            if (!h.engineOn && h.landed && h.fuel > 0) hint = touchRef.current ? '시동 버튼으로 엔진을 켜세요' : 'I 키로 엔진 시동';
+            else if (h.engineOn && h.rpm < 0.95 && h.landed) hint = `로터 가속 중… ${Math.round(h.rpm * 100)}%`;
+            else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = touchRef.current ? '왼쪽 스틱을 위로 — 콜렉티브를 올려 이륙' : 'W 키로 콜렉티브를 올려 이륙';
+          }
+          hintRef.current.textContent = hint;
+        }
+      },
+    });
+    rendererRef.current = r;
     input.onEngine = () => sim.toggleEngine();
-    input.onView = toggleView;
-
-    let raf = 0, last = performance.now(), acc = 0, frame = 0, rotorAngle = 0, tailAngle = 0;
-    const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
-
-    const tick = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000); last = now;
-      input.update(sim, dt);
-      acc += dt;
-      while (acc >= STEP) { session.step(STEP); acc -= STEP; }
-      const h = sim.player, c = sim.controls;
-
-      model.root.position.copy(h.pos);
-      model.root.quaternion.copy(h.q);
-      model.root.visible = h.alive || session.mode === 'brief';
-
-      rotorAngle += h.rpm * Math.PI * 2 * ROTOR_HZ * dt;
-      tailAngle += h.rpm * Math.PI * 2 * 23 * dt;
-      model.rotor.rotation.y = rotorAngle;
-      model.tailRotor.rotation.x = tailAngle;
-      const blur = clamp((h.rpm - 0.25) / 0.5, 0, 1);
-      for (const b of model.blades) (b.material as THREE.MeshLambertMaterial).opacity = 1 - blur * 0.85;
-      (model.disc.material as THREE.MeshBasicMaterial).opacity = blur * 0.16;
-
-      model.cyclic.rotation.set(-c.cyclicY * 0.25, 0, -c.cyclicX * 0.25);
-      model.collective.rotation.x = h.collective * 0.45;
-      model.pedalL.position.z = -3.18 + c.pedal * 0.05;
-      model.pedalR.position.z = -3.18 - c.pedal * 0.05;
-
-      const cockpit = viewRef.current === 'cockpit';
-      model.shell.visible = !cockpit;
-      if (cockpit) {
-        if (camera.parent !== model.head) { model.head.add(camera); camera.position.set(0, 0, 0); }
-        const vib = h.rpm * (0.0012 + airspeed(h, sim.wind) * 0.00003) * (h.landed ? 0.5 : 1);
-        model.head.position.set(
-          EYE.x + (Math.random() - 0.5) * vib,
-          EYE.y + Math.sin(now * 0.001 * Math.PI * 2 * ROTOR_HZ * BLADES * h.rpm) * vib + (Math.random() - 0.5) * vib,
-          EYE.z,
-        );
-        camera.rotation.set(input.headPitch, input.headYaw, 0, 'YXZ');
-        chaseInit = false;
-      } else {
-        if (camera.parent !== scn.scene) scn.scene.add(camera);
-        const yawDir = tmp.set(-Math.sin(h.yaw), 0, -Math.cos(h.yaw));
-        const want = tmp2.copy(h.pos).addScaledVector(yawDir, -30);
-        want.y += 9;
-        want.y = Math.max(want.y, sim.terrain.surfaceAt(want.x, want.z) + 2);
-        if (!chaseInit) { chasePos.copy(want); chaseInit = true; }
-        chasePos.lerp(want, Math.min(1, dt * 3));
-        camera.position.copy(chasePos);
-        camera.lookAt(h.pos.x, h.pos.y + 1, h.pos.z);
-      }
-
-      const tp = sim.target;
-      scn.beam.visible = !!tp;
-      if (tp) scn.beam.position.set(tp.x, tp.y + 250, tp.z);
-      const blink = Math.sin(now * 0.008) > 0;
-      sim.pads.forEach((p, i) => {
-        const pv = scn.pads[i];
-        const target = !!tp && Math.hypot(p.x - tp.x, p.z - tp.z) < 1;
-        for (const l of pv.lights) {
-          const m = l.material as THREE.MeshBasicMaterial;
-          m.color.set(target ? (blink ? 0x06d6a0 : 0x222222) : p.base ? 0x4cc9f0 : 0x886633);
-        }
-        const ws = sim.wind.length();
-        pv.sock.rotation.set(0, Math.atan2(-sim.wind.z, sim.wind.x), -(1 - Math.min(1, ws / 8)) * 0.9);
-      });
-
-      const agl = aglOf(h, sim.terrain);
-      const sy = sim.terrain.surfaceAt(h.pos.x, h.pos.z);
-      scn.shadow.visible = h.alive && agl < 90;
-      scn.shadow.position.set(h.pos.x, sy + 0.12, h.pos.z);
-      scn.shadow.scale.setScalar(5.5 + Math.max(0, agl) * 0.03);
-      (scn.shadow.material as THREE.MeshBasicMaterial).opacity = 0.4 * (1 - clamp(agl / 90, 0, 1));
-
-      camera.getWorldPosition(tmp);
-      scn.sky.position.copy(tmp);
-
-      inst.draw(sim, frame++ % 3);
-      renderer.render(scn.scene, camera);
-
-      og.clearRect(0, 0, overlay.width, overlay.height);
-      if (cockpit && hudOnRef.current && h.alive && session.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, sim, camera);
-
-      audioRef.current?.update({
-        rpm: h.alive ? h.rpm : 0, collective: h.collective, airspeed: airspeed(h, sim.wind),
-        warn: h.alive && session.mode === 'play' && ((h.rpm < 0.85 && !h.landed) || h.fuel < 10),
-      });
-
-      if (hudRef.current) {
-        hudRef.current.style.display = !cockpit && hudOnRef.current ? '' : 'none';
-        hudRef.current.textContent =
-          `RAD ALT ${Math.round(Math.max(0, agl) * M_TO_FT)} ft · VS ${Math.round(h.vel.y * MS_TO_FPM)} fpm · ${Math.round(airspeed(h, sim.wind) * MS_TO_KT)} kt · COLL ${Math.round(h.collective * 100)}% · ROTOR ${Math.round(h.rpm * 100)}%`;
-      }
-      if (missionRef.current) {
-        missionRef.current.textContent = tp
-          ? `목표: ${tp.name} 패드 (${Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z))} m)`
-          : '비행 연습';
-        missionRef.current.style.color = '#06d6a0';
-      }
-      if (msgRef.current) {
-        const list = messagesRef.current;
-        for (const m of list) m.life -= dt;
-        messagesRef.current = list.filter(m => m.life > 0);
-        msgRef.current.replaceChildren(...messagesRef.current.map(m => {
-          const el = document.createElement('div');
-          el.textContent = m.text; el.style.color = m.color; el.style.opacity = String(clamp(m.life, 0, 1));
-          return el;
-        }));
-      }
-      if (hintRef.current) {
-        let hint = '';
-        if (session.mode === 'play' && h.alive) {
-          if (!h.engineOn && h.landed && h.fuel > 0) hint = touchRef.current ? '시동 버튼으로 엔진을 켜세요' : 'I 키로 엔진 시동';
-          else if (h.engineOn && h.rpm < 0.95 && h.landed) hint = `로터 가속 중… ${Math.round(h.rpm * 100)}%`;
-          else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = touchRef.current ? '왼쪽 스틱을 위로 — 콜렉티브를 올려 이륙' : 'W 키로 콜렉티브를 올려 이륙';
-        }
-        hintRef.current.textContent = hint;
-      }
-
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-
+    input.onView = () => r.toggleView();
+    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, renderer: r, model: r.model } });
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-      scn.dispose();
       offEvents();
-      inst.dispose();
-      renderer.dispose();
-      mount.removeChild(renderer.domElement);
+      r.dispose();
+      rendererRef.current = null;
       audioRef.current?.dispose();
       audioRef.current = null;
     };

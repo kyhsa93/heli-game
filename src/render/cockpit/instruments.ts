@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { clamp } from '../core/math';
-import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
-import { agl as aglOf, airspeed } from '../sim/heli/state';
-import { HALF, N, SIZE } from '../sim/terrain';
-import type { World } from '../sim/world';
+import { clamp } from '../../core/math';
+import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../../core/units';
+import { agl as aglOf, airspeed } from '../../sim/heli/state';
+import { HALF, N, SIZE } from '../../sim/terrain';
+import type { World } from '../../sim/world';
 
 const GREEN = '#46ff7a';
 const DIM = '#1f8a3e';
