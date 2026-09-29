@@ -245,7 +245,7 @@ EUFD(가운데 주황 화면)는 현재처럼 경고 목록 + 연료·NR·TQ. 03
 
 구현(M3-8): 음성 경고는 `src/audio/voice.ts`의 8문장(Missile launch / Missile, missile / Engine one·two fire / Engine out / Land now / Bingo fuel / Altitude, altitude), 같은 문장은 5초 쿨다운, `speechSynthesis`가 없으면 비프. 연료 10% 미만에서 한 번, 50ft 아래 800fpm 넘는 하강이면 Altitude. 켜고 끄기는 일시정지 카드의 버튼(설정 화면은 M7-1)이며 `localStorage`에 저장. RWR은 합성 사각파: 탐색 2초마다 짧은 틱, 추적 초당 2회 비프, 발사·미사일 초당 8회 고음(`src/audio/rwr.ts`). 기체 피격은 Kenney 금속 충격 3종 중 무작위, 무전 잡음 샘플은 `SfxPlayer.radio()`로 준비(무전 큐는 M4-2).
 
-녹음 파일은 `public/assets/audio/`(모노 MP3, 합계 약 350~520KB, 10장 10.3절). 재생·믹싱은 `src/audio/`. 경고음·RWR·스위치 소리는 합성 유지. 녹음 파일 로드 실패 시 합성음으로 폴백.
+녹음 파일은 `public/assets/audio/`(모노 MP3, 합계 약 350~520KB, 10장 10.3절). 재생·믹싱은 `src/audio/`. 구현(M7-4, `src/audio/mixer.ts`): 버스 4개 — 엔진(로터·터빈·바람·시동, 0.85), 무기(발사·폭발·피격, 1.0), 경고(비프·잠금음·RWR, 0.9), 무전(잡음, 0.9) → 마스터(설정의 전체 음량). 경고 비프·RWR 발사 단계·음성 경고(1.6초)·무전(0.8초) 동안 엔진 버스는 45%, 무기 버스는 60%로 덕킹(0.05초에 내려가고 0.6초에 돌아옴). 무전 버스는 320–3,200Hz 대역 필터 + 약한 tanh 왜곡으로 무전기 소리. 거리 감쇠는 역거리 모델 `ref/(ref + rolloff·(d−ref))`: 착탄음 기준 60m·2.5km 밖 무음, 폭발 기준 150m·롤오프 0.8·9km 밖 무음, 저역 통과는 거리에 따라 20kHz에서 400Hz까지. 경고음·RWR·스위치 소리는 합성 유지. 녹음 파일 로드 실패 시 합성음으로 폴백.
 
 ## 7.8 설정
 

@@ -1,3 +1,4 @@
+import { Mixer } from './mixer';
 import { RWR_PATTERN, rwrGateOn, type RwrLevel } from './rwr';
 
 export const MASTER_GAIN = 0.55;
@@ -34,7 +35,9 @@ export class RotorAudio {
   private rwrGain!: GainNode;
   private muted = false;
   private volume = 1;
+  private duckUntil = 0;
   private synthBus: GainNode;
+  readonly mixer: Mixer;
   private loop: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   private start: AudioBufferSourceNode | null = null;
 
@@ -43,13 +46,15 @@ export class RotorAudio {
     this.master = this.ctx.createGain();
     this.master.gain.value = MASTER_GAIN;
     this.master.connect(this.ctx.destination);
+    this.mixer = new Mixer(this.ctx, this.master);
     this.synthBus = this.ctx.createGain();
-    this.synthBus.connect(this.master);
+    this.synthBus.connect(this.mixer.buses.engine);
     this.init();
   }
 
   get context() { return this.ctx; }
-  get output(): AudioNode { return this.master; }
+  get output(): AudioNode { return this.mixer.buses.weapons; }
+  get radioOutput(): AudioNode { return this.mixer.buses.radio; }
 
   setRotorLoop(buffer: AudioBuffer) {
     const src = this.ctx.createBufferSource();
@@ -59,7 +64,7 @@ export class RotorAudio {
     src.loopStart = a; src.loopEnd = b;
     const gain = this.ctx.createGain();
     gain.gain.value = 0;
-    src.connect(gain).connect(this.master);
+    src.connect(gain).connect(this.mixer.buses.engine);
     src.start(0, a);
     this.loop = { src, gain };
     this.synthBus.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
@@ -74,7 +79,7 @@ export class RotorAudio {
     src.buffer = buffer;
     const g = this.ctx.createGain();
     g.gain.value = 0.7;
-    src.connect(g).connect(this.master);
+    src.connect(g).connect(this.mixer.buses.engine);
     src.start();
     this.start = src;
   }
@@ -124,18 +129,18 @@ export class RotorAudio {
     this.windFilter = ctx.createBiquadFilter();
     this.windFilter.type = 'bandpass'; this.windFilter.frequency.value = 700; this.windFilter.Q.value = 0.6;
     this.windGain = ctx.createGain(); this.windGain.gain.value = 0;
-    src().connect(this.windFilter).connect(this.windGain).connect(this.master);
+    src().connect(this.windFilter).connect(this.windGain).connect(this.mixer.buses.engine);
 
     const beep = ctx.createOscillator(); beep.type = 'square'; beep.frequency.value = 760; beep.start();
     this.warnGain = ctx.createGain(); this.warnGain.gain.value = 0;
-    beep.connect(this.warnGain).connect(this.master);
+    beep.connect(this.warnGain).connect(this.mixer.buses.warnings);
     const tone = ctx.createOscillator(); tone.type = 'sine'; tone.frequency.value = LOCK_HZ; tone.start();
     this.lockOsc = tone;
     this.lockGain = ctx.createGain(); this.lockGain.gain.value = 0;
-    tone.connect(this.lockGain).connect(this.master);
+    tone.connect(this.lockGain).connect(this.mixer.buses.warnings);
     this.rwrOsc = ctx.createOscillator(); this.rwrOsc.type = 'square'; this.rwrOsc.frequency.value = 1000; this.rwrOsc.start();
     this.rwrGain = ctx.createGain(); this.rwrGain.gain.value = 0;
-    this.rwrOsc.connect(this.rwrGain).connect(this.master);
+    this.rwrOsc.connect(this.rwrGain).connect(this.mixer.buses.warnings);
   }
 
   resume() { return this.ctx.resume(); }
@@ -177,6 +182,8 @@ export class RotorAudio {
       this.loop.src.playbackRate.setTargetAtTime(0.45 + 0.55 * Math.min(1.1, rpm), t, k);
       this.loop.gain.gain.setTargetAtTime(Math.min(1, rpm * 1.3) * (0.55 + 0.45 * s.collective) * 0.9, t, k);
     }
+    const rwrLoud = s.rwr === 'launch';
+    this.mixer.duck(s.warn || rwrLoud || t < this.duckUntil);
     const beepOn = s.warn && Math.floor(t * 3) % 2 === 0;
     this.warnGain.gain.setTargetAtTime(beepOn ? 0.05 : 0, t, 0.01);
     const ir = s.ir ?? 'none';
@@ -186,6 +193,10 @@ export class RotorAudio {
     const level = s.rwr ?? 'none', pat = RWR_PATTERN[level];
     if (pat.freq) this.rwrOsc.frequency.setTargetAtTime(pat.freq, t, 0.01);
     this.rwrGain.gain.setTargetAtTime(rwrGateOn(level, t) ? pat.gain : 0, t, 0.004);
+  }
+
+  duckFor(seconds: number) {
+    this.duckUntil = Math.max(this.duckUntil, this.ctx.currentTime + seconds);
   }
 
   beep() {

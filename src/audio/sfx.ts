@@ -1,5 +1,11 @@
 import type { Vector3 } from 'three';
 import type { SimEvent } from '../sim/events';
+import { distanceGain, distanceLowpass } from './mixer';
+
+export const IMPACT_REF = 60;
+export const IMPACT_MAX = 2500;
+export const EXPLOSION_REF = 150;
+export const EXPLOSION_MAX = 9000;
 
 export const SOUND_SPEED = 340;
 
@@ -9,6 +15,7 @@ export class SfxPlayer {
   private lastGun = -1;
   private voices = 0;
   private noise: AudioBuffer;
+  radioOut: AudioNode | null = null;
 
   constructor(
     private ctx: AudioContext,
@@ -43,14 +50,13 @@ export class SfxPlayer {
         break;
       case 'impact': {
         const d = e.pos.distanceTo(listener);
-        if (d > 2500) return;
-        this.play(e.ground ? 'impact_ground' : 'impact_metal', 0.9 / (1 + d / 120), 0.9 + this.rnd() * 0.2, d / SOUND_SPEED, 20000 / (1 + d / 300), 0.08);
+        this.play(e.ground ? 'impact_ground' : 'impact_metal', 0.9 * distanceGain(d, IMPACT_REF, 1, IMPACT_MAX), 0.9 + this.rnd() * 0.2, d / SOUND_SPEED, distanceLowpass(d, 20000, 300), 0.08);
         break;
       }
       case 'explosion': {
         const d = e.pos.distanceTo(listener);
         const id: SampleId = this.rnd() < 0.5 ? 'explosion_near' : 'explosion_fire';
-        this.play(id, Math.min(1.2, 0.4 + e.size / 20) / (1 + d / 250), e.size > 10 ? 0.85 : 1, d / SOUND_SPEED, 18000 / (1 + d / 400), 0.9);
+        this.play(id, Math.min(1.2, 0.4 + e.size / 20) * distanceGain(d, EXPLOSION_REF, 0.8, EXPLOSION_MAX), e.size > 10 ? 0.85 : 1, d / SOUND_SPEED, distanceLowpass(d, 18000, 400), 0.9);
         break;
       }
       case 'playerHit': {
@@ -64,10 +70,10 @@ export class SfxPlayer {
   }
 
   radio() {
-    this.play('radio_squelch', 0.5, 1, 0, 20000, 0.15);
+    this.play('radio_squelch', 0.5, 1, 0, 20000, 0.15, this.radioOut ?? this.out);
   }
 
-  private play(id: SampleId, gain: number, rate: number, delay: number, lowpass: number, synthLength: number) {
+  private play(id: SampleId, gain: number, rate: number, delay: number, lowpass: number, synthLength: number, dest: AudioNode = this.out) {
     if (this.voices >= this.maxVoices || gain < 0.01) return;
     const buffer = this.samples[id];
     const src = this.ctx.createBufferSource();
@@ -83,7 +89,7 @@ export class SfxPlayer {
       g.gain.setValueAtTime(gain, at);
       g.gain.exponentialRampToValueAtTime(0.001, at + synthLength);
     }
-    src.connect(filter).connect(g).connect(this.out);
+    src.connect(filter).connect(g).connect(dest);
     this.voices++;
     src.onended = () => { this.voices--; };
     src.start(at, 0, buffer ? undefined : synthLength);

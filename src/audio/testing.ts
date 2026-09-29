@@ -23,6 +23,7 @@ export function fakeCtx() {
     createGain: () => ({ ...node(), gain: new FakeParam() }),
     createBiquadFilter: () => ({ ...node(), type: '', frequency: new FakeParam(), Q: new FakeParam() }),
     createOscillator: () => ({ ...node(), type: '', frequency: new FakeParam(), start() {} }),
+    createWaveShaper: () => ({ ...node(), curve: null as Float32Array | null }),
     createBuffer: (_c: number, len: number, sr: number) => buffer(len, sr),
     createBufferSource: () => {
       const src = {

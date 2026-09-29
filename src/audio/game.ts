@@ -37,6 +37,9 @@ export const AUDIO_ASSETS: Record<string, string> = {
   'audio.radio_squelch': 'radio_squelch',
 };
 
+export const VOICE_DUCK = 1.6;
+export const RADIO_DUCK = 0.8;
+
 export class GameAudio {
   readonly rotor: RotorAudio;
   readonly sfx: SfxPlayer;
@@ -47,6 +50,7 @@ export class GameAudio {
   constructor(ctx?: AudioContext, voice?: VoiceBackend | null) {
     this.rotor = new RotorAudio(ctx);
     this.sfx = new SfxPlayer(this.rotor.context, this.rotor.output);
+    this.sfx.radioOut = this.rotor.radioOutput;
     this.voice = new VoiceWarnings(voice === undefined ? speechBackend() : voice, () => this.rotor.beep(), () => this.rotor.context.currentTime);
   }
 
@@ -69,9 +73,9 @@ export class GameAudio {
       else this.rotor.stopEngineStart();
     }
     this.sfx.onEvent(e, listener);
-    if (e.t === 'radio') this.sfx.radio();
+    if (e.t === 'radio') { this.sfx.radio(); this.rotor.duckFor(RADIO_DUCK); }
     const line = voiceFor(e);
-    if (line) this.voice.say(line);
+    if (line && this.voice.say(line)) this.rotor.duckFor(VOICE_DUCK);
   }
 
   update(s: AudioState & { fuel?: number; aglFt?: number; vsFpm?: number; flying?: boolean }) {
