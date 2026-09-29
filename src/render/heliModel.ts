@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { BLADES, EYE, GEAR_Y, ROTOR_R, ROTOR_Y } from '../sim/heli/airframe';
+import { PYLONS, type Loadout, type PylonId } from '../sim/heli/loadout';
 import { buildCockpit, type Screens } from './cockpit/cockpitModel';
 import { add, bar, box, extrudeSide, lambert, MAT, taperBox, tube, v } from './modelKit';
 
@@ -17,12 +18,14 @@ export interface HeliModel {
   pedalR: THREE.Group;
   head: THREE.Group;
   screens: Screens;
+  stores: Record<PylonId, PylonStores>;
+  stingers: THREE.Group[];
 }
 
 function buildExterior(root: THREE.Group) {
   const ext = new THREE.Group();
   root.add(ext);
-  const { olive, oliveDark, black, metal, rubber, missile } = MAT;
+  const { olive, oliveDark, black, metal, rubber } = MAT;
 
   const nose = add(ext, taperBox(-6.55, -5.4, 0.55, 0.45, 1.0, 0.75, -0.62, -0.6, olive));
   nose.name = 'nose';
@@ -58,28 +61,10 @@ function buildExterior(root: THREE.Group) {
   box(ext, 0.08, 0.35, 0.7, olive, -1.7, 0.2, 8.75);
   box(ext, 0.08, 0.35, 0.7, olive, 1.7, 0.2, 8.75);
 
-  for (const s of [-1, 1]) {
-    box(ext, 1.95, 0.1, 1.1, olive, s * 1.6, 0.35, 0.15);
-    for (const [px, kind] of [[1.25, 'hellfire'], [2.1, 'rockets']] as const) {
-      box(ext, 0.12, 0.35, 0.6, oliveDark, s * px, 0.13, 0.15);
-      if (kind === 'hellfire') {
-        box(ext, 0.62, 0.06, 1.55, oliveDark, s * px, -0.08, 0.15);
-        for (const dx of [-0.17, 0.17]) {
-          for (const dy of [-0.24, -0.5]) {
-            const m = add(ext, new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.62, 10), missile));
-            m.rotation.x = Math.PI / 2; m.position.set(s * px + dx, dy, 0.1);
-            const tip = add(ext, new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), black));
-            tip.rotation.x = -Math.PI / 2; tip.position.set(s * px + dx, dy, -0.71);
-          }
-        }
-      } else {
-        const pod = add(ext, new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1.6, 16), oliveDark));
-        pod.rotation.x = Math.PI / 2; pod.position.set(s * px, -0.2, 0.15);
-        const face = add(ext, new THREE.Mesh(new THREE.CircleGeometry(0.25, 16), black));
-        face.position.set(s * px, -0.2, -0.66); face.rotation.y = Math.PI;
-      }
-    }
-  }
+  for (const s of [-1, 1]) box(ext, 1.95, 0.1, 1.1, olive, s * 1.6, 0.35, 0.15);
+  const stores = {} as Record<PylonId, PylonStores>;
+  for (const [id, x] of PYLON_X) stores[id] = buildPylon(ext, x);
+  const stingers = [-1, 1].map(s => buildStingerLauncher(ext, s * 2.62));
 
   box(ext, 0.42, 0.26, 0.42, oliveDark, 0, -1.12, -3.25);
   tube(ext, v(0, -1.2, -3.3), v(0, -1.2, -5.0), 0.055, black);
@@ -108,7 +93,45 @@ function buildExterior(root: THREE.Group) {
   }
   ext.add(tailRotor);
 
-  return { tailRotor };
+  return { tailRotor, stores, stingers };
+}
+
+export const PYLON_X: readonly [PylonId, number][] = [['L2', -2.1], ['L1', -1.25], ['R1', 1.25], ['R2', 2.1]];
+
+export interface PylonStores { hellfire: THREE.Group; missiles: THREE.Object3D[]; pod: THREE.Group }
+
+function buildPylon(ext: THREE.Group, x: number): PylonStores {
+  const { oliveDark, black, missile } = MAT;
+  box(ext, 0.12, 0.35, 0.6, oliveDark, x, 0.13, 0.15);
+  const hellfire = add(ext, new THREE.Group());
+  box(hellfire, 0.62, 0.06, 1.55, oliveDark, x, -0.08, 0.15);
+  const missiles: THREE.Object3D[] = [];
+  for (const dy of [-0.24, -0.5]) {
+    for (const dx of [-0.17, 0.17]) {
+      const m = add(hellfire, new THREE.Group());
+      const body = add(m, new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.62, 10), missile));
+      body.rotation.x = Math.PI / 2; body.position.set(x + dx, dy, 0.1);
+      const tip = add(m, new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), black));
+      tip.rotation.x = -Math.PI / 2; tip.position.set(x + dx, dy, -0.71);
+      missiles.push(m);
+    }
+  }
+  const pod = add(ext, new THREE.Group());
+  const tube = add(pod, new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1.6, 16), oliveDark));
+  tube.rotation.x = Math.PI / 2; tube.position.set(x, -0.2, 0.15);
+  const face = add(pod, new THREE.Mesh(new THREE.CircleGeometry(0.25, 16), black));
+  face.position.set(x, -0.2, -0.66); face.rotation.y = Math.PI;
+  return { hellfire, missiles, pod };
+}
+
+function buildStingerLauncher(ext: THREE.Group, x: number) {
+  const g = add(ext, new THREE.Group());
+  box(g, 0.08, 0.2, 0.5, MAT.oliveDark, x, 0.3, 0.15);
+  for (const dy of [0.2, 0.42]) {
+    const m = add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.5, 8), MAT.missile));
+    m.rotation.x = Math.PI / 2; m.position.set(x, dy, 0.1);
+  }
+  return g;
 }
 
 function buildRotor(root: THREE.Group) {
@@ -144,7 +167,7 @@ function buildShell(root: THREE.Group) {
 
 export function buildHeli(): HeliModel {
   const root = new THREE.Group();
-  const { tailRotor } = buildExterior(root);
+  const { tailRotor, stores, stingers } = buildExterior(root);
   const { rotor, blades, disc } = buildRotor(root);
   const shell = buildShell(root);
   const parts = buildCockpit();
@@ -152,5 +175,16 @@ export function buildHeli(): HeliModel {
   const head = new THREE.Group();
   head.position.copy(EYE);
   root.add(head);
-  return { root, shell, rotor, blades, disc, tailRotor, head, ...parts };
+  return { root, shell, rotor, blades, disc, tailRotor, head, stores, stingers, ...parts };
+}
+
+export function applyLoadout(model: HeliModel, lo: Loadout) {
+  for (const id of PYLONS) {
+    const st = model.stores[id], store = lo.def.pylons[id];
+    const hellfire = store === 'agm114k' || store === 'agm114l';
+    st.hellfire.visible = hellfire;
+    st.pod.visible = store === 'hydra70';
+    st.missiles.forEach((m, i) => { m.visible = hellfire && i < lo.rounds[id]; });
+  }
+  model.stingers.forEach(g => { g.visible = lo.def.stingers; });
 }

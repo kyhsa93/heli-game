@@ -7,7 +7,7 @@ import type { FlightSession } from '../sim/session';
 import { STEP } from '../sim/world';
 import type { FlightInput } from '../input/input';
 import { Instruments } from './cockpit/instruments';
-import { buildHeli, type HeliModel } from './heliModel';
+import { applyLoadout, buildHeli, type HeliModel } from './heliModel';
 import { assets } from '../assets/loader';
 import { UNITS_GROUP } from '../assets/manifest';
 import { Effects, fallbackAtlas } from './effects';
@@ -135,6 +135,7 @@ export class FlightRenderer {
     for (const b of model.blades) (b.material as THREE.MeshLambertMaterial).opacity = 1 - blur * 0.85;
     (model.disc.material as THREE.MeshBasicMaterial).opacity = blur * 0.16;
 
+    applyLoadout(model, world.loadout);
     model.cyclic.rotation.set(-c.cyclicY * 0.25, 0, -c.cyclicX * 0.25);
     model.collective.rotation.x = h.collective * 0.45;
     model.pedalL.position.z = -3.18 + c.pedal * 0.05;

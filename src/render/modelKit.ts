@@ -78,6 +78,7 @@ export function extrudeSide(points: [number, number][], thickness: number, mat: 
 }
 
 export function canvasTex(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) {
+  if (typeof document === 'undefined') return new THREE.CanvasTexture(null as unknown as HTMLCanvasElement);
   const cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
   draw(cv.getContext('2d')!);
