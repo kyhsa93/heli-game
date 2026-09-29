@@ -5,7 +5,7 @@ import { BLADES, EYE, ROTOR_HZ } from '../sim/heli/airframe';
 import { agl as aglOf, airspeed } from '../sim/heli/state';
 import type { FlightSession } from '../sim/session';
 import { STEP } from '../sim/world';
-import type { FlightInput } from '../sim3d/input';
+import type { FlightInput } from '../input/input';
 import { Instruments } from './cockpit/instruments';
 import { buildHeli, type HeliModel } from './heliModel';
 import { drawIhadss } from './ihadss';

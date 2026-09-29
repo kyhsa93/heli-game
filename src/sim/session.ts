@@ -11,6 +11,7 @@ export class FlightSession {
   readonly world: World;
   mode: Mode = 'brief';
   crash: Crash | null = null;
+  paused = false;
   private overTimer = 0;
   private listeners = new Set<() => void>();
   private snapshot: SessionSnapshot = { mode: 'brief', crash: null };
@@ -41,11 +42,13 @@ export class FlightSession {
     this.world.resetPlayer();
     this.world.active = true;
     this.crash = null;
+    this.paused = false;
     this.mode = 'play';
     this.publish();
   }
 
   step(dt: number) {
+    if (this.paused) return;
     this.world.step(dt);
     if (this.mode === 'crashed') {
       this.overTimer -= dt;

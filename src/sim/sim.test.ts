@@ -114,6 +114,21 @@ describe('session', () => {
     expect(session.getSnapshot().crash?.reason).toBe('hardLanding');
   });
 
+  it('freezes the simulation while paused', () => {
+    const session = new FlightSession(7);
+    session.start();
+    const w = session.world, b = w.pads[0];
+    airborneAt(w, b.x, b.z, b.y + 100);
+    session.paused = true;
+    const y = w.player.pos.y, t = w.time;
+    for (let i = 0; i < 240; i++) session.step(1 / 120);
+    expect(w.player.pos.y).toBe(y);
+    expect(w.time).toBe(t);
+    session.paused = false;
+    session.step(1 / 120);
+    expect(w.time).toBeGreaterThan(t);
+  });
+
   it('does not fly before the session starts', () => {
     const session = new FlightSession(7);
     const y = session.world.player.pos.y;

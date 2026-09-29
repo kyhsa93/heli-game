@@ -1,5 +1,6 @@
 import { clamp } from '../core/math';
 import type { World } from '../sim/world';
+import { FLIGHT_KEYS, GAMEPAD_BUTTONS, type Command } from './bindings';
 
 export interface TouchSticks { lx: number; ly: number; rx: number; ry: number }
 
@@ -14,21 +15,24 @@ export class FlightInput {
   private cx = 0;
   private cy = 0;
   private padButtons: boolean[] = [];
-  onEngine?: () => void;
-  onView?: () => void;
+  onCommand?: (cmd: Command) => void;
+
+  private held(keys: readonly string[]) {
+    return keys.some(k => this.keys.has(k));
+  }
 
   update(world: World, dt: number) {
-    const k = this.keys, c = world.controls;
-    const tx = (k.has('ArrowRight') ? 1 : 0) - (k.has('ArrowLeft') ? 1 : 0);
-    const ty = (k.has('ArrowUp') ? 1 : 0) - (k.has('ArrowDown') ? 1 : 0);
+    const c = world.controls, K = FLIGHT_KEYS;
+    const tx = (this.held(K.cyclicRight) ? 1 : 0) - (this.held(K.cyclicLeft) ? 1 : 0);
+    const ty = (this.held(K.cyclicForward) ? 1 : 0) - (this.held(K.cyclicBack) ? 1 : 0);
     const ramp = Math.min(1, dt * 4);
     this.cx += (tx - this.cx) * ramp;
     this.cy += (ty - this.cy) * ramp;
 
     let cyclicX = this.cx + this.touch.rx, cyclicY = this.cy - this.touch.ry;
-    let pedal = (k.has('KeyD') || k.has('KeyE') ? 1 : 0) - (k.has('KeyA') || k.has('KeyQ') ? 1 : 0) + this.touch.lx;
-    const fine = k.has('ShiftLeft') || k.has('ShiftRight') ? 0.3 : 1;
-    let collRate = ((k.has('KeyW') || k.has('PageUp') ? 1 : 0) - (k.has('KeyS') || k.has('PageDown') ? 1 : 0)) * 0.45 * fine;
+    let pedal = (this.held(K.pedalRight) ? 1 : 0) - (this.held(K.pedalLeft) ? 1 : 0) + this.touch.lx;
+    const fine = this.held(K.fine) ? 0.3 : 1;
+    let collRate = ((this.held(K.collectiveUp) ? 1 : 0) - (this.held(K.collectiveDown) ? 1 : 0)) * 0.45 * fine;
     collRate += -this.touch.ly * 0.5;
 
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -39,8 +43,10 @@ export class FlightInput {
       cyclicX += dz(gp.axes[2] ?? 0);
       cyclicY += -dz(gp.axes[3] ?? 0);
       const pressed = gp.buttons.map(b => b.pressed);
-      if (pressed[0] && !this.padButtons[0]) this.onEngine?.();
-      if (pressed[3] && !this.padButtons[3]) this.onView?.();
+      pressed.forEach((on, i) => {
+        const cmd = GAMEPAD_BUTTONS[i];
+        if (cmd && on && !this.padButtons[i]) this.onCommand?.(cmd);
+      });
       this.padButtons = pressed;
     }
 

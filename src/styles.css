@@ -65,3 +65,4 @@ button.go {
 .tbtn.engine { left: 50%; transform: translateX(-110%); bottom: calc(40px + env(safe-area-inset-bottom)); }
 .tbtn.view { left: 50%; transform: translateX(10%); bottom: calc(40px + env(safe-area-inset-bottom)); }
 .ihadss { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
+button.go.secondary { background: transparent; color: #e8eef7; border: 1px solid rgba(255, 255, 255, .35); }

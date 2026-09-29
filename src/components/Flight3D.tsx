@@ -5,7 +5,8 @@ import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { FlightRenderer } from '../render/renderer';
 import { airspeed } from '../sim/heli/state';
 import { FlightSession } from '../sim/session';
-import { FlightInput } from '../sim3d/input';
+import { commandForKey, PREVENT_DEFAULT, type Command } from '../input/bindings';
+import { FlightInput } from '../input/input';
 import { crashText, eventMessage, MessageLog } from './messages';
 import { VirtualStick } from './VirtualStick';
 
@@ -33,6 +34,20 @@ export function Flight3D({ touch }: { touch: boolean }) {
 
   const toggleView = () => rendererRef.current?.toggleView();
 
+  const runCommand = (cmd: Command) => {
+    switch (cmd) {
+      case 'engine': sim.toggleEngine(); break;
+      case 'view': toggleView(); break;
+      case 'centerView': input.centerView(); break;
+      case 'toggleHud': setHud(v => !v); break;
+      case 'help': case 'pause': if (session.mode === 'play') setHelp(v => !v); break;
+      case 'mute': if (audioRef.current) setMuted(audioRef.current.toggleMute()); break;
+      default: break;
+    }
+  };
+  const runCommandRef = useRef(runCommand);
+  runCommandRef.current = runCommand;
+
   const begin = () => {
     if (!audioRef.current) {
       try { audioRef.current = new RotorAudio(); } catch { audioRef.current = null; }
@@ -47,6 +62,10 @@ export function Flight3D({ touch }: { touch: boolean }) {
   useEffect(() => {
     if (rendererRef.current) rendererRef.current.hud = hud;
   }, [hud]);
+
+  useEffect(() => {
+    session.paused = help && snap.mode === 'play';
+  }, [session, help, snap.mode]);
 
   useEffect(() => {
     const log = logRef.current;
@@ -92,8 +111,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
       },
     });
     rendererRef.current = r;
-    input.onEngine = () => sim.toggleEngine();
-    input.onView = () => r.toggleView();
+    input.onCommand = cmd => runCommandRef.current(cmd);
     if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, renderer: r, model: r.model } });
     return () => {
       offEvents();
@@ -105,21 +123,13 @@ export function Flight3D({ touch }: { touch: boolean }) {
   }, [session, sim, input]);
 
   useEffect(() => {
-    const prevent = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown']);
     const down = (e: KeyboardEvent) => {
-      if (prevent.has(e.code)) e.preventDefault();
+      if (PREVENT_DEFAULT.has(e.code)) e.preventDefault();
       input.keys.add(e.code);
       if (e.repeat) return;
-      switch (e.code) {
-        case 'KeyI': sim.toggleEngine(); break;
-        case 'KeyV': toggleView(); break;
-        case 'KeyC': input.centerView(); break;
-        case 'KeyU': setHud(v => !v); break;
-        case 'KeyH': setHelp(v => !v); break;
-        case 'KeyM': if (audioRef.current) setMuted(audioRef.current.toggleMute()); break;
-        case 'KeyR': if (session.mode !== 'brief') begin(); break;
-        case 'Enter': if (session.mode === 'brief' || session.mode === 'over') begin(); break;
-      }
+      if (e.code === 'Enter' && (session.mode === 'brief' || session.mode === 'over')) { begin(); return; }
+      const cmd = commandForKey(e.code);
+      if (cmd) runCommand(cmd);
     };
     const up = (e: KeyboardEvent) => { input.keys.delete(e.code); };
     const blur = () => input.keys.clear();
@@ -196,7 +206,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
               <b>A / D</b><span>페달 — 기수 좌우 회전</span>
               <b>마우스 드래그</b><span>고개 돌리기 (C 또는 더블클릭: 정면)</span>
               <b>V · U · M</b><span>외부 시점 · 헬멧 심볼(IHADSS) · 소리</span>
-              <b>R</b><span>다시 시작</span>
+              <b>Esc</b><span>일시정지 (다시 시작)</span>
             </div>
             )}
             <ul className="rules">
@@ -208,7 +218,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
             </ul>
             {snap.mode === 'brief'
               ? <button className="go" onClick={begin}>비행 시작</button>
-              : <button className="go" onClick={() => setHelp(false)}>닫기</button>}
+              : <><button className="go" onClick={() => setHelp(false)}>계속</button> <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>다시 시작</button></>}
           </div>
         </div>
       )}
