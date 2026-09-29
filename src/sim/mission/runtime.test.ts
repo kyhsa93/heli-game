@@ -169,6 +169,16 @@ describe('mission runtime (06-missions-and-world.md 6.2)', () => {
     expect(rt.objectives[0].state).toBe('failed');
   });
 
+  it('does not count the land objective before the first take-off', () => {
+    const { rt, s } = run(mission({
+      start: { kind: 'farp_hot', position: [0, 0], headingDeg: 0 },
+      objectives: [{ id: 'l', kind: 'land', farp: 'farp_a', primary: true, label: '귀환' }],
+    }));
+    hold(s, 3);
+    expect(rt.objectives[0].state).toBe('active');
+    expect(s.getSnapshot().mode).toBe('play');
+  });
+
   it('succeeds only after the primaries are done and the player lands at a FARP', () => {
     const { rt, w, s } = run(mission({ start: { kind: 'farp_hot', position: [0, 0], headingDeg: 0 } }));
     w.player.pos.set(600, w.terrain.surfaceAt(600, 0) + 80, 0);

@@ -74,7 +74,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 - [x] [#37](https://github.com/kyhsa93/heli-game/issues/37) **M4-2 임무 런타임**: 목표·트리거·무전 큐, 1Hz 평가, 성공/실패 판정. *완료*: 트리거 조건 종류별 테스트, 목표 상태 전이 테스트.
 - [x] [#38](https://github.com/kyhsa93/heli-game/issues/38) **M4-3 🅰 지형 확장**: 12km 지도, 임무 `terrain.features`·도로 적용, 청크 LOD 렌더, ambientCG 회색조 디테일 맵 경사·높이 스플랫(10장 10.5절). *완료*: 같은 시드 → 같은 높이 배열 테스트, 도로 평탄화 테스트, 성능 예산 확인.
 - [x] [#39](https://github.com/kyhsa93/heli-game/issues/39) **M4-4 유닛 이동**: 도로 그래프, A*, 그룹 행동(patrol/advance/convoy). *완료*: 호송 그룹이 경로 끝에 도착 테스트.
-- [ ] [#40](https://github.com/kyhsa93/heli-game/issues/40) **M4-5 🅰 FARP**: 모델(채택 소품: 텐트·상자·드럼통·헬리패드 + 코드 연료 블래더), 착륙 시 메뉴, 재급유·재무장·수리. *완료*: 서비스 시간 테스트, 스크린샷.
+- [x] [#40](https://github.com/kyhsa93/heli-game/issues/40) **M4-5 🅰 FARP**: 모델(채택 소품: 텐트·상자·드럼통·헬리패드 + 코드 연료 블래더), 착륙 시 메뉴, 재급유·재무장·수리. *완료*: 서비스 시간 테스트, 스크린샷.
 - [ ] [#41](https://github.com/kyhsa93/heli-game/issues/41) **M4-6 화면**: 브리핑, 로드아웃, 디브리핑, 일시정지, 무전 자막, 목표 추적기. *완료*: 화면별 스크린샷(데스크톱·모바일 가로·세로).
 - [ ] [#42](https://github.com/kyhsa93/heli-game/issues/42) **M4-7 점수·평점**: `sim/mission/scoring.ts`, 02장 2.4절. *완료*: 점수 항목별 테스트.
 - [ ] [#43](https://github.com/kyhsa93/heli-game/issues/43) **M4-8 임무 1~3 작성**: JSON + 플레이 확인(헤드리스로 목표 달성 경로 자동 재생 테스트 1개씩).

@@ -111,6 +111,8 @@
 | 모래주머니·막사 | Quaternius | poly.pizza/m/iHyRewQQcN · /m/LW3jwpPfiN · /m/lnyADheSvA | CC0 | 65 / 128 / 221KB |
 | 상자·드럼통 (FARP) | Quaternius | poly.pizza/m/3OEFd1AWfa · /m/Eko3cjAMW9 · /m/eS1OXGo51c | CC0 | 34~44KB |
 | 텐트·검문소 | KolosStudios | sketchfab …64ae1a56… · …839aec48… | CC-BY 4.0 | 151 / 91KB |
+
+**채택(M4-5)**: 상자·드럼통·기름통(Quaternius, poly.pizza 3OEFd1AWfa·Eko3cjAMW9·eS1OXGo51c)과 막사·모래주머니(Quaternius, lnyADheSvA·LW3jwpPfiN) — 모두 CC0, 128px 텍스처로 9~42KB, 합계 약 113KB. 텐트(KolosStudios, Sketchfab)는 #65 때문에 막사로 대신했고, 헬리패드 모델(Kay Lousberg)은 이름·H 표시가 있는 기존 코드 패드와 겹쳐 쓰지 않았다.
 | 헬리패드 | Landing pad | poly.pizza/m/QpDGgpHcH2 | CC0, Kay Lousberg | 51KB |
 | (선택) 윙맨 아파치 | AH-64 Apache Attack Helicopter Low Poly | sketchfab.com/3d-models/ah-64-apache-attack-helicopter-low-poly-34986214decd4b3db90e91f12e624d78 | CC-BY 4.0, TheOminousDuck | 3,880 / 328KB (사막 위장 텍스처 1장) |
 | (선택) `heli_attack` | Mi-24 Hind | sketchfab.com/3d-models/mi-24-hind-004d68143e1a4df88e136dbc0a05f181 | CC-BY 4.0, duanesmind | 4,237 / 4.4MB → 텍스처 재압축 시 약 0.5MB |

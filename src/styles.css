@@ -67,6 +67,15 @@ button.go {
 .tads-row { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom)); display: flex; gap: 8px; pointer-events: auto; }
 .tads-row .tbtn { position: static; }
 .tbtn.view { left: 50%; transform: translateX(10%); bottom: calc(40px + env(safe-area-inset-bottom)); }
+.farp-menu { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 4;
+  background: rgba(8, 14, 24, .82); border: 1px solid rgba(76, 201, 240, .5); border-radius: 12px; padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 6px; align-items: center; color: #e8eef7; font-size: 14px; max-width: calc(100vw - 32px); }
+.farp-menu .row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.farp-menu button { font: inherit; color: #e8eef7; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.3); border-radius: 8px; padding: 6px 10px; }
+.farp-menu button.on { background: rgba(76, 201, 240, .35); border-color: #4cc9f0; }
+.farp-menu button.go { background: #ffd166; color: #10151d; font-weight: 700; }
+.farp-menu button:disabled { opacity: .4; }
+.farp-menu .dim { color: #aebbd0; }
 .ihadss { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
 button.go.secondary { background: transparent; color: #e8eef7; border: 1px solid rgba(255, 255, 255, .35); }
 

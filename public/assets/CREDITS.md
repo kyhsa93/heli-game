@@ -17,6 +17,11 @@
 | models/apc.glb | Tank | Quaternius | https://poly.pizza/m/FA5daiyZQq | CC0 | meshopt 압축·텍스처 축소, 애니메이션·스킨 제거, 폴리곤 30%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
 | models/technical.glb | Pickup Truck | Quaternius | https://poly.pizza/m/qn4grQgHm8 | CC0 | meshopt 압축·텍스처 축소, 폴리곤 40%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
 | models/civ_car.glb | SUV | Quaternius | https://poly.pizza/m/xsMtZhBkxL | CC0 | meshopt 압축·텍스처 축소, 폴리곤 40%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
+| models/prop_crate.glb | Crate | Quaternius | https://poly.pizza/m/3OEFd1AWfa | CC0 | meshopt 압축·텍스처 128px, 정지 모델. FARP 소품 | 2026-09-29 |
+| models/prop_barrel.glb | Barrel | Quaternius | https://poly.pizza/m/Eko3cjAMW9 | CC0 | meshopt 압축·텍스처 128px, 정지 모델. FARP 소품 | 2026-09-29 |
+| models/prop_gas_can.glb | Gas Can | Quaternius | https://poly.pizza/m/eS1OXGo51c | CC0 | meshopt 압축·텍스처 128px, 정지 모델. FARP 소품 | 2026-09-29 |
+| models/prop_barracks.glb | Barracks | Quaternius | https://poly.pizza/m/lnyADheSvA | CC0 | meshopt 압축·텍스처 128px, 정지 모델. FARP 소품 (텐트 대신 막사) | 2026-09-29 |
+| models/prop_sandbags.glb | Sack Trench | Quaternius | https://poly.pizza/m/LW3jwpPfiN | CC0 | meshopt 압축·텍스처 128px, 정지 모델. FARP 소품 | 2026-09-29 |
 | audio/rotor_interior_loop.mp3 | G36-10-Helicopter Constant Interior | craigsmith | https://freesound.org/people/craigsmith/sounds/438593/ | CC0 | 7–11초 구간 4초를 잘라 0.25초 크로스페이드로 이음새 없는 루프 제작, 모노 96kbps | 2026-09-29 |
 | audio/engine_start.mp3 | Helicopter Start Airbus Helicopters H135 | Borgory | https://freesound.org/people/Borgory/sounds/522672/ | CC0 | 10–22초(터빈 점화·가속) 12초 구간, 페이드, 모노 64kbps | 2026-09-29 |
 | audio/gun_shot.mp3 | Autocannon Three Shot Burst | qubodup | https://freesound.org/people/qubodup/sounds/854186/ | CC0 | 첫 발(0.02–0.26초)만 잘라 단발로 사용, 모노 64kbps | 2026-09-29 |

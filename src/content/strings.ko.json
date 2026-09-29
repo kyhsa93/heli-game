@@ -34,6 +34,11 @@
     "system": {
       "damaged": "피격: {name} 손상",
       "destroyed": "{name} 기능 상실"
+    },
+    "farp": {
+      "started": "FARP 작업 시작",
+      "done": "FARP 작업 완료",
+      "cancelled": "이륙해서 FARP 작업이 중단됐습니다"
     }
   },
   "hud": {
@@ -301,5 +306,22 @@
     "sensors": "센서",
     "fuel": "연료 계통",
     "cockpit": "조종석"
+  },
+  "farp": {
+    "title": "FARP — 전방 재보급",
+    "fuel": "재급유 {pct}%",
+    "repair": "수리 ({sec}초)",
+    "rearm": "재무장",
+    "gun": "기관포 {n}",
+    "start": "시작 ({sec}초)",
+    "working": "작업 중 — 남은 시간 {sec}초. 이륙하면 중단됩니다",
+    "repairLeft": "수리 {sec}초",
+    "rearmLeft": "재무장 {sec}초",
+    "store": {
+      "empty": "빈칸",
+      "hydra70": "로켓",
+      "agm114k": "헬파이어",
+      "agm114l": "헬파이어 L"
+    }
   }
 }

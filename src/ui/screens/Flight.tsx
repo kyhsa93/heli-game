@@ -9,6 +9,8 @@ import { FlightRenderer } from '../../render/renderer';
 import { LAND_DESCENT } from '../../sim/heli/airframe';
 import { airspeed } from '../../sim/heli/state';
 import { FlightSession } from '../../sim/session';
+import { farpUnder } from '../../sim/farp';
+import { FarpMenu } from '../flight/FarpMenu';
 import { MISSIONS } from '../../content/missions';
 import { missionSession } from '../../sim/mission/runtime';
 import { DIFFICULTIES } from '../../sim/difficulty';
@@ -58,6 +60,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
   const toggleView = () => rendererRef.current?.toggleView();
   const toggleSensor = () => { sim.tads.sensor = sim.tads.sensor === 'tv' ? 'flir' : 'tv'; };
   const [tadsOn, setTadsOn] = useState(false);
+  const [atFarp, setAtFarp] = useState(false);
+  const [, setFarpTick] = useState(0);
 
   const runCommand = (cmd: Command) => {
     switch (cmd) {
@@ -139,6 +143,9 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         }
         log.tick(simDt);
         setTadsOn(sim.tads.active);
+        const farp = session.mode === 'play' && h.alive && h.landed && farpUnder(sim) >= 0;
+        setAtFarp(farp);
+        if (farp) setFarpTick(n => (n + 1) % 1000);
         if (msgRef.current) {
           msgRef.current.replaceChildren(...log.items.map(m => {
             const el = document.createElement('div');
@@ -228,6 +235,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         </div>
       )}
       <div className="messages" ref={msgRef} />
+      {atFarp && <FarpMenu world={sim} />}
       <div className="hint" ref={hintRef} />
 
       {touch && snap.mode === 'play' && (

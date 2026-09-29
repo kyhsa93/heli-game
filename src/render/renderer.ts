@@ -11,7 +11,8 @@ import type { FlightInput } from '../input/input';
 import { Instruments } from './cockpit/instruments';
 import { applyLoadout, buildHeli, type HeliModel } from './heliModel';
 import { assets } from '../assets/loader';
-import { UNITS_GROUP } from '../assets/manifest';
+import { FARP_GROUP, UNITS_GROUP } from '../assets/manifest';
+import { FarpProps } from './farp';
 import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
 import { drawIhadss } from './ihadss';
@@ -63,6 +64,7 @@ export class FlightRenderer {
   private tmp2 = new THREE.Vector3();
   readonly effects: Effects;
   readonly units = new UnitRenderer();
+  readonly farp: FarpProps;
   readonly tads = new TadsView();
   private mpdTads = new TadsView();
   private mpdTarget = new THREE.WebGLRenderTarget(MPD_TADS, MPD_TADS);
@@ -98,6 +100,13 @@ export class FlightRenderer {
     this.effects = new Effects(assets.get<THREE.Texture>('tex.particles') ?? fallbackAtlas());
     this.scene.scene.add(this.effects.group);
     this.scene.scene.add(this.units.group);
+    this.farp = new FarpProps(session.world.pads);
+    this.scene.scene.add(this.farp.group);
+    void assets.loadGroup(FARP_GROUP).then(report => {
+      const models: Record<string, THREE.Object3D> = {};
+      for (const id of report.loaded) { const g = assets.get<{ scene: THREE.Object3D }>(id); if (g) models[id.replace('model.prop_', '')] = g.scene; }
+      this.farp.setModels(models);
+    });
     this.offEvents = session.world.events.onAny(e => {
       this.effects.onEvent(e, session.world);
       if (this.audio) this.audio.onEvent(e, this.camera.getWorldPosition(this.listener));

@@ -12,6 +12,7 @@ import { blastShares, DAMAGED, hitSystem, randomHitPoint, ROTOR_FAIL_SECONDS, sy
 import type { CrashReason } from './events';
 import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
 import { stepBrains } from './ai/brain';
+import { stepService, type FarpService } from './farp';
 import { RoadGraph, stepGroups, type GroupState } from './ai/movement';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
 import { DIFFICULTIES, type Difficulty } from './difficulty';
@@ -47,6 +48,7 @@ export class World {
   projectiles: Projectile[] = [];
   missiles: Missile[] = [];
   groups = new Map<string, GroupState>();
+  farpService: FarpService | null = null;
   private graph: RoadGraph | null = null;
   enemyMissiles: EnemyMissile[] = [];
   flares: Flare[] = [];
@@ -93,8 +95,23 @@ export class World {
     this.identify = { unitId: null, time: 0 };
     this.tads = createTads();
     this.hold = null;
+    this.farpService = null;
     this.flares = [];
     this.cm = createCountermeasures();
+  }
+
+  rearm(def: LoadoutDef) {
+    this.loadoutDef = def;
+    this.loadout = createLoadout(def);
+    this.arms = { ...createArms(def.gunRounds), selected: this.availableWeaponsFor(def).includes(this.arms.selected) ? this.arms.selected : 'gun30' };
+    this.updateWeight();
+  }
+
+  private availableWeaponsFor(def: LoadoutDef) {
+    const list = ['gun30'];
+    if (Object.values(def.pylons).includes('hydra70')) list.push('hydra70');
+    if (Object.values(def.pylons).includes('agm114k')) list.push('agm114k');
+    return list;
   }
 
   applyLoadout(def: LoadoutDef) {
@@ -296,6 +313,7 @@ export class World {
         collide(h, this.terrain, this.emit);
         if (h.landed && !wasLanded) this.refuelNoted = false;
       }
+      stepService(this, dt);
       if (!this.tads.active) lookAngles(aimDirection(h, this.commands.aim), this.tads);
       else {
         constrainTads(h, this.tads);

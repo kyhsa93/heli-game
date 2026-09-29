@@ -37,6 +37,7 @@ export class MissionRuntime implements Objective {
   private fired = new Set<string>();
   private triggerClock = 0;
   private failIn: number | null = null;
+  private flown = false;
   private world: World | null = null;
 
   constructor(readonly mission: MissionDef) {
@@ -58,6 +59,7 @@ export class MissionRuntime implements Objective {
     this.fired.clear();
     this.triggerClock = 0;
     this.failIn = null;
+    this.flown = false;
     world.applyLoadout(m.briefing.recommendedLoadout);
     world.conditions = { ...world.conditions, night: m.environment.time === 'night', fog: m.environment.fog };
     world.cm.chaffUnlocked = !!m.unlocks?.includes('chaff') || world.cm.chaffUnlocked;
@@ -175,7 +177,7 @@ export class MissionRuntime implements Objective {
         if (this.elapsed - o.since + 1e-6 >= d.seconds) this.setObjective(o, 'done');
         break;
       case 'land':
-        if (this.landedAtFarp(d.farp)) this.setObjective(o, 'done');
+        if (this.flown && this.landedAtFarp(d.farp)) this.setObjective(o, 'done');
         break;
       case 'identify':
         if (d.units.every(id => { const u = this.unit(id); return !!u && (u.identified || !u.alive); })) this.setObjective(o, 'done');
@@ -265,6 +267,7 @@ export class MissionRuntime implements Objective {
     if (this.state !== 'active') return;
     this.world = world;
     this.elapsed += dt;
+    if (!world.player.landed) this.flown = true;
     this.triggerClock += dt;
     if (this.triggerClock >= 1 / TRIGGER_HZ - 1e-9) {
       this.triggerClock -= 1 / TRIGGER_HZ;
@@ -296,7 +299,7 @@ export function missionTerrain(m: MissionDef): TerrainOptions {
     size: m.terrain.size,
     features: m.terrain.features,
     roads: m.terrain.roads,
-    pads: m.farps.map((f, i) => ({ x: f.position[0], z: f.position[1], name: f.id.replace(/^farp_/, '').toUpperCase(), base: i === 0 })),
+    pads: m.farps.map(f => ({ x: f.position[0], z: f.position[1], name: f.id.replace(/^farp_/, '').toUpperCase(), base: true })),
   };
 }
 

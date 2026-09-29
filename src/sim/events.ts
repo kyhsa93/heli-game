@@ -29,7 +29,8 @@ export type SimEvent =
   | { t: 'countermeasure'; kind: 'flare' | 'chaff'; decoyed: number; auto: boolean }
   | { t: 'radio'; from: 'control' | 'steel6' | 'hound2' | 'rescue'; text: string }
   | { t: 'smoke'; pos: Vector3; color: 'red' | 'green' | 'white' }
-  | { t: 'missionObjective'; id: string; state: 'active' | 'done' | 'failed'; primary: boolean };
+  | { t: 'missionObjective'; id: string; state: 'active' | 'done' | 'failed'; primary: boolean }
+  | { t: 'farp'; state: 'started' | 'done' | 'cancelled'; repair: number; rearm: number };
 
 export type AdviceCode = 'landingTooHard' | 'wrongPad';
 

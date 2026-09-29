@@ -11,6 +11,7 @@ export interface AssetDef {
 
 export const BOOT_GROUP = 'boot';
 export const UNITS_GROUP = 'units';
+export const FARP_GROUP = 'farp';
 export const BOOT_BUDGET_BYTES = 600 * 1024;
 export const MISSION_BUDGET_BYTES = 1024 * 1024;
 
@@ -43,6 +44,11 @@ export const ASSETS: AssetDef[] = [
   { id: 'model.technical', kind: 'gltf', path: 'models/technical.glb', group: UNITS_GROUP },
   { id: 'model.soldier', kind: 'gltf', path: 'models/soldier.glb', group: UNITS_GROUP },
   { id: 'model.civ_car', kind: 'gltf', path: 'models/civ_car.glb', group: UNITS_GROUP },
+  { id: 'model.prop_crate', kind: 'gltf', path: 'models/prop_crate.glb', group: FARP_GROUP },
+  { id: 'model.prop_barrel', kind: 'gltf', path: 'models/prop_barrel.glb', group: FARP_GROUP },
+  { id: 'model.prop_gas_can', kind: 'gltf', path: 'models/prop_gas_can.glb', group: FARP_GROUP },
+  { id: 'model.prop_barracks', kind: 'gltf', path: 'models/prop_barracks.glb', group: FARP_GROUP },
+  { id: 'model.prop_sandbags', kind: 'gltf', path: 'models/prop_sandbags.glb', group: FARP_GROUP },
 ];
 
 export function assetUrl(path: string) {

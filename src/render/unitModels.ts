@@ -145,3 +145,20 @@ export function fallbackModel(def: UnitDef, category: Category): THREE.BufferGeo
   g.computeBoundingSphere();
   return g;
 }
+
+export function bakeProp(scene: THREE.Object3D, extent: number): THREE.BufferGeometry {
+  scene.updateMatrixWorld(true);
+  const parts: THREE.BufferGeometry[] = [];
+  scene.traverse(o => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh && m.geometry) parts.push(bakeMesh(m, m.matrixWorld));
+  });
+  const geo = mergeGeometries(parts, false)!;
+  geo.computeBoundingBox();
+  const b = geo.boundingBox!;
+  geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2);
+  const k = extent / Math.max(1e-6, b.max.x - b.min.x, b.max.z - b.min.z);
+  geo.scale(k, k, k);
+  geo.computeBoundingSphere();
+  return geo;
+}
