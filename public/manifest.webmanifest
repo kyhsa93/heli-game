@@ -1,0 +1,19 @@
+{
+  "name": "헬기 조종",
+  "short_name": "헬기 조종",
+  "description": "AH-64 아파치 조종석 시뮬레이터와 측면 아케이드 헬기 게임",
+  "lang": "ko",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#0b1320",
+  "theme_color": "#0b1320",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

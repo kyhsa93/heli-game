@@ -30,6 +30,10 @@ https://kyhsa93.github.io/heli-game/
 
 ▲/W/Space 상승 · ▼/S 하강 · ◀▶/A D 기울이기 · E 화물 고리 · R 재시작 · Esc 메뉴
 
+## 앱으로 설치 (PWA)
+
+브라우저 메뉴의 "앱 설치" 또는 "홈 화면에 추가"로 설치하면 전체 화면으로 실행된다. 서비스 워커는 아무것도 캐시하지 않고 모든 요청을 `cache: 'no-store'`로 네트워크에서 새로 받으므로, 앱을 열 때마다 항상 최신 버전이 뜬다(오프라인에서는 실행되지 않는다).
+
 ## 개발
 
 React + TypeScript + Vite. `main`에 push하면 GitHub Actions가 테스트·빌드 후 Pages에 배포한다.
