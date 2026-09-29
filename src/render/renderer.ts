@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { RotorAudio } from '../audio/rotor';
+import type { GameAudio } from '../audio/game';
 import { clamp } from '../core/math';
 import { BLADES, EYE, ROTOR_HZ } from '../sim/heli/airframe';
 import { agl as aglOf, airspeed } from '../sim/heli/state';
@@ -31,7 +31,8 @@ export class FlightRenderer {
   view: View = 'cockpit';
   debugCamera: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
   hud = true;
-  audio: RotorAudio | null = null;
+  audio: GameAudio | null = null;
+  private listener = new THREE.Vector3();
   readonly model: HeliModel;
   readonly scene: WorldScene;
   readonly camera = new THREE.PerspectiveCamera(72, 1, 0.05, 7000);
@@ -75,7 +76,10 @@ export class FlightRenderer {
     this.effects = new Effects(assets.get<THREE.Texture>('tex.particles') ?? fallbackAtlas());
     this.scene.scene.add(this.effects.group);
     this.scene.scene.add(this.units.group);
-    this.offEvents = session.world.events.onAny(e => this.effects.onEvent(e, session.world));
+    this.offEvents = session.world.events.onAny(e => {
+      this.effects.onEvent(e, session.world);
+      if (this.audio) this.audio.onEvent(e, this.camera.getWorldPosition(this.listener));
+    });
 
     this.resize();
     window.addEventListener('resize', this.resize);

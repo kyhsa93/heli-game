@@ -8,25 +8,71 @@ export interface AudioState {
 export class RotorAudio {
   private ctx: AudioContext;
   private master: GainNode;
-  private chop: GainNode;
-  private chopDepth: GainNode;
-  private lfo: OscillatorNode;
-  private thump: GainNode;
-  private thumpDepth: GainNode;
-  private turbine: OscillatorNode;
-  private whine: OscillatorNode;
-  private turbineGain: GainNode;
-  private windGain: GainNode;
-  private windFilter: BiquadFilterNode;
-  private warnGain: GainNode;
+  private chop!: GainNode;
+  private chopDepth!: GainNode;
+  private lfo!: OscillatorNode;
+  private thump!: GainNode;
+  private thumpDepth!: GainNode;
+  private turbine!: OscillatorNode;
+  private whine!: OscillatorNode;
+  private turbineGain!: GainNode;
+  private windGain!: GainNode;
+  private windFilter!: BiquadFilterNode;
+  private warnGain!: GainNode;
   private muted = false;
+  private synthBus: GainNode;
+  private loop: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private start: AudioBufferSourceNode | null = null;
 
-  constructor() {
-    this.ctx = new AudioContext();
-    const ctx = this.ctx;
-    this.master = ctx.createGain();
+  constructor(ctx?: AudioContext) {
+    this.ctx = ctx ?? new AudioContext();
+    this.master = this.ctx.createGain();
     this.master.gain.value = 0.55;
-    this.master.connect(ctx.destination);
+    this.master.connect(this.ctx.destination);
+    this.synthBus = this.ctx.createGain();
+    this.synthBus.connect(this.master);
+    this.init();
+  }
+
+  get context() { return this.ctx; }
+  get output(): AudioNode { return this.master; }
+
+  setRotorLoop(buffer: AudioBuffer) {
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    const [a, b] = audibleRange(buffer);
+    src.loopStart = a; src.loopEnd = b;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0;
+    src.connect(gain).connect(this.master);
+    src.start(0, a);
+    this.loop = { src, gain };
+    this.synthBus.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
+  }
+
+  get usingRecording() { return this.loop !== null; }
+
+  playEngineStart(buffer: AudioBuffer | undefined) {
+    this.stopEngineStart();
+    if (!buffer) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    const g = this.ctx.createGain();
+    g.gain.value = 0.7;
+    src.connect(g).connect(this.master);
+    src.start();
+    this.start = src;
+  }
+
+  stopEngineStart() {
+    if (!this.start) return;
+    try { this.start.stop(); } catch { /* already stopped */ }
+    this.start = null;
+  }
+
+  private init() {
+    const ctx = this.ctx;
 
     const noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const data = noise.getChannelData(0);
@@ -42,14 +88,14 @@ export class RotorAudio {
     chopFilter.type = 'lowpass'; chopFilter.frequency.value = 380; chopFilter.Q.value = 3;
     this.chop = ctx.createGain(); this.chop.gain.value = 0;
     this.chopDepth = ctx.createGain(); this.chopDepth.gain.value = 0;
-    src().connect(chopFilter).connect(this.chop).connect(this.master);
+    src().connect(chopFilter).connect(this.chop).connect(this.synthBus);
     this.lfo.connect(this.chopDepth).connect(this.chop.gain);
 
     const thumpOsc = ctx.createOscillator();
     thumpOsc.frequency.value = 48; thumpOsc.start();
     this.thump = ctx.createGain(); this.thump.gain.value = 0;
     this.thumpDepth = ctx.createGain(); this.thumpDepth.gain.value = 0;
-    thumpOsc.connect(this.thump).connect(this.master);
+    thumpOsc.connect(this.thump).connect(this.synthBus);
     this.lfo.connect(this.thumpDepth).connect(this.thump.gain);
 
     this.turbine = ctx.createOscillator(); this.turbine.type = 'sawtooth'; this.turbine.start();
@@ -59,7 +105,7 @@ export class RotorAudio {
     this.turbine.connect(tf).connect(this.turbineGain);
     const wg = ctx.createGain(); wg.gain.value = 0.25;
     this.whine.connect(wg).connect(this.turbineGain);
-    this.turbineGain.connect(this.master);
+    this.turbineGain.connect(this.synthBus);
 
     this.windFilter = ctx.createBiquadFilter();
     this.windFilter.type = 'bandpass'; this.windFilter.frequency.value = 700; this.windFilter.Q.value = 0.6;
@@ -97,9 +143,21 @@ export class RotorAudio {
     this.turbineGain.gain.setTargetAtTime(Math.min(1, rpm * 1.4) * 0.05, t, k);
     this.windGain.gain.setTargetAtTime(Math.min(0.5, s.airspeed / 55 * 0.35), t, k);
     this.windFilter.frequency.setTargetAtTime(500 + s.airspeed * 12, t, k);
+    if (this.loop) {
+      this.loop.src.playbackRate.setTargetAtTime(0.45 + 0.55 * Math.min(1.1, rpm), t, k);
+      this.loop.gain.gain.setTargetAtTime(Math.min(1, rpm * 1.3) * (0.55 + 0.45 * s.collective) * 0.9, t, k);
+    }
     const beepOn = s.warn && Math.floor(t * 3) % 2 === 0;
     this.warnGain.gain.setTargetAtTime(beepOn ? 0.05 : 0, t, 0.01);
   }
 
   dispose() { void this.ctx.close(); }
+}
+
+export function audibleRange(buffer: AudioBuffer, threshold = 0.002): [number, number] {
+  const d = buffer.getChannelData(0);
+  let a = 0, b = d.length - 1;
+  while (a < b && Math.abs(d[a]) < threshold) a++;
+  while (b > a && Math.abs(d[b]) < threshold) b--;
+  return [a / buffer.sampleRate, (b + 1) / buffer.sampleRate];
 }

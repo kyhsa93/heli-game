@@ -16,3 +16,10 @@
 | models/apc.glb | Tank | Quaternius | https://poly.pizza/m/FA5daiyZQq | CC0 | meshopt 압축·텍스처 축소, 애니메이션·스킨 제거, 폴리곤 30%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
 | models/technical.glb | Pickup Truck | Quaternius | https://poly.pizza/m/qn4grQgHm8 | CC0 | meshopt 압축·텍스처 축소, 폴리곤 40%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
 | models/civ_car.glb | SUV | Quaternius | https://poly.pizza/m/xsMtZhBkxL | CC0 | meshopt 압축·텍스처 축소, 폴리곤 40%로 감소. 게임에서 가상 명칭으로 사용 | 2026-09-29 |
+| audio/rotor_interior_loop.mp3 | G36-10-Helicopter Constant Interior | craigsmith | https://freesound.org/people/craigsmith/sounds/438593/ | CC0 | 7–11초 구간 4초를 잘라 0.25초 크로스페이드로 이음새 없는 루프 제작, 모노 96kbps | 2026-09-29 |
+| audio/engine_start.mp3 | Helicopter Start Airbus Helicopters H135 | Borgory | https://freesound.org/people/Borgory/sounds/522672/ | CC0 | 10–22초(터빈 점화·가속) 12초 구간, 페이드, 모노 64kbps | 2026-09-29 |
+| audio/gun_shot.mp3 | Autocannon Three Shot Burst | qubodup | https://freesound.org/people/qubodup/sounds/854186/ | CC0 | 첫 발(0.02–0.26초)만 잘라 단발로 사용, 모노 64kbps | 2026-09-29 |
+| audio/explosion_near.mp3 | EOD Explosion | qubodup | https://freesound.org/people/qubodup/sounds/855798/ | CC0 | 정규화·페이드, 모노 64kbps | 2026-09-29 |
+| audio/explosion_fire.mp3 | Fire Explosion | qubodup | https://freesound.org/people/qubodup/sounds/855898/ | CC0 | 정규화·페이드, 모노 64kbps | 2026-09-29 |
+| audio/impact_metal.mp3 | Impact Sounds — impactMetal_medium_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 정규화, 모노 48kbps | 2026-09-29 |
+| audio/impact_ground.mp3 | Impact Sounds — impactSoft_heavy_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 정규화, 모노 48kbps | 2026-09-29 |

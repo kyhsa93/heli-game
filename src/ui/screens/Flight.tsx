@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
-import { RotorAudio } from '../../audio/rotor';
+import { assets } from '../../assets/loader';
+import { GameAudio } from '../../audio/game';
 import { t, tList, tPairs } from '../../content/strings';
 import { clamp } from '../../core/math';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../../core/units';
@@ -28,7 +29,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
   const logRef = useRef(new MessageLog());
   const rendererRef = useRef<FlightRenderer | null>(null);
   const [input] = useState(() => new FlightInput());
-  const audioRef = useRef<RotorAudio | null>(null);
+  const audioRef = useRef<GameAudio | null>(null);
   const touchRef = useRef(touch);
   touchRef.current = touch;
   const [hud, setHud] = useState(true);
@@ -57,7 +58,10 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
 
   const begin = () => {
     if (!audioRef.current) {
-      try { audioRef.current = new RotorAudio(); } catch { audioRef.current = null; }
+      try {
+        audioRef.current = new GameAudio();
+        void audioRef.current.loadSamples(id => assets.get<ArrayBuffer>(id));
+      } catch { audioRef.current = null; }
     }
     if (rendererRef.current) rendererRef.current.audio = audioRef.current;
     void audioRef.current?.resume();

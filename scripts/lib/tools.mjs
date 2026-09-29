@@ -1,10 +1,10 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 
-const TOOLS = join(dirname(fileURLToPath(import.meta.url)), '..', '.tools');
+const TOOLS = process.env.HELI_TOOLS ?? join(homedir(), '.cache', 'heli-game-tools');
 
 export const PINNED = {
   'ffmpeg-static': '5.3.0',
@@ -19,7 +19,7 @@ export function ensurePackage(name) {
   const pkgDir = join(TOOLS, 'node_modules', ...name.split('/'));
   if (!existsSync(pkgDir)) {
     mkdirSync(TOOLS, { recursive: true });
-    console.error(`installing ${name}@${PINNED[name]} into scripts/.tools …`);
+    console.error(`installing ${name}@${PINNED[name]} into ${TOOLS} …`);
     execFileSync('npm', ['install', '--no-save', '--prefix', TOOLS, `${name}@${PINNED[name]}`], { stdio: 'inherit' });
   }
   return pkgDir;
