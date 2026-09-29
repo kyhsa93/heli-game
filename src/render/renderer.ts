@@ -16,6 +16,7 @@ import { FarpProps } from './farp';
 import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
 import { RingGates } from './rings';
+import { SearchlightBeams } from './searchlights';
 import { TIME_PRESETS } from './timeOfDay';
 import { FOG_FLIR_RANGE, FOG_TV_RANGE } from '../sim/sensors/laser';
 
@@ -72,6 +73,7 @@ export class FlightRenderer {
   readonly effects: Effects;
   readonly units = new UnitRenderer();
   private rings = new RingGates();
+  private searchlights = new SearchlightBeams();
   private panelLight = new THREE.PointLight(0xbfe6ff, 0, 2.2, 1.5);
   readonly farp: FarpProps;
   readonly tads = new TadsView();
@@ -116,6 +118,7 @@ export class FlightRenderer {
     this.scene.scene.add(this.units.group);
     this.farp = new FarpProps(session.world.pads);
     this.scene.scene.add(this.rings.group);
+    this.scene.scene.add(this.searchlights.group);
     this.scene.scene.add(this.farp.group);
     void assets.loadGroup(FARP_GROUP).then(report => {
       const models: Record<string, THREE.Object3D> = {};
@@ -257,6 +260,7 @@ export class FlightRenderer {
     const flir = tads && world.tads.sensor === 'flir';
     this.units.update(world, flir);
     this.rings.update(session.objective?.rings ?? []);
+    this.searchlights.update(world);
     this.effects.update(steps * STEP, world);
     if (!tads && this.mpdVideo && this.instruments.shows('TADS') && now - this.mpdVideoAt >= MPD_TADS_MS && h.alive) {
       this.mpdVideoAt = now;
@@ -369,6 +373,7 @@ export class FlightRenderer {
     this.effects.dispose();
     this.units.dispose();
     this.rings.dispose();
+    this.searchlights.dispose();
     window.removeEventListener('resize', this.resize);
     this.scene.dispose();
     this.instruments.dispose();

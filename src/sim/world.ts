@@ -13,6 +13,7 @@ import type { CrashReason } from './events';
 import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
 import { stepBrains } from './ai/brain';
 import { stepAir } from './ai/air';
+import { stepSearchlights } from './ai/searchlight';
 import { setOrder, stepWingman, thinkWingman, type Wingman, type WingmanOrder } from './ai/wingman';
 import { stepService, type FarpService } from './farp';
 import { RoadGraph, stepGroups, type GroupState } from './ai/movement';
@@ -394,7 +395,7 @@ export class World {
       this.stepHellfire(dt, pressed);
       this.stepStinger(dt, pressed);
     }
-    if (this.active) { stepGroups(this, this.groups.values(), dt); stepAir(this, dt); if (this.wingman) stepWingman(this, this.wingman, dt); }
+    if (this.active) { stepGroups(this, this.groups.values(), dt); stepAir(this, dt); stepSearchlights(this, dt); if (this.wingman) stepWingman(this, this.wingman, dt); }
     this.stepProjectiles(dt);
     this.stepMissiles(dt);
     this.stepEnemyMissiles(dt);

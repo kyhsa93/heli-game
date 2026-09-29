@@ -441,6 +441,22 @@
     ],
     "heat": 0.5
   },
+  "searchlight": {
+    "side": "veros",
+    "hp": 30,
+    "armor": 0,
+    "category": "structure",
+    "move": null,
+    "weapons": [],
+    "detect": "visual",
+    "score": 50,
+    "size": [
+      1.6,
+      5,
+      1.6
+    ],
+    "heat": 0.7
+  },
   "c_inf": {
     "side": "coalition",
     "hp": 40,

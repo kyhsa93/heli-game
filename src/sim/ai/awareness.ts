@@ -5,6 +5,7 @@ import type { LosCache } from '../los';
 import type { Terrain } from '../terrain';
 import type { Unit } from '../units';
 import type { World } from '../world';
+import { litBy, SEARCHLIGHT_RANGE } from './searchlight';
 
 export const AI_TICK = 0.1;
 export const BASE_RATE = 0.6;
@@ -57,10 +58,9 @@ export function skylined(t: Terrain, eye: Vector3, target: Vector3, reach = 3000
   return true;
 }
 
-export function visualRate(world: World, eye: Vector3, occlusion: number, cond: Conditions) {
+export function visualRate(world: World, eye: Vector3, occlusion: number, cond: Conditions, range = visualRange(cond)) {
   const h = world.player;
   const dist = eye.distanceTo(h.pos);
-  const range = visualRange(cond);
   const distF = Math.pow(clamp(1 - dist / range, 0, 1), 1.5);
   if (distF <= 0) return 0;
   const low = agl(h, world.terrain) <= LOW_AGL && Math.hypot(h.vel.x, h.vel.z) <= SLOW;
@@ -130,10 +130,10 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
       }
       continue;
     }
-    const range = visualRange(cond);
+    const range = cond.time === 'night' && litBy(world, u) ? SEARCHLIGHT_RANGE : visualRange(cond);
     const sight = dist <= range ? los.visual(u.id, eye, h.pos, world.time) : { clear: false, occlusion: 1 };
     if (sight.clear) {
-      u.ai.awareness = Math.min(1, u.ai.awareness + visualRate(world, eye, sight.occlusion, cond) * dt);
+      u.ai.awareness = Math.min(1, u.ai.awareness + visualRate(world, eye, sight.occlusion, cond, range) * dt);
       if (u.ai.awareness >= 1) detect(world, u, 'visual');
     } else {
       forget(world, u, dt);

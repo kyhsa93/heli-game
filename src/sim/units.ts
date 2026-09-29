@@ -69,6 +69,7 @@ export interface Unit {
   passive?: boolean;
   skill?: number;
   aam?: boolean;
+  beam?: { yaw: number; pitch: number; lost: number; lit: boolean };
 }
 
 export function squadMembers(u: Unit) {

@@ -7,7 +7,7 @@
     "summary": "어둠을 틈타 VPA 탄약고 두 곳을 파괴하고 돌아오라. 열상(PNVS·TADS FLIR)으로 날고 찾아라.",
     "situation": [
       "VPA가 반격용 탄약을 북쪽 골짜기 두 곳에 쌓았다. 낮에는 대공포가 지키는 곳이다.",
-      "야간엔 조종석 밖이 거의 보이지 않는다. 헬멧의 PNVS 열상과 TADS FLIR에 의지하라. 탄약고는 한 번 불붙으면 연쇄 폭발한다."
+      "야간엔 조종석 밖이 거의 보이지 않는다. 헬멧의 PNVS 열상과 TADS FLIR에 의지하라. 탄약고는 한 번 불붙으면 연쇄 폭발한다. 대공 진지 옆 탐조등에 비치면 멀리서도 보인다 — 먼저 꺼라."
     ],
     "threats": [
       "대공포",
@@ -282,6 +282,24 @@
         290,
         604
       ]
+    },
+    {
+      "id": "sl1",
+      "type": "searchlight",
+      "position": [
+        -665,
+        -2023
+      ],
+      "group": "guns"
+    },
+    {
+      "id": "sl2",
+      "type": "searchlight",
+      "position": [
+        1535,
+        -2440
+      ],
+      "group": "guns"
     }
   ],
   "groups": [
@@ -317,6 +335,16 @@
       "count": 3,
       "primary": false,
       "label": "대공포 진지 3곳 제거"
+    },
+    {
+      "id": "o4",
+      "kind": "destroy",
+      "units": [
+        "sl1",
+        "sl2"
+      ],
+      "primary": false,
+      "label": "탐조등 2개 파괴"
     },
     {
       "id": "o3",
