@@ -3,6 +3,7 @@ import { clamp } from '../core/math';
 import { count } from '../sim/heli/loadout';
 import { TADS_FOV_NAMES, tadsFovDeg, tadsLocal } from '../sim/sensors/tads';
 import { gunInLimits } from '../sim/weapons/arms';
+import { gunAim } from '../sim/weapons/ballistics';
 import { hellfireSolution, longbowSolution, type HellfireStatus } from '../sim/weapons/hellfire';
 import type { World } from '../sim/world';
 import { headingDeg } from './cockpit/instruments';
@@ -46,7 +47,7 @@ export function tadsWeaponStatus(world: World) {
     return n > 0 ? `RKT ${n} x${a.salvo}` : 'RKT EMPTY';
   }
   if (a.gunAmmo <= 0) return 'GUN EMPTY';
-  return `GUN ${a.gunAmmo}${gunInLimits(world.commands.aim) ? '' : ' LIMIT'}`;
+  return `GUN ${a.gunAmmo}${gunInLimits(gunAim(world)) ? '' : ' LIMIT'}`;
 }
 
 export function drawTads(g: CanvasRenderingContext2D, w: number, h: number, world: World) {

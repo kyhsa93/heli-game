@@ -2,9 +2,10 @@ import { Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { DEG } from '../../core/math';
 import type { SimEvent } from '../events';
-import { G3 } from '../heli/airframe';
-import { updateQ } from '../heli/state';
-import { airborneAt, hoverCollective } from '../testing';
+import { EYE, G3 } from '../heli/airframe';
+import { toWorld, updateQ } from '../heli/state';
+import { airborneAt, hoverCollective, makeWorld } from '../testing';
+import { gunTarget, predictGunImpact } from './ballistics';
 import { STEP, World } from '../world';
 import { aimDirection, aimToward, gunInLimits, muzzlePosition } from './arms';
 import { WEAPONS } from './damage';
@@ -28,6 +29,11 @@ function hover(w: World, seconds: number, each?: () => void) {
     w.controls.collective = Math.min(1, Math.max(0, hoverCollective(w) - w.player.vel.y * 0.3));
     w.step(STEP);
   }
+}
+
+function lookAt(w: World, p: Vector3) {
+  const h = w.player, d = p.clone().sub(toWorld(h, EYE, new Vector3())).applyQuaternion(h.q.clone().invert()).normalize();
+  return { yaw: Math.atan2(-d.x, -d.z), pitch: Math.asin(d.y) };
 }
 
 describe('30mm gun (04-weapons-and-sensors.md 4.2, 4.3)', () => {
@@ -98,7 +104,7 @@ describe('30mm gun (04-weapons-and-sensors.md 4.2, 4.3)', () => {
     const truck = w.spawnUnit('truck', m.x, m.z - 200);
     const center = truck.pos.clone().setY(truck.pos.y + 1.5);
     w.commands.fire = true;
-    hover(w, 1.5, () => { w.commands.aim = aimToward(w.player, center); w.commands.aim.pitch += 0.002; });
+    hover(w, 1.5, () => { w.commands.aim = lookAt(w, center); });
     expect(truck.alive).toBe(false);
     expect(events.some(e => e.t === 'impact' && (e as { unit?: number }).unit === truck.id)).toBe(true);
   });
@@ -120,5 +126,38 @@ describe('30mm gun (04-weapons-and-sensors.md 4.2, 4.3)', () => {
     hover(w, 2);
     expect(events.some(e => e.t === 'impact' && (e as { ground: boolean }).ground)).toBe(true);
     expect(w.projectiles).toHaveLength(0);
+  });
+});
+
+describe('gun fire control (#84)', () => {
+  it('lands rounds on the point under the helmet sight out to 1.6 km', () => {
+    const g = WEAPONS.gun30, spread = g.dispersionMrad;
+    g.dispersionMrad = 0;
+    try {
+      for (const pitch of [-0.5, -0.25, -0.15, -0.1]) {
+        const { world } = makeWorld(7);
+        airborneAt(world, 0, 0, world.terrain.surfaceAt(0, 0) + 150);
+        const h = world.player;
+        world.commands.aim = { yaw: 0.2, pitch };
+        const target = gunTarget(world).point.clone();
+        const range = target.distanceTo(h.pos);
+        const pred = predictGunImpact(world)!;
+        expect(pred.point.distanceTo(target), `predicted at ${Math.round(range)} m`).toBeLessThan(range * 0.01 + 1);
+        const impacts: Vector3[] = [];
+        world.events.onAny(e => { if (e.t === 'impact' && e.weapon === 'gun30') impacts.push(e.pos.clone()); });
+        world.arms.selected = 'gun30'; world.commands.fire = true;
+        const at = h.pos.clone(), q = h.q.clone(), att = [h.pitch, h.roll, h.yaw];
+        for (let i = 0; i < 120 * 4; i++) {
+          h.pos.copy(at); h.vel.set(0, 0, 0); h.q.copy(q); [h.pitch, h.roll, h.yaw] = att; h.pRate = h.rRate = h.yRate = 0;
+          if (i > 60) world.commands.fire = false;
+          world.step(STEP);
+        }
+        expect(impacts.length).toBeGreaterThan(3);
+        const mean = impacts.reduce((a, p) => a.add(p), new Vector3()).divideScalar(impacts.length);
+        expect(mean.distanceTo(target), `fired at ${Math.round(range)} m`).toBeLessThan(range * 0.01 + 1);
+      }
+    } finally {
+      g.dispersionMrad = spread;
+    }
   });
 });

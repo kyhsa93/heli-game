@@ -1,7 +1,7 @@
 {
   "gun30": {
     "guidance": "ballistic", "ammo": [300, 600, 1200], "minRange": 0, "maxRange": 2000, "effectiveRange": 1500,
-    "speed": 805, "drag": 0.0012, "damage": 12, "splashRadius": 3, "splashDamage": 4, "penetration": 2,
+    "speed": 805, "drag": 0.0005, "damage": 12, "splashRadius": 3, "splashDamage": 4, "penetration": 2,
     "rate": 10.4, "dispersionMrad": 5
   },
   "hydra70": {

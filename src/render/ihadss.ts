@@ -10,7 +10,7 @@ import { agl as aglOf, airspeed } from '../sim/heli/state';
 import { gunInLimits } from '../sim/weapons/arms';
 import { damageWarnings } from '../sim/heli/damage';
 import { aseThreats, missileInbound } from '../sim/sensors/ase';
-import { predictGunImpact } from '../sim/weapons/ballistics';
+import { gunAim, predictGunImpact } from '../sim/weapons/ballistics';
 import { count } from '../sim/heli/loadout';
 import { EYE } from '../sim/heli/airframe';
 import { toWorld } from '../sim/heli/state';
@@ -137,7 +137,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
 
 function drawGun(g: CanvasRenderingContext2D, w: number, h: number, u: number, world: World, camera: THREE.Camera) {
   const cx = w / 2, cy = h / 2, a = world.arms;
-  const inLimits = gunInLimits(world.commands.aim);
+  const inLimits = gunInLimits(gunAim(world));
   g.save();
   g.lineWidth = 2 * u;
   if (inLimits) {

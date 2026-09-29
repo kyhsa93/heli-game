@@ -28,6 +28,7 @@ import { createAiState, UNIT_DEFS, type Unit } from './units';
 import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
 import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
 import { integrate, PLAYER_OWNER, segmentHitsTerrain, segmentHitsUnit, type Projectile } from './weapons/projectile';
+import { gunAim } from './weapons/ballistics';
 import { hellfireSolution, launchHellfire, longbowSolution } from './weapons/hellfire';
 import { createFcr, cycleTarget, FCR_SCAN_SECONDS, scanTargets, type Fcr, type FcrMode } from './sensors/fcr';
 import { stepEnemyMissile, threatDef, type EnemyMissile } from './weapons/enemyMissile';
@@ -412,10 +413,11 @@ export class World {
     const a = this.arms, h = this.player;
     a.gunTimer = Math.max(0, a.gunTimer - dt);
     if (!this.commands.fire || a.selected !== 'gun30' || !h.alive) return;
-    if (!gunInLimits(this.commands.aim)) return;
+    const aim = gunAim(this);
+    if (!gunInLimits(aim)) return;
     const w = WEAPONS.gun30;
     while (a.gunTimer <= 0 && a.gunAmmo > 0) {
-      const dir = aimDirection(h, this.commands.aim);
+      const dir = aimDirection(h, aim);
       this.disperse(dir, w.dispersionMrad ?? 0);
       const pos = muzzlePosition(h);
       const tracer = a.shots % 5 === 0;
