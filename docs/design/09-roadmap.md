@@ -66,7 +66,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 - [x] [#32](https://github.com/kyhsa93/heli-game/issues/32) **M3-7 🅰 자주대공포·SAM·MANPADS·기관총차량 모델과 행동**: SAM은 채택 모델(Pantsir), 기관총차량은 UAZ 모델, 자주대공포·대공 진지는 코드 모델.
 - [x] [#33](https://github.com/kyhsa93/heli-game/issues/33) **M3-8 🅰 음성 경고·RWR 소리·피격음**: 금속 피격 녹음, RWR·경고음은 합성, 음성 경고는 `speechSynthesis`(9.3 결정, 녹음 파일로 교체 가능한 인터페이스), 무전 잡음 녹음.
 - [x] [#34](https://github.com/kyhsa93/heli-game/issues/34) **M3-9 난이도 배율**(05장 표). *완료*: 배율 적용 테스트.
-- [ ] [#35](https://github.com/kyhsa93/heli-game/issues/35) **M3-10 훈련 T5**.
+- [x] [#35](https://github.com/kyhsa93/heli-game/issues/35) **M3-10 훈련 T5**.
 
 ## M4. 임무 시스템
 

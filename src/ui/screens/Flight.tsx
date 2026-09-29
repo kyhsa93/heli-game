@@ -19,6 +19,7 @@ import { createObjective } from '../../sim/training';
 import { T1_MAX_FPM, TrainingT1 } from '../../sim/training/t1';
 import { T3_GUN_NEED, T3_NEED, T3_TARGETS } from '../../sim/training/t3';
 import { T4_NEED, TrainingT4 } from '../../sim/training/t4';
+import { T5_MAX_HITS } from '../../sim/training/t5';
 import { commandForKey, PREVENT_DEFAULT, type Command } from '../../input/bindings';
 import { FlightInput } from '../../input/input';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
@@ -150,7 +151,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
             else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = t(touchRef.current ? 'hint.liftTouch' : 'hint.liftKey');
           }
           const step = session.objective?.step;
-          if (!hint && step && session.mode === 'play' && h.alive) hint = t(`training.${missionId}.steps.${step}`);
+          if (!hint && step && session.mode === 'play' && h.alive) hint = t(`training.${missionId}.steps.${step}`, { pad: sim.target?.name ?? "" });
           hintRef.current.textContent = hint;
         }
       },
@@ -261,7 +262,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         <div className="overlay">
           <div className="card wide">
             <h1>{t(`training.${missionId}.name`)}</h1>
-            <p className="sub">{t(`training.${missionId}.brief`, { pad: missionId === 't4' ? sim.pads[TrainingT4.farPad(sim)].name : t1Pad.name, max: T1_MAX_FPM, need: missionId === 't4' ? T4_NEED : T3_NEED, gunNeed: T3_GUN_NEED, total: T3_TARGETS.length })}<br />{t('brief.introCollective')}</p>
+            <p className="sub">{t(`training.${missionId}.brief`, { pad: missionId === 't4' || missionId === 't5' ? sim.pads[TrainingT4.farPad(sim)].name : t1Pad.name, hits: T5_MAX_HITS, max: T1_MAX_FPM, need: missionId === 't4' ? T4_NEED : T3_NEED, gunNeed: T3_GUN_NEED, total: T3_TARGETS.length })}<br />{t('brief.introCollective')}</p>
             <div className="keys">
               {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
             </div>
@@ -308,6 +309,8 @@ const RESULT_FORMAT: Record<string, (v: number, all: Record<string, number>) => 
   accuracy: v => `${Math.round(v)}%`,
   missiles: v => `${v}`,
   loal: v => `${v}`,
+  hits: v => `${v} / ${T5_MAX_HITS}`,
+  flares: v => `${v}`,
 };
 
 function formatTime(sec: number) {
