@@ -6,6 +6,8 @@ import type { TimeOfDay } from '../sim/ai/awareness';
 import { starField, TIME_PRESETS } from './timeOfDay';
 
 export const SKY_HORIZON = new THREE.Color(0xbcd6ea);
+export const FOG_GREY = new THREE.Color(0xb4b8bc);
+export const FOG_BANK = { near: 60, far: 800 };
 export const SUN_DIR = new THREE.Vector3(0.45, 0.8, 0.35).normalize();
 
 export interface PadVisual {
@@ -23,7 +25,8 @@ export interface WorldScene {
   terrain: TerrainChunks;
   stars: THREE.Points;
   time: TimeOfDay;
-  setTime(time: TimeOfDay): void;
+  fog: boolean;
+  setTime(time: TimeOfDay, fog?: boolean): void;
   dispose(): void;
 }
 
@@ -227,18 +230,20 @@ export function buildWorld(t: Terrain, detail: THREE.Texture | null = null): Wor
   scene.add(shadow);
 
   const view: WorldScene = {
-    scene, sky, pads, beam, shadow, terrain, stars, time: 'day',
-    setTime(time: TimeOfDay) {
+    scene, sky, pads, beam, shadow, terrain, stars, time: 'day', fog: false,
+    setTime(time: TimeOfDay, fogBank = view.fog) {
       const p = TIME_PRESETS[time];
       view.time = time;
+      view.fog = fogBank;
       const dir = new THREE.Vector3(...p.sun).normalize();
       sun.position.copy(dir).multiplyScalar(100);
       sun.color.setHex(p.sunColor); sun.intensity = p.sunIntensity;
       hemi.color.setHex(p.hemiSky); hemi.groundColor.setHex(p.hemiGround); hemi.intensity = p.hemiIntensity;
       const fog = scene.fog as THREE.Fog;
       fog.color.setHex(p.fog); fog.near = p.fogNear; fog.far = p.fogFar;
-      (scene.background as THREE.Color).setHex(p.fog);
-      sky.visible = p.sky;
+      if (fogBank) { fog.color.lerp(FOG_GREY, time === 'night' ? 0.15 : 0.6); fog.near = FOG_BANK.near; fog.far = FOG_BANK.far; }
+      (scene.background as THREE.Color).copy(fog.color);
+      sky.visible = p.sky && !fogBank;
       const u = (sky.material as THREE.ShaderMaterial).uniforms;
       if (p.sky) { u.sunPosition.value.copy(dir); u.rayleigh.value = p.rayleigh; u.turbidity.value = p.turbidity; }
       stars.visible = p.stars > 0;

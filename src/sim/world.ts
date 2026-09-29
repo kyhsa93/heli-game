@@ -19,7 +19,7 @@ import { RoadGraph, stepGroups, type GroupState } from './ai/movement';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
 import { DIFFICULTIES, type Difficulty } from './difficulty';
 import { LosCache } from './los';
-import { castRay, createLaser, crosshairUnit, unitCenter, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
+import { castRay, createLaser, crosshairUnit, identifyRange, unitCenter, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
 import { CHAFF_JAM, createCountermeasures, decoyChaff, decoyFlare, FLARE_LIFE, FLARE_PER_DROP, type Countermeasures, type Flare } from './sensors/ase';
 import { constrainTads, createTads, lookAngles, tadsDirection, tadsFovDeg, tadsLocal, tadsPosition, type Tads } from './sensors/tads';
 import { PAD_R, Terrain, type Pad3, type TerrainOptions } from './terrain';
@@ -455,7 +455,7 @@ export class World {
     const id = this.identify;
     const fov = tadsFovDeg(this.tads);
     const auto = this.assists.autoIdentify;
-    const u = this.tads.active && (auto || fov <= IDENTIFY_FOV_DEG) ? crosshairUnit(this.terrain, this.units, origin, dir, fov) : null;
+    const u = this.tads.active && (auto || fov <= IDENTIFY_FOV_DEG) ? crosshairUnit(this.terrain, this.units, origin, dir, fov, identifyRange(this.conditions.fog, this.tads.sensor)) : null;
     if (!u) { id.unitId = null; id.time = 0; return; }
     if (id.unitId !== u.id) { id.unitId = u.id; id.time = 0; }
     id.time += dt;

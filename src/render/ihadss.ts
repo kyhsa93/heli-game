@@ -36,7 +36,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
   const heli = world.player;
   g.save();
   g.strokeStyle = GREEN; g.fillStyle = GREEN; g.lineWidth = 2 * u;
-  g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 3;
+  g.shadowColor = 'rgba(0,0,0,0.95)'; g.shadowBlur = 6 * u;
   g.font = `bold ${Math.round(16 * u)}px "B612 Mono", ui-monospace, Menlo, Consolas, monospace`;
   g.textAlign = 'center';
 

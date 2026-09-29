@@ -17,6 +17,7 @@ import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
 import { RingGates } from './rings';
 import { TIME_PRESETS } from './timeOfDay';
+import { FOG_FLIR_RANGE, FOG_TV_RANGE } from '../sim/sensors/laser';
 
 const PANEL_LIGHT = 1.6;
 const PNVS_SCALE = 0.5;
@@ -239,9 +240,9 @@ export class FlightRenderer {
     scn.shadow.scale.setScalar(5.5 + Math.max(0, agl) * 0.03);
     (scn.shadow.material as THREE.MeshBasicMaterial).opacity = 0.4 * (1 - clamp(agl / 90, 0, 1));
 
-    const time = world.conditions.time ?? 'day';
-    if (scn.time !== time) {
-      scn.setTime(time);
+    const time = world.conditions.time ?? 'day', fogBank = world.conditions.fog;
+    if (scn.time !== time || scn.fog !== fogBank) {
+      scn.setTime(time, fogBank);
       this.panelLight.intensity = TIME_PRESETS[time].panelLight * PANEL_LIGHT;
       if (time === 'night' && !this.pnvsAuto) { this.pnvs = true; this.pnvsAuto = true; }
     }
@@ -322,7 +323,8 @@ export class FlightRenderer {
 
   private renderTadsInto(view: TadsView, now: number, flir: boolean, output: THREE.WebGLRenderTarget | null) {
     const world = this.opts.session.world;
-    this.sensorPass(flir, 2500, 9000, () => {
+    const [near, far] = world.conditions.fog ? (flir ? [600, FOG_FLIR_RANGE] : [200, FOG_TV_RANGE]) : [2500, 9000];
+    this.sensorPass(flir, near, far, () => {
       view.aim(world.player, world.tads);
       this.scene.sky.position.copy(view.camera.position);
       view.render(this.renderer, this.scene.scene, world.tads, now * 0.001, output, world.player.damage.sensors <= DAMAGED ? 0.3 : 0.07);
@@ -332,7 +334,7 @@ export class FlightRenderer {
   private renderPnvs(now: number) {
     const world = this.opts.session.world;
     this.units.update(world, true);
-    this.sensorPass(true, 1200, 4500, () => {
+    this.sensorPass(true, world.conditions.fog ? 600 : 1200, world.conditions.fog ? FOG_FLIR_RANGE : 4500, () => {
       this.pnvsView.follow(this.camera);
       this.scene.sky.position.copy(this.pnvsView.camera.position);
       this.pnvsView.renderImage(this.renderer, this.scene.scene, true, now * 0.001, null, world.player.damage.sensors <= DAMAGED ? 0.3 : 0.1, PNVS_OVERLAY);
@@ -344,7 +346,7 @@ export class FlightRenderer {
     const scn = this.scene, { scene, sky, beam, stars } = scn;
     const fog = scene.fog as THREE.Fog, bg = scene.background, time = scn.time;
     const saved = { near: fog.near, far: fog.far, color: fog.color.clone(), root: this.model.root.visible, beam: beam.visible, sky: sky.visible, shadow: scn.shadow.visible, stars: stars.visible };
-    if (flir && time !== 'day') scn.setTime('day');
+    if (flir && time !== 'day') scn.setTime('day', scn.fog);
     this.model.root.visible = false;
     beam.visible = false;
     scn.shadow.visible = false;
@@ -352,7 +354,7 @@ export class FlightRenderer {
     if (flir) { sky.visible = false; stars.visible = false; scene.background = this.black; fog.color.copy(this.flirFog); }
     draw();
     scene.background = bg;
-    if (flir && time !== 'day') scn.setTime(time);
+    if (flir && time !== 'day') scn.setTime(time, scn.fog);
     fog.near = saved.near; fog.far = saved.far; fog.color.copy(saved.color);
     this.model.root.visible = saved.root; beam.visible = saved.beam; sky.visible = saved.sky; scn.shadow.visible = saved.shadow; stars.visible = saved.stars;
   }

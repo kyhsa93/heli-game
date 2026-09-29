@@ -141,3 +141,16 @@ describe('time of day (06 6.1)', () => {
     expect(s.world.conditions.night).toBe(false);
   });
 });
+
+describe('fog (06 6.1)', () => {
+  it('halves the visual detection range', () => {
+    expect(visualRange({ ...DAY, fog: true, time: 'day' })).toBe(2000);
+    expect(visualRange({ ...DAY, fog: true, time: 'dawn' })).toBe(1500);
+    const { world } = setup();
+    const g = openPair(world, 2500, 30);
+    putPlayer(world, g.player.x, g.player.z, 30);
+    const u = world.spawnUnit('inf', g.unit.x, g.unit.z);
+    expect(visualRate(world, eyeOf(u), 0, DAY)).toBeGreaterThan(0);
+    expect(visualRate(world, eyeOf(u), 0, { ...DAY, fog: true })).toBe(0);
+  });
+});

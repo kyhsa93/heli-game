@@ -7,7 +7,7 @@ import { STEP, type World } from '../world';
 import { predictGunImpact } from '../weapons/ballistics';
 import { rocketTarget } from '../weapons/rockets';
 import { segmentHitsTerrain } from '../weapons/projectile';
-import { lineOfSight, unitCenter } from './laser';
+import { crosshairUnit, identifyRange, IDENTIFY_MAX, lineOfSight, unitCenter } from './laser';
 import { lookAngles, tadsPosition } from './tads';
 
 function setup(seed = 7) {
@@ -197,3 +197,21 @@ function segmentFree(world: World, u: { pos: Vector3; def: { size: number[] } })
   }
   return true;
 }
+
+describe('TADS identification in fog (06 6.1)', () => {
+  it('reaches 1.5 km on TV and 3 km on FLIR', () => {
+    expect(identifyRange(false, 'tv')).toBe(IDENTIFY_MAX);
+    expect(identifyRange(true, 'tv')).toBe(1500);
+    expect(identifyRange(true, 'flir')).toBe(3000);
+  });
+
+  it('will not pick a unit beyond the sensor range', () => {
+    const { world } = makeWorld();
+    const origin = new Vector3(0, world.terrain.surfaceAt(0, 0) + 800, 0);
+    const u = world.spawnUnit('tank', 0, -2000);
+    const dir = unitCenter(u).sub(origin).normalize();
+    expect(crosshairUnit(world.terrain, world.units, origin, dir, 3)?.id).toBe(u.id);
+    expect(crosshairUnit(world.terrain, world.units, origin, dir, 3, identifyRange(true, 'flir'))?.id).toBe(u.id);
+    expect(crosshairUnit(world.terrain, world.units, origin, dir, 3, identifyRange(true, 'tv'))).toBe(null);
+  });
+});

@@ -9,6 +9,8 @@ export const LASER_MAX = 10000;
 export const IDENTIFY_FOV_DEG = 3;
 export const IDENTIFY_SECONDS = 1;
 export const IDENTIFY_MAX = 8000;
+export const FOG_TV_RANGE = 1500;
+export const FOG_FLIR_RANGE = 3000;
 export const DESIGNATION_SECONDS = 30;
 
 export interface Laser {
@@ -62,7 +64,7 @@ export function lineOfSight(t: Terrain, a: Vector3, b: Vector3) {
   return g === null;
 }
 
-export function crosshairUnit(t: Terrain, units: readonly Unit[], origin: Vector3, dir: Vector3, fovDeg: number): Unit | null {
+export function crosshairUnit(t: Terrain, units: readonly Unit[], origin: Vector3, dir: Vector3, fovDeg: number, maxRange = IDENTIFY_MAX): Unit | null {
   const tol = fovDeg * DEG * 0.04;
   let best: Unit | null = null, bestAng = Infinity;
   const c = new Vector3();
@@ -70,7 +72,7 @@ export function crosshairUnit(t: Terrain, units: readonly Unit[], origin: Vector
     if (!u.alive) continue;
     unitCenter(u, c);
     const dist = c.distanceTo(origin);
-    if (dist > IDENTIFY_MAX || dist < 1) continue;
+    if (dist > maxRange || dist < 1) continue;
     const ang = Math.acos(Math.min(1, c.clone().sub(origin).divideScalar(dist).dot(dir)));
     const radius = Math.atan(Math.max(u.def.size[0], u.def.size[2]) / 2 / dist);
     if (ang > Math.max(tol, radius) || ang >= bestAng) continue;
@@ -78,4 +80,8 @@ export function crosshairUnit(t: Terrain, units: readonly Unit[], origin: Vector
     best = u; bestAng = ang;
   }
   return best;
+}
+
+export function identifyRange(fog: boolean, sensor: 'tv' | 'flir') {
+  return fog ? (sensor === 'flir' ? FOG_FLIR_RANGE : FOG_TV_RANGE) : IDENTIFY_MAX;
 }

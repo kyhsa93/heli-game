@@ -40,7 +40,8 @@ export interface Conditions { night: boolean; fog: boolean; playerRadar: boolean
 
 export function visualRange(cond: Conditions) {
   const time = cond.time ?? (cond.night ? 'night' : 'day');
-  return time === 'night' ? VIS_RANGE_NIGHT : time === 'day' ? VIS_RANGE_DAY : VIS_RANGE_TWILIGHT;
+  const range = time === 'night' ? VIS_RANGE_NIGHT : time === 'day' ? VIS_RANGE_DAY : VIS_RANGE_TWILIGHT;
+  return cond.fog ? range * FOG : range;
 }
 
 export function eyeOf(u: Unit, out = new Vector3()) {
@@ -66,8 +67,7 @@ export function visualRate(world: World, eye: Vector3, occlusion: number, cond: 
   let exposure = low ? LOW_EXPOSURE : 1;
   if (skylined(world.terrain, eye, h.pos)) exposure *= SKYLINE;
   const noise = dist <= NOISE_RANGE ? NOISE : 1;
-  const light = cond.fog ? FOG : 1;
-  return BASE_RATE * distF * exposure * noise * light * (1 - occlusion) * world.difficulty.detection;
+  return BASE_RATE * distF * exposure * noise * (1 - occlusion) * world.difficulty.detection;
 }
 
 function detect(world: World, u: Unit, by: 'visual' | 'radar') {
