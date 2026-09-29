@@ -134,6 +134,7 @@ type Action =
 - 목표는 `pending → active → done | failed`. 주 목표가 모두 `done`이고 플레이어가 FARP·기지에 착륙하면 임무 성공(착륙 없이도 끝낼 수 있게 일시정지 메뉴에 "임무 종료" — 이때 착륙 보너스 없음).
 - 주 목표 중 하나라도 `failed`면 무전으로 알리고 10초 후 임무 실패.
 - 무전(`radio`)은 화면 하단 자막 + 짧은 무전 잡음 효과음. 동시에 여러 개면 큐에 쌓아 순서대로 4초씩.
+- 구현(M4-2, `src/sim/mission/runtime.ts`): `MissionRuntime`이 `Objective` 인터페이스를 구현해 `FlightSession`에 그대로 꽂힌다(세션이 `tick`을 매 스텝 부른다). 시작 시 권장 로드아웃·시간/안개 조건 적용, 숨기지 않은 유닛 스폰(유닛 `skill`은 명중률 ×, 반응 시간 ÷), 시작 방식별 배치(`farp_cold` 착륙·시동 꺼짐, `farp_hot` 착륙·로터 100%, `air` 고도·속도). 목표는 1Hz 평가 + 착륙·파괴·식별 이벤트 때 즉시 재평가. 식별 목표는 식별했거나 이미 파괴된 유닛을 인정한다. 활성 `reach`/`land` 목표가 항법 목표(TSD·IHADSS 마름모)가 된다. 이벤트: `radio {from, text}`(4초 간격 큐, 무전 잡음 재생), `smoke {pos, color}`(90초 유지), `missionObjective {id, state, primary}`. `startGroup`은 시작된 그룹 목록만 기록한다(이동은 M4-4). 실패 사유 문자열(`missionEnd.reason`)은 실패 화면에 그대로 나온다.
 
 ### 임무 작성 예시 (임무 1 요약)
 

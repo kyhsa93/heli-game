@@ -9,6 +9,8 @@ export interface Objective {
   readonly result: Record<string, number>;
   readonly step?: string;
   readonly failure?: string;
+  readonly failureText?: string;
   start(world: World): void;
+  tick?(world: World, dt: number): void;
   onEvent(e: SimEvent, world: World): void;
 }

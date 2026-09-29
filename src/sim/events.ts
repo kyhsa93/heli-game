@@ -26,7 +26,10 @@ export type SimEvent =
   | { t: 'systemDamaged'; system: SystemId; level: 'damaged' | 'destroyed' }
   | { t: 'missileWarning'; id: number; kind: 'ir' | 'radar'; from: Vector3; owner: number }
   | { t: 'missileEnd'; id: number; hit: boolean }
-  | { t: 'countermeasure'; kind: 'flare' | 'chaff'; decoyed: number; auto: boolean };
+  | { t: 'countermeasure'; kind: 'flare' | 'chaff'; decoyed: number; auto: boolean }
+  | { t: 'radio'; from: 'control' | 'steel6' | 'hound2' | 'rescue'; text: string }
+  | { t: 'smoke'; pos: Vector3; color: 'red' | 'green' | 'white' }
+  | { t: 'missionObjective'; id: string; state: 'active' | 'done' | 'failed'; primary: boolean };
 
 export type AdviceCode = 'landingTooHard' | 'wrongPad';
 

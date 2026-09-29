@@ -130,7 +130,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         }
         if (missionRef.current) {
           missionRef.current.textContent = tp
-            ? t(tp.area ? 'hud.targetArea' : 'hud.target', { name: tp.area ? t(`targets.${tp.name}`) : tp.name, dist: Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) })
+            ? t(tp.area ? 'hud.targetArea' : 'hud.target', { name: tp.area && !tp.raw ? t(`targets.${tp.name}`) : tp.name, dist: Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) })
             : t('hud.practice');
           missionRef.current.style.color = '#06d6a0';
         }

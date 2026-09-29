@@ -75,6 +75,7 @@ export class GameAudio {
       else this.rotor.stopEngineStart();
     }
     this.sfx.onEvent(e, listener);
+    if (e.t === 'radio') this.sfx.radio();
     const line = voiceFor(e);
     if (line) this.voice.say(line);
   }

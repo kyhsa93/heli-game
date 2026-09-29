@@ -6,7 +6,7 @@ export type Mode = 'brief' | 'play' | 'crashed' | 'over' | 'done';
 
 export interface Crash { reason: CrashReason; value?: number }
 
-export interface SessionSnapshot { mode: Mode; crash: Crash | null; result: Record<string, number> | null; failure: string | null }
+export interface SessionSnapshot { mode: Mode; crash: Crash | null; result: Record<string, number> | null; failure: string | null; failureText: string | null }
 
 export class FlightSession {
   readonly world: World;
@@ -15,7 +15,7 @@ export class FlightSession {
   paused = false;
   private overTimer = 0;
   private listeners = new Set<() => void>();
-  private snapshot: SessionSnapshot = { mode: 'brief', crash: null, result: null, failure: null };
+  private snapshot: SessionSnapshot = { mode: 'brief', crash: null, result: null, failure: null, failureText: null };
   failure: string | null = null;
   private failTimer = 0;
   private doneTimer = 0;
@@ -43,7 +43,7 @@ export class FlightSession {
   getSnapshot = () => this.snapshot;
 
   private publish() {
-    this.snapshot = { mode: this.mode, crash: this.crash, result: this.mode === 'done' ? this.objective?.result ?? null : null, failure: this.mode === 'over' ? this.failure : null };
+    this.snapshot = { mode: this.mode, crash: this.crash, result: this.mode === 'done' ? this.objective?.result ?? null : null, failure: this.mode === 'over' ? this.failure : null, failureText: this.mode === 'over' ? this.objective?.failureText ?? null : null };
     for (const fn of this.listeners) fn();
   }
 
@@ -65,6 +65,7 @@ export class FlightSession {
   step(dt: number) {
     if (this.paused) return;
     this.world.step(dt);
+    if (this.mode === 'play') this.objective?.tick?.(this.world, dt);
     if (this.doneTimer > 0 && this.mode === 'play') {
       this.doneTimer -= dt;
       if (this.doneTimer <= 0) { this.mode = 'done'; this.world.active = false; this.publish(); }

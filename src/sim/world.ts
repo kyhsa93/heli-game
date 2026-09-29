@@ -30,7 +30,7 @@ import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SAL
 
 export const STEP = 1 / 120;
 
-export interface NavTarget { x: number; y: number; z: number; name: string; area?: boolean }
+export interface NavTarget { x: number; y: number; z: number; name: string; area?: boolean; raw?: boolean }
 
 export class World {
   time = 0;
@@ -123,14 +123,14 @@ export class World {
 
   padAt(i: number): Pad3 | undefined { return this.pads[i]; }
 
-  spawnUnit(defId: string, x: number, z: number, yaw = 0, opts: { missionId?: string; group?: string; passive?: boolean } = {}): Unit {
+  spawnUnit(defId: string, x: number, z: number, yaw = 0, opts: { missionId?: string; group?: string; passive?: boolean; skill?: number } = {}): Unit {
     const def = UNIT_DEFS[defId];
     if (!def) throw new Error(`unknown unit ${defId}`);
     const y = def.move?.air ? this.terrain.surfaceAt(x, z) + 60 : this.terrain.surfaceAt(x, z);
     const u: Unit = {
       id: this.nextUnitId++, defId, def, side: def.side, missionId: opts.missionId, group: opts.group,
       pos: new Vector3(x, y, z), yaw, vel: new Vector3(), hp: def.hp, alive: true,
-      ai: createAiState(), weaponCooldown: 0, identified: false, passive: opts.passive,
+      ai: createAiState(), weaponCooldown: 0, identified: false, passive: opts.passive, skill: opts.skill,
     };
     this.units.push(u);
     return u;

@@ -67,6 +67,7 @@ export interface Unit {
   weaponCooldown: number;
   identified: boolean;
   passive?: boolean;
+  skill?: number;
 }
 
 export function squadMembers(u: Unit) {

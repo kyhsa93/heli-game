@@ -30,6 +30,10 @@ export function hitChance(world: World, w: UnitWeaponDef, dist: number) {
   return clamp((w.accuracy ?? 0) * (1 - dist / w.range) * (speed >= FAST ? FAST_FACTOR : 1) * world.difficulty.enemyAccuracy, 0, 1);
 }
 
+export function unitHitChance(world: World, u: Unit, w: UnitWeaponDef, dist: number) {
+  return clamp(hitChance(world, w, dist) * (u.skill ?? 1), 0, 1);
+}
+
 function inRange(u: Unit, dist: number) {
   return u.def.weapons.some(w => dist <= w.range && dist >= w.minRange);
 }
@@ -79,7 +83,7 @@ function fire(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
     u.ai.fireAcc += w.rate * dt;
     while (u.ai.fireAcc >= 1) {
       u.ai.fireAcc -= 1;
-      const hit = world.rng() < hitChance(world, w, dist);
+      const hit = world.rng() < unitHitChance(world, u, w, dist);
       const target = world.player.pos.clone();
       if (!hit) target.add(new Vector3(world.rng() - 0.5, world.rng() - 0.5, world.rng() - 0.5).multiplyScalar(30 + dist * 0.02));
       const dir = target.sub(eye).normalize();
@@ -121,7 +125,7 @@ export function stepBrain(world: World, u: Unit, dt = AI_TICK) {
       if (ai.awareness >= SUSPECT) enter(u, 'alert');
       break;
     case 'alert':
-      if (ai.detected && h.alive && inRange(u, dist)) { enter(u, 'engage'); ai.aimTimer = reactionTime(u) * world.difficulty.enemyReaction; }
+      if (ai.detected && h.alive && inRange(u, dist)) { enter(u, 'engage'); ai.aimTimer = reactionTime(u) * world.difficulty.enemyReaction / (u.skill ?? 1); }
       else if (ai.awareness < SUSPECT && (!ai.lastSeen || world.time - ai.lastSeenAt > ALERT_FORGET) && ai.stateTimer > ALERT_FORGET) enter(u, 'idle');
       break;
     case 'engage': {
