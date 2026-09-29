@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
 import { RotorAudio } from '../audio/rotor';
+import { t, tList, tPairs } from '../content/strings';
 import { clamp } from '../core/math';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { FlightRenderer } from '../render/renderer';
+import { LAND_DESCENT } from '../sim/heli/airframe';
 import { airspeed } from '../sim/heli/state';
 import { FlightSession } from '../sim/session';
 import { commandForKey, PREVENT_DEFAULT, type Command } from '../input/bindings';
@@ -87,8 +89,8 @@ export function Flight3D({ touch }: { touch: boolean }) {
         }
         if (missionRef.current) {
           missionRef.current.textContent = tp
-            ? `목표: ${tp.name} 패드 (${Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z))} m)`
-            : '비행 연습';
+            ? t('hud.target', { name: tp.name, dist: Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) })
+            : t('hud.practice');
           missionRef.current.style.color = '#06d6a0';
         }
         log.tick(simDt);
@@ -102,9 +104,9 @@ export function Flight3D({ touch }: { touch: boolean }) {
         if (hintRef.current) {
           let hint = '';
           if (session.mode === 'play' && h.alive) {
-            if (!h.engineOn && h.landed && h.fuel > 0) hint = touchRef.current ? '시동 버튼으로 엔진을 켜세요' : 'I 키로 엔진 시동';
-            else if (h.engineOn && h.rpm < 0.95 && h.landed) hint = `로터 가속 중… ${Math.round(h.rpm * 100)}%`;
-            else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = touchRef.current ? '왼쪽 스틱을 위로 — 콜렉티브를 올려 이륙' : 'W 키로 콜렉티브를 올려 이륙';
+            if (!h.engineOn && h.landed && h.fuel > 0) hint = t(touchRef.current ? 'hint.startEngineTouch' : 'hint.startEngineKey');
+            else if (h.engineOn && h.rpm < 0.95 && h.landed) hint = t('hint.spooling', { pct: Math.round(h.rpm * 100) });
+            else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = t(touchRef.current ? 'hint.liftTouch' : 'hint.liftKey');
           }
           hintRef.current.textContent = hint;
         }
@@ -169,7 +171,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
         <div className="hud3d">
           <div className="mission" ref={missionRef} />
           <div className="telemetry" ref={hudRef} />
-          {muted && <div className="score3d">음소거</div>}
+          {muted && <div className="score3d">{t('hud.muted')}</div>}
         </div>
       )}
       <div className="messages" ref={msgRef} />
@@ -177,48 +179,27 @@ export function Flight3D({ touch }: { touch: boolean }) {
 
       {touch && snap.mode === 'play' && (
         <div className="sticks">
-          <VirtualStick className="stick left" label="콜렉티브 · 페달" onMove={(x, y) => { input.touch.lx = x; input.touch.ly = y; }} />
-          <VirtualStick className="stick right" label="사이클릭" onMove={(x, y) => { input.touch.rx = x; input.touch.ry = y; }} />
-          <button className="tbtn engine" onPointerDown={e => { e.preventDefault(); sim.toggleEngine(); }}>시동</button>
-          <button className="tbtn view" onPointerDown={e => { e.preventDefault(); toggleView(); }}>시점</button>
+          <VirtualStick className="stick left" label={t('touch.leftStick')} onMove={(x, y) => { input.touch.lx = x; input.touch.ly = y; }} />
+          <VirtualStick className="stick right" label={t('touch.rightStick')} onMove={(x, y) => { input.touch.rx = x; input.touch.ry = y; }} />
+          <button className="tbtn engine" onPointerDown={e => { e.preventDefault(); sim.toggleEngine(); }}>{t('touch.engine')}</button>
+          <button className="tbtn view" onPointerDown={e => { e.preventDefault(); toggleView(); }}>{t('touch.view')}</button>
         </div>
       )}
 
       {(help || snap.mode === 'brief') && (
         <div className="overlay">
           <div className="card wide">
-            <h1>AH-64 조종석</h1>
-            <p className="sub">아파치 뒷좌석(조종사석)에 앉았습니다. 베이스(H)에서 시동을 걸고 자유롭게 비행 연습을 하세요.<br />
-              콜렉티브는 놓아도 그 자리에 머뭅니다 — 실제 헬기처럼요.</p>
-            {touch ? (
-              <div className="keys">
-                <b>시동 버튼</b><span>엔진 시동 / 정지 (로터가 100%까지 오를 때까지 대기)</span>
-                <b>왼쪽 스틱 ↕</b><span>콜렉티브 올리기 / 내리기 — 놓으면 그 자리 유지</span>
-                <b>왼쪽 스틱 ↔</b><span>페달 — 기수 좌우 회전</span>
-                <b>오른쪽 스틱</b><span>사이클릭 — 기수 숙이기·들기, 좌우 기울이기</span>
-                <b>화면 드래그</b><span>고개 돌리기 (더블탭: 정면) · 시점 버튼: 외부 시점</span>
-              </div>
-            ) : (
+            <h1>{t('brief.title')}</h1>
+            <p className="sub">{t('brief.intro')}<br />{t('brief.introCollective')}</p>
             <div className="keys">
-              <b>I</b><span>엔진 시동 / 정지 (로터가 100%까지 오를 때까지 대기)</span>
-              <b>W / S</b><span>콜렉티브 올리기 / 내리기 (Shift: 미세 조정)</span>
-              <b>방향키</b><span>사이클릭 — 기수 숙이기·들기, 좌우 기울이기</span>
-              <b>A / D</b><span>페달 — 기수 좌우 회전</span>
-              <b>마우스 드래그</b><span>고개 돌리기 (C 또는 더블클릭: 정면)</span>
-              <b>V · U · M</b><span>외부 시점 · 헬멧 심볼(IHADSS) · 소리</span>
-              <b>Esc</b><span>일시정지 (다시 시작)</span>
+              {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
             </div>
-            )}
             <ul className="rules">
-              <li>착륙: 하강률 {Math.round(3 * MS_TO_FPM)} fpm 이하, 거의 멈춘 채로, 수평으로.</li>
-              <li>H 패드에 착륙하면 연료가 채워집니다.</li>
-              <li>헬멧 심볼의 방위 화살표·마름모와 오른쪽 MPD 지도(TSD)가 목표를 가리킵니다. 가운데 선은 기체가 흘러가는 방향(호버 벡터)입니다.</li>
-              <li>엔진이 꺼지면 콜렉티브를 내려 로터를 살리고(오토로테이션), 지면 직전에 올리세요.</li>
-              <li>게임패드: 왼쪽 스틱 콜렉티브·페달, 오른쪽 스틱 사이클릭, A 시동, Y 시점.</li>
+              {tList('brief.rules', { fpm: Math.round(LAND_DESCENT * MS_TO_FPM) }).map(r => <li key={r}>{r}</li>)}
             </ul>
             {snap.mode === 'brief'
-              ? <button className="go" onClick={begin}>비행 시작</button>
-              : <><button className="go" onClick={() => setHelp(false)}>계속</button> <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>다시 시작</button></>}
+              ? <button className="go" onClick={begin}>{t('brief.start')}</button>
+              : <><button className="go" onClick={() => setHelp(false)}>{t('brief.continue')}</button> <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button></>}
           </div>
         </div>
       )}
@@ -226,9 +207,9 @@ export function Flight3D({ touch }: { touch: boolean }) {
       {snap.mode === 'over' && !help && (
         <div className="overlay">
           <div className="card">
-            <h1>추락</h1>
+            <h1>{t('crash.title')}</h1>
             <p className="sub">{snap.crash ? crashText(snap.crash.reason, snap.crash.value) : ''}</p>
-            <button className="go" onClick={begin}>다시 비행</button>
+            <button className="go" onClick={begin}>{t('crash.retry')}</button>
           </div>
         </div>
       )}

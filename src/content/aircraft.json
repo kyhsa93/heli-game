@@ -1,0 +1,31 @@
+{
+  "name": "AH-64D",
+  "maxThrustG": 1.7,
+  "maxPitchDeg": 25,
+  "maxRollDeg": 35,
+  "attitude": { "stiffness": 8, "damping": 5 },
+  "yaw": { "pedalRate": 0.9, "response": 3, "coordinationSpeed": 12, "coordinationBlend": 10, "torqueCoupling": 0.004 },
+  "drag": {
+    "forward": { "linear": 0.03, "quadratic": 0.0009 },
+    "side": { "linear": 0.1, "quadratic": 0.006 },
+    "vertical": { "linear": 0.35, "quadratic": 0.02 }
+  },
+  "groundEffect": { "height": 10, "gain": 0.15 },
+  "ceiling": { "start": 900, "fade": 300 },
+  "takeoffThrustRatio": 1.02,
+  "rotor": { "radius": 7.3, "hubHeight": 2.4, "hz": 4.8, "blades": 4 },
+  "gearHeight": -2.1,
+  "eye": [0, 1.02, -2.55],
+  "landing": { "maxDescent": 3, "maxHorizontal": 4, "maxAttitudeDeg": 12, "maxSlopeDeg": 10 },
+  "rpm": {
+    "autorotationGain": 0.012,
+    "dragBase": 0.02,
+    "dragPerCollective": 0.09,
+    "spoolRate": 0.4,
+    "governRate": 1.5,
+    "spoolThreshold": 0.9,
+    "groundSpindown": 0.05,
+    "max": 1.12
+  },
+  "fuel": { "burnBase": 0.05, "burnPerCollective": 0.3, "burnScale": 1, "baseRefuelRate": 8 }
+}

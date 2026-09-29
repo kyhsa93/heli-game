@@ -3,7 +3,7 @@ import { clamp } from '../../core/math';
 import type { Emit } from '../events';
 import { HALF, type Terrain } from '../terrain';
 import {
-  G3, GEAR, GEAR_Y, HULL, LAND_ATT, LAND_DESCENT, LAND_HS, MAX_PITCH, MAX_ROLL, MAX_THRUST, ROTOR_R, ROTOR_TIPS, ROTOR_Y, SLOPE_MAX,
+  AIRCRAFT, G3, GEAR, GEAR_Y, HULL, LAND_ATT, LAND_DESCENT, LAND_HS, MAX_PITCH, MAX_ROLL, MAX_THRUST, ROTOR_R, ROTOR_TIPS, ROTOR_Y, SLOPE_MAX,
 } from './airframe';
 import { agl, groundAttitude, toWorld, updateQ, type Controls, type HeliState } from './state';
 import { burnFuel, stepRotor } from './systems';
@@ -26,34 +26,38 @@ export function stepFlight(h: HeliState, c: Controls, env: FlightEnv, dt: number
   stepRotor(h, -air.dot(up), collective, dt);
 
   const height = agl(h, env.terrain);
-  const ground = height < 10 ? 1 + 0.15 * (1 - Math.max(0, height) / 10) : 1;
-  const ceiling = h.pos.y > 900 ? Math.max(0, 1 - (h.pos.y - 900) / 300) : 1;
+  const ge = AIRCRAFT.groundEffect, ceil = AIRCRAFT.ceiling;
+  const ground = height < ge.height ? 1 + ge.gain * (1 - Math.max(0, height) / ge.height) : 1;
+  const ceiling = h.pos.y > ceil.start ? Math.max(0, 1 - (h.pos.y - ceil.start) / ceil.fade) : 1;
   const thrust = MAX_THRUST * collective * h.rpm * h.rpm * ground * ceiling;
 
   if (h.landed) {
     h.vel.set(0, 0, 0);
-    if (thrust > G3 * 1.02) { h.landed = false; h.vel.y = 0.2; }
+    if (thrust > G3 * AIRCRAFT.takeoffThrustRatio) { h.landed = false; h.vel.y = 0.2; }
     else { h.pRate = h.rRate = h.yRate = 0; return 'ground'; }
   }
 
   const tp = -c.cyclicY * MAX_PITCH, tr = c.cyclicX * MAX_ROLL;
-  h.pRate += (8 * (tp - h.pitch) - 5 * h.pRate) * dt;
-  h.rRate += (8 * (tr - h.roll) - 5 * h.rRate) * dt;
+  const { stiffness: k, damping: d } = AIRCRAFT.attitude;
+  h.pRate += (k * (tp - h.pitch) - d * h.pRate) * dt;
+  h.rRate += (k * (tr - h.roll) - d * h.rRate) * dt;
   h.pitch += h.pRate * dt; h.roll += h.rRate * dt;
 
   const hs = Math.hypot(air.x, air.z);
-  let yawTarget = -c.pedal * 0.9;
-  if (hs > 12) yawTarget -= Math.min(1, (hs - 12) / 10) * G3 * Math.tan(h.roll) / hs;
-  h.yRate += (yawTarget - h.yRate) * 3 * dt - dColl * 0.004 * h.rpm;
+  const y = AIRCRAFT.yaw;
+  let yawTarget = -c.pedal * y.pedalRate;
+  if (hs > y.coordinationSpeed) yawTarget -= Math.min(1, (hs - y.coordinationSpeed) / y.coordinationBlend) * G3 * Math.tan(h.roll) / hs;
+  h.yRate += (yawTarget - h.yRate) * y.response * dt - dColl * y.torqueCoupling * h.rpm;
   h.yaw += h.yRate * dt;
   updateQ(h);
 
   const vf = air.dot(fwd), vr = air.dot(right), vu = air.dot(up);
   const acc = up.multiplyScalar(thrust);
   acc.y -= G3;
-  acc.addScaledVector(fwd, -(0.03 * vf + 0.0009 * vf * Math.abs(vf)));
-  acc.addScaledVector(right, -(0.1 * vr + 0.006 * vr * Math.abs(vr)));
-  acc.addScaledVector(new Vector3(0, 1, 0).applyQuaternion(h.q), -(0.35 * vu + 0.02 * vu * Math.abs(vu)));
+  const dr = AIRCRAFT.drag;
+  acc.addScaledVector(fwd, -(dr.forward.linear * vf + dr.forward.quadratic * vf * Math.abs(vf)));
+  acc.addScaledVector(right, -(dr.side.linear * vr + dr.side.quadratic * vr * Math.abs(vr)));
+  acc.addScaledVector(new Vector3(0, 1, 0).applyQuaternion(h.q), -(dr.vertical.linear * vu + dr.vertical.quadratic * vu * Math.abs(vu)));
   h.vel.addScaledVector(acc, dt);
   h.pos.addScaledVector(h.vel, dt);
   return 'air';
