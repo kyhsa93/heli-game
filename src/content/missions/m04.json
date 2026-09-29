@@ -1,0 +1,348 @@
+{
+  "id": "m04",
+  "title": "대공포 사냥",
+  "act": 1,
+  "kind": "sead",
+  "briefing": {
+    "summary": "안개 낀 계곡 세 곳에 숨은 VPA 자주대공포를 찾아 파괴하라. 레이더에 잡히면 능선 뒤로 숨어라.",
+    "situation": [
+      "VPA가 국경 계곡 입구에 레이더 대공포 세 대를 숨겨 놓아 아군 헬기가 들어가지 못한다.",
+      "안개로 멀리 보이지 않는다. RWR에 뜨는 방향과 지형을 이용해 가시선 밖에서 접근하고, 떠오르는 순간 헬파이어로 끝내라."
+    ],
+    "threats": [
+      "자주대공포 3",
+      "휴대용 대공미사일",
+      "기관총 차량"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "agm114k",
+        "L1": "agm114k",
+        "R1": "agm114k",
+        "R2": "agm114k"
+      },
+      "stingers": false,
+      "gunRounds": 1200,
+      "fuel": 80
+    }
+  },
+  "environment": {
+    "seed": 1104,
+    "time": "day",
+    "fog": true,
+    "wind": {
+      "dirDeg": 150,
+      "speed": 4,
+      "gust": 2
+    }
+  },
+  "terrain": {
+    "size": 12000,
+    "features": [
+      {
+        "kind": "base",
+        "center": [
+          -3025,
+          4157
+        ],
+        "radius": 120
+      },
+      {
+        "kind": "village",
+        "center": [
+          -500,
+          2500
+        ],
+        "radius": 160,
+        "houses": 6
+      },
+      {
+        "kind": "forest",
+        "center": [
+          0,
+          200
+        ],
+        "radius": 700,
+        "density": 0.6
+      }
+    ],
+    "roads": [
+      [
+        [
+          -3025,
+          4157
+        ],
+        [
+          -1500,
+          3000
+        ],
+        [
+          -500,
+          2500
+        ],
+        [
+          1200,
+          600
+        ],
+        [
+          2500,
+          -1500
+        ]
+      ]
+    ]
+  },
+  "start": {
+    "kind": "farp_hot",
+    "position": [
+      -3025,
+      4157
+    ],
+    "headingDeg": 29
+  },
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -3025,
+        4157
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    }
+  ],
+  "waypoints": [
+    {
+      "id": "zone",
+      "name": "대공 지역",
+      "position": [
+        0,
+        -1200
+      ]
+    },
+    {
+      "id": "bp1",
+      "name": "BP1",
+      "position": [
+        -2152,
+        1213
+      ]
+    },
+    {
+      "id": "bp2",
+      "name": "BP2",
+      "position": [
+        1500,
+        1300
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "z1",
+      "type": "spaag",
+      "position": [
+        -1765,
+        -435
+      ],
+      "group": "ad1"
+    },
+    {
+      "id": "y1",
+      "type": "spaag",
+      "position": [
+        1358,
+        -642
+      ],
+      "group": "ad2"
+    },
+    {
+      "id": "x1",
+      "type": "spaag",
+      "position": [
+        286,
+        -2186
+      ],
+      "group": "ad3"
+    },
+    {
+      "id": "mp1",
+      "type": "manpads",
+      "position": [
+        -1552,
+        -343
+      ],
+      "group": "mp"
+    },
+    {
+      "id": "mq1",
+      "type": "manpads",
+      "position": [
+        1650,
+        -300
+      ],
+      "group": "mp"
+    },
+    {
+      "id": "t1",
+      "type": "technical",
+      "position": [
+        10,
+        -2497
+      ],
+      "group": "camp"
+    },
+    {
+      "id": "t2",
+      "type": "technical",
+      "position": [
+        -27,
+        -2532
+      ],
+      "group": "camp"
+    },
+    {
+      "id": "t3",
+      "type": "truck",
+      "position": [
+        5,
+        -2560
+      ],
+      "group": "camp"
+    },
+    {
+      "id": "t4",
+      "type": "truck",
+      "position": [
+        15,
+        -2461
+      ],
+      "group": "camp"
+    },
+    {
+      "id": "v1",
+      "type": "civ_car",
+      "position": [
+        -450,
+        2450
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "civ_house",
+      "position": [
+        -482,
+        2445
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "ad1",
+      "behavior": "defend"
+    },
+    {
+      "id": "ad2",
+      "behavior": "defend"
+    },
+    {
+      "id": "ad3",
+      "behavior": "defend"
+    },
+    {
+      "id": "mp",
+      "behavior": "defend"
+    },
+    {
+      "id": "camp",
+      "behavior": "defend"
+    }
+  ],
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "destroy",
+      "units": [
+        "z1",
+        "y1",
+        "x1"
+      ],
+      "primary": true,
+      "label": "자주대공포 3대 파괴"
+    },
+    {
+      "id": "o2",
+      "kind": "destroy",
+      "units": [
+        "mp1",
+        "mq1"
+      ],
+      "primary": false,
+      "label": "휴대용 SAM 팀 2개 제거"
+    },
+    {
+      "id": "o3",
+      "kind": "land",
+      "farp": "farp_a",
+      "primary": true,
+      "label": "FARP 귀환"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "tr_start",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 3
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "하운드 1, 관제. 안개 속 계곡에 레이더 대공포 셋. RWR을 보면서 능선 뒤로 접근하라."
+        }
+      ]
+    },
+    {
+      "id": "tr_two",
+      "once": true,
+      "when": {
+        "kind": "unitDestroyed",
+        "units": [
+          "z1",
+          "y1",
+          "x1"
+        ],
+        "count": 2
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "둘 잡았다. 하나 남았다."
+        }
+      ]
+    },
+    {
+      "id": "tr_done",
+      "once": true,
+      "when": {
+        "kind": "objectiveDone",
+        "objective": "o1"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "대공망이 뚫렸다. 채프를 보급한다 — 귀환하라, 하운드."
+        }
+      ]
+    }
+  ],
+  "par": 2600,
+  "parTimeSec": 900,
+  "wingman": false
+}

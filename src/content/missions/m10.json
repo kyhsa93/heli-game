@@ -1,0 +1,423 @@
+{
+  "id": "m10",
+  "title": "협곡 돌파",
+  "act": 3,
+  "kind": "strike",
+  "briefing": {
+    "summary": "SAM 지대를 피해 긴 협곡을 저공으로 지나 VPA 전방 지휘소를 파괴하라. 연료가 빠듯하다.",
+    "situation": [
+      "VPA 전방 지휘소는 SAM 세 기가 덮는 고지 너머에 있다. 정면으로 가면 격추된다.",
+      "골짜기를 따라 지형에 붙어 날면 레이더에 잡히지 않고 지휘소 뒤로 나올 수 있다. FARP가 멀어 연료를 아껴야 한다."
+    ],
+    "threats": [
+      "단거리 SAM 3",
+      "대공포 4",
+      "보병"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "agm114k",
+        "L1": "agm114k",
+        "R1": "agm114k",
+        "R2": "agm114k"
+      },
+      "stingers": false,
+      "gunRounds": 1200,
+      "fuel": 65
+    }
+  },
+  "environment": {
+    "seed": 1110,
+    "time": "day",
+    "fog": false,
+    "wind": {
+      "dirDeg": 240,
+      "speed": 7,
+      "gust": 4
+    }
+  },
+  "terrain": {
+    "size": 12000,
+    "features": [
+      {
+        "kind": "base",
+        "center": [
+          -2982,
+          1518
+        ],
+        "radius": 120
+      },
+      {
+        "kind": "base",
+        "center": [
+          3400,
+          -4000
+        ],
+        "radius": 160
+      },
+      {
+        "kind": "village",
+        "center": [
+          -2300,
+          1900
+        ],
+        "radius": 150,
+        "houses": 6
+      }
+    ],
+    "roads": [
+      [
+        [
+          -2982,
+          1518
+        ],
+        [
+          -3000,
+          0
+        ]
+      ],
+      [
+        [
+          1800,
+          -3400
+        ],
+        [
+          3400,
+          -4000
+        ],
+        [
+          4800,
+          -4600
+        ]
+      ]
+    ]
+  },
+  "start": {
+    "kind": "farp_hot",
+    "position": [
+      -2982,
+      1518
+    ],
+    "headingDeg": 58
+  },
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -2982,
+        1518
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    }
+  ],
+  "waypoints": [
+    {
+      "id": "c1",
+      "name": "협곡 입구",
+      "position": [
+        -1200,
+        400
+      ]
+    },
+    {
+      "id": "c2",
+      "name": "협곡 출구",
+      "position": [
+        1400,
+        -3600
+      ]
+    },
+    {
+      "id": "hq",
+      "name": "지휘소",
+      "position": [
+        3400,
+        -4000
+      ]
+    },
+    {
+      "id": "bp1",
+      "name": "BP1",
+      "position": [
+        1381,
+        -2895
+      ]
+    },
+    {
+      "id": "bp2",
+      "name": "BP2",
+      "position": [
+        1982,
+        -5068
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "hq1",
+      "type": "hq",
+      "position": [
+        3400,
+        -4000
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "hq2",
+      "type": "bunker",
+      "position": [
+        3359,
+        -4039
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "hq3",
+      "type": "bunker",
+      "position": [
+        3467,
+        -3978
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "sa1",
+      "type": "sam_short",
+      "position": [
+        -4100,
+        -5350
+      ],
+      "group": "sams"
+    },
+    {
+      "id": "sb1",
+      "type": "sam_short",
+      "position": [
+        -1600,
+        -3850
+      ],
+      "group": "sams"
+    },
+    {
+      "id": "sc1",
+      "type": "sam_short",
+      "position": [
+        -5350,
+        -2350
+      ],
+      "group": "sams"
+    },
+    {
+      "id": "ga1",
+      "type": "aaa_light",
+      "position": [
+        3200,
+        -3700
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "ga2",
+      "type": "aaa_light",
+      "position": [
+        3102,
+        -3753
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "gb1",
+      "type": "aaa_light",
+      "position": [
+        3700,
+        -4300
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "gb2",
+      "type": "aaa_light",
+      "position": [
+        3641,
+        -4405
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "i1",
+      "type": "inf",
+      "position": [
+        3500,
+        -3850
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "i2",
+      "type": "inf_mg",
+      "position": [
+        3457,
+        -3829
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "i3",
+      "type": "truck",
+      "position": [
+        3538,
+        -3896
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "v1",
+      "type": "civ_car",
+      "position": [
+        -2250,
+        1850
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "civ_house",
+      "position": [
+        -2286,
+        1832
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "hq",
+      "behavior": "defend"
+    },
+    {
+      "id": "sams",
+      "behavior": "defend"
+    }
+  ],
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "reach",
+      "waypoint": "c2",
+      "radius": 500,
+      "primary": true,
+      "label": "협곡 출구 통과"
+    },
+    {
+      "id": "o2",
+      "kind": "destroy",
+      "units": [
+        "hq1"
+      ],
+      "primary": true,
+      "label": "지휘소 파괴"
+    },
+    {
+      "id": "o3",
+      "kind": "destroy",
+      "units": [
+        "ga1",
+        "ga2",
+        "gb1",
+        "gb2"
+      ],
+      "count": 3,
+      "primary": false,
+      "label": "지휘소 대공포 3문 제거"
+    },
+    {
+      "id": "o4",
+      "kind": "land",
+      "farp": "farp_a",
+      "primary": true,
+      "label": "FARP 귀환"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "tr_start",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 3
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "하운드 1, 헬멧의 마름모를 따라 협곡 입구까지. 거기서부터 골짜기에 붙어라. 높이 뜨면 SAM이 본다."
+        }
+      ]
+    },
+    {
+      "id": "tr_exit",
+      "once": true,
+      "when": {
+        "kind": "objectiveDone",
+        "objective": "o1"
+      },
+      "then": [
+        {
+          "kind": "objectiveAdd",
+          "objective": "o2"
+        },
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "협곡을 빠져나왔다. 지휘소가 동쪽 2킬로. 끝내라."
+        }
+      ]
+    },
+    {
+      "id": "tr_seen",
+      "once": true,
+      "when": {
+        "kind": "playerDetected",
+        "byGroup": "sams"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "SAM 레이더에 잡혔다! 내려가라, 내려가!"
+        }
+      ]
+    },
+    {
+      "id": "tr_done",
+      "once": true,
+      "when": {
+        "kind": "objectiveDone",
+        "objective": "o2"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "지휘소 침묵. 연료 확인하고 귀환하라."
+        }
+      ]
+    }
+  ],
+  "initialObjectives": [
+    "o1",
+    "o3",
+    "o4"
+  ],
+  "par": 3000,
+  "parTimeSec": 1300,
+  "wingman": false,
+  "unlocks": [
+    "stinger",
+    "fcr",
+    "agm114l",
+    "chaff"
+  ]
+}

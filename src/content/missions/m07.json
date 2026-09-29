@@ -1,0 +1,424 @@
+{
+  "id": "m07",
+  "title": "추락 조종사",
+  "act": 2,
+  "kind": "csar",
+  "briefing": {
+    "summary": "격추된 아군 조종사가 숨어 있는 LZ 주변을 정리하고, 구조 헬기가 태워 돌아올 때까지 지켜라.",
+    "situation": [
+      "정찰기 조종사가 LZ 인근 숲에 숨어 있다. VPA 수색대가 조여 오고 있다.",
+      "LZ 주변 위협을 먼저 치우면 구조 헬기 레스큐 1이 출발한다. 해가 지기 전에 끝내야 한다. 하운드 2가 동행한다."
+    ],
+    "threats": [
+      "보병",
+      "기관총 차량",
+      "휴대용 대공미사일"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "hydra70",
+        "L1": "hydra70",
+        "R1": "hydra70",
+        "R2": "hydra70"
+      },
+      "stingers": false,
+      "gunRounds": 1200,
+      "fuel": 80
+    }
+  },
+  "environment": {
+    "seed": 1107,
+    "time": "dusk",
+    "fog": false,
+    "wind": {
+      "dirDeg": 300,
+      "speed": 6,
+      "gust": 3
+    }
+  },
+  "terrain": {
+    "size": 12000,
+    "features": [
+      {
+        "kind": "base",
+        "center": [
+          -3600,
+          3600
+        ],
+        "radius": 120
+      },
+      {
+        "kind": "flatten",
+        "center": [
+          1200,
+          -1400
+        ],
+        "radius": 60
+      },
+      {
+        "kind": "forest",
+        "center": [
+          1500,
+          -1100
+        ],
+        "radius": 400,
+        "density": 0.5
+      },
+      {
+        "kind": "village",
+        "center": [
+          -1600,
+          1500
+        ],
+        "radius": 150,
+        "houses": 5
+      }
+    ],
+    "roads": [
+      [
+        [
+          -3600,
+          3600
+        ],
+        [
+          -1800,
+          1600
+        ],
+        [
+          200,
+          -200
+        ],
+        [
+          1200,
+          -1400
+        ],
+        [
+          2600,
+          -3600
+        ]
+      ]
+    ]
+  },
+  "start": {
+    "kind": "farp_hot",
+    "position": [
+      -3600,
+      3600
+    ],
+    "headingDeg": 44
+  },
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -3600,
+        3600
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    }
+  ],
+  "waypoints": [
+    {
+      "id": "lz",
+      "name": "LZ",
+      "position": [
+        1200,
+        -1400
+      ]
+    },
+    {
+      "id": "bp1",
+      "name": "BP1",
+      "position": [
+        -200,
+        -300
+      ]
+    },
+    {
+      "id": "bp2",
+      "name": "BP2",
+      "position": [
+        2500,
+        -200
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "q1",
+      "type": "inf",
+      "position": [
+        1267,
+        -1710
+      ],
+      "group": "lz"
+    },
+    {
+      "id": "q2",
+      "type": "inf",
+      "position": [
+        1063,
+        -1792
+      ],
+      "group": "lz"
+    },
+    {
+      "id": "q3",
+      "type": "inf_mg",
+      "position": [
+        1530,
+        -1696
+      ],
+      "group": "lz"
+    },
+    {
+      "id": "q4",
+      "type": "technical",
+      "position": [
+        1079,
+        -1616
+      ],
+      "group": "lz"
+    },
+    {
+      "id": "q5",
+      "type": "technical",
+      "position": [
+        1020,
+        -1741
+      ],
+      "group": "lz"
+    },
+    {
+      "id": "q6",
+      "type": "manpads",
+      "position": [
+        1400,
+        -1741
+      ],
+      "group": "lz"
+    },
+    {
+      "id": "q7",
+      "type": "inf",
+      "position": [
+        1092,
+        -1565
+      ],
+      "group": "lz"
+    },
+    {
+      "id": "rf1",
+      "type": "technical",
+      "position": [
+        2561,
+        -3510
+      ],
+      "group": "reinf",
+      "hidden": true
+    },
+    {
+      "id": "rf2",
+      "type": "inf",
+      "position": [
+        2557,
+        -3521
+      ],
+      "group": "reinf",
+      "hidden": true
+    },
+    {
+      "id": "rf3",
+      "type": "inf",
+      "position": [
+        2603,
+        -3556
+      ],
+      "group": "reinf",
+      "hidden": true
+    },
+    {
+      "id": "rescue",
+      "type": "c_heli_rescue",
+      "position": [
+        -3400,
+        3450
+      ],
+      "group": "rg",
+      "hidden": true
+    },
+    {
+      "id": "v1",
+      "type": "civ_car",
+      "position": [
+        -1650,
+        1450
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "civ_house",
+      "position": [
+        -1679,
+        1477
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "lz",
+      "behavior": "defend"
+    },
+    {
+      "id": "reinf",
+      "behavior": "advance",
+      "route": [
+        [
+          2600,
+          -3500
+        ],
+        [
+          1500,
+          -1900
+        ]
+      ],
+      "startTrigger": "tr_rescue"
+    },
+    {
+      "id": "rg",
+      "behavior": "advance",
+      "route": [
+        [
+          -3400,
+          3450
+        ],
+        [
+          1200,
+          -1400
+        ],
+        [
+          1240,
+          -1380
+        ],
+        [
+          -3400,
+          3450
+        ]
+      ],
+      "startTrigger": "tr_rescue"
+    }
+  ],
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "destroy",
+      "units": {
+        "group": "lz"
+      },
+      "count": 6,
+      "primary": true,
+      "label": "LZ 주변 위협 제거"
+    },
+    {
+      "id": "o2",
+      "kind": "protect",
+      "units": [
+        "rescue"
+      ],
+      "minSurvive": 1,
+      "untilTrigger": "tr_home",
+      "primary": true,
+      "label": "구조 헬기 호위 (귀환까지)"
+    },
+    {
+      "id": "o3",
+      "kind": "protect",
+      "units": [
+        "hound2"
+      ],
+      "minSurvive": 1,
+      "untilTrigger": "tr_home",
+      "primary": false,
+      "label": "하운드 2 생존"
+    },
+    {
+      "id": "o4",
+      "kind": "land",
+      "farp": "farp_a",
+      "primary": true,
+      "label": "FARP 귀환"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "tr_start",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 3
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "하운드 1, 조종사 신호 확인. LZ 주변 수색대를 치워라. 하운드 2가 네 오른쪽에 붙는다."
+        }
+      ]
+    },
+    {
+      "id": "tr_rescue",
+      "once": true,
+      "when": {
+        "kind": "objectiveDone",
+        "objective": "o1"
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "rescue",
+            "rf1",
+            "rf2",
+            "rf3"
+          ]
+        },
+        {
+          "kind": "objectiveAdd",
+          "objective": "o2"
+        },
+        {
+          "kind": "radio",
+          "from": "rescue",
+          "text": "레스큐 1 출발. LZ까지 3분. 길을 지켜 달라."
+        }
+      ]
+    },
+    {
+      "id": "tr_home",
+      "once": true,
+      "when": {
+        "kind": "groupArrived",
+        "group": "rg"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "rescue",
+          "text": "레스큐 1, 조종사 태우고 기지 도착. 고맙다, 하운드."
+        }
+      ]
+    }
+  ],
+  "initialObjectives": [
+    "o1",
+    "o3",
+    "o4"
+  ],
+  "par": 3000,
+  "parTimeSec": 1100,
+  "wingman": true
+}

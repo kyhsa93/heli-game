@@ -61,7 +61,7 @@ function play(id: string, maxSec = 1500) {
 }
 
 describe('mission playthroughs (scripted pilot)', () => {
-  for (const id of ['m01', 'm02', 'm03', 't1', 't2', 't3', 't4', 't5']) {
+  for (const id of ['m01', 'm02', 'm03', 'm04', 'm05', 'm06', 'm07', 'm08', 'm09', 'm10', 'm11', 'm12', 't1', 't2', 't3', 't4', 't5']) {
     it(`${id} can be completed`, () => {
       const { s, rt } = play(id);
       expect(s.getSnapshot().mode, rt.objectives.map(o => `${o.def.id}:${o.state}`).join(' ')).toBe('done');

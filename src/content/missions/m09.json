@@ -1,0 +1,415 @@
+{
+  "id": "m09",
+  "title": "헬기 기지",
+  "act": 3,
+  "kind": "strike",
+  "briefing": {
+    "summary": "새벽에 VPA 헬기 기지를 기습해 지상의 헬기 여섯 대를 부수고, 이륙하는 헬기는 스팅어로 떨어뜨려라.",
+    "situation": [
+      "VPA 공격 헬기 부대가 전방 기지로 옮겨 왔다. 해가 뜨면 아군 기갑을 노리고 날아오를 것이다.",
+      "발각되면 대기 중이던 헬기 두 대가 바로 뜬다. 이번 출격부터 날개 끝에 스팅어를 단다 — 헬기를 1.5초 원 안에 두면 잠긴다."
+    ],
+    "threats": [
+      "적 공격 헬기 2",
+      "단거리 SAM",
+      "대공포"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "agm114k",
+        "L1": "agm114k",
+        "R1": "agm114k",
+        "R2": "agm114k"
+      },
+      "stingers": true,
+      "gunRounds": 1200,
+      "fuel": 80
+    }
+  },
+  "environment": {
+    "seed": 1109,
+    "time": "dawn",
+    "fog": false,
+    "wind": {
+      "dirDeg": 90,
+      "speed": 4,
+      "gust": 2
+    }
+  },
+  "terrain": {
+    "size": 12000,
+    "features": [
+      {
+        "kind": "base",
+        "center": [
+          -2700,
+          3100
+        ],
+        "radius": 120
+      },
+      {
+        "kind": "base",
+        "center": [
+          1500,
+          -2500
+        ],
+        "radius": 220
+      },
+      {
+        "kind": "village",
+        "center": [
+          -1300,
+          1300
+        ],
+        "radius": 150,
+        "houses": 5
+      }
+    ],
+    "roads": [
+      [
+        [
+          -2700,
+          3100
+        ],
+        [
+          -1200,
+          1200
+        ],
+        [
+          600,
+          -900
+        ],
+        [
+          1500,
+          -2500
+        ]
+      ]
+    ]
+  },
+  "start": {
+    "kind": "farp_hot",
+    "position": [
+      -2700,
+      3100
+    ],
+    "headingDeg": 37
+  },
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -2700,
+        3100
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    }
+  ],
+  "waypoints": [
+    {
+      "id": "hb",
+      "name": "헬기 기지",
+      "position": [
+        1500,
+        -2500
+      ]
+    },
+    {
+      "id": "bp1",
+      "name": "BP1",
+      "position": [
+        0,
+        -500
+      ]
+    },
+    {
+      "id": "bp2",
+      "name": "BP2",
+      "position": [
+        3000,
+        -700
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "p1",
+      "type": "heli_attack",
+      "position": [
+        1425,
+        -2540
+      ],
+      "headingDeg": 180,
+      "parked": true
+    },
+    {
+      "id": "p2",
+      "type": "heli_attack",
+      "position": [
+        1500,
+        -2540
+      ],
+      "headingDeg": 180,
+      "parked": true
+    },
+    {
+      "id": "p3",
+      "type": "heli_attack",
+      "position": [
+        1575,
+        -2540
+      ],
+      "headingDeg": 180,
+      "parked": true
+    },
+    {
+      "id": "p4",
+      "type": "heli_attack",
+      "position": [
+        1425,
+        -2460
+      ],
+      "headingDeg": 180,
+      "parked": true
+    },
+    {
+      "id": "p5",
+      "type": "heli_attack",
+      "position": [
+        1500,
+        -2460
+      ],
+      "headingDeg": 180,
+      "parked": true
+    },
+    {
+      "id": "p6",
+      "type": "heli_attack",
+      "position": [
+        1575,
+        -2460
+      ],
+      "headingDeg": 180,
+      "parked": true
+    },
+    {
+      "id": "a1",
+      "type": "heli_attack",
+      "position": [
+        1500,
+        -2800
+      ],
+      "hidden": true,
+      "group": "air"
+    },
+    {
+      "id": "a2",
+      "type": "heli_attack",
+      "position": [
+        1405,
+        -2815
+      ],
+      "hidden": true,
+      "group": "air"
+    },
+    {
+      "id": "s1",
+      "type": "sam_short",
+      "position": [
+        1750,
+        -2750
+      ],
+      "group": "def"
+    },
+    {
+      "id": "g1",
+      "type": "aaa_light",
+      "position": [
+        1450,
+        -2350
+      ],
+      "group": "def"
+    },
+    {
+      "id": "g2",
+      "type": "aaa_light",
+      "position": [
+        1379,
+        -2476
+      ],
+      "group": "def"
+    },
+    {
+      "id": "g3",
+      "type": "inf",
+      "position": [
+        1466,
+        -2529
+      ],
+      "group": "def"
+    },
+    {
+      "id": "g4",
+      "type": "inf",
+      "position": [
+        1494,
+        -2232
+      ],
+      "group": "def"
+    },
+    {
+      "id": "v1",
+      "type": "civ_car",
+      "position": [
+        -1350,
+        1250
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "civ_house",
+      "position": [
+        -1389,
+        1244
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "def",
+      "behavior": "defend"
+    },
+    {
+      "id": "air",
+      "behavior": "hold"
+    }
+  ],
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "destroy",
+      "units": [
+        "p1",
+        "p2",
+        "p3",
+        "p4",
+        "p5",
+        "p6"
+      ],
+      "primary": true,
+      "label": "지상의 적 헬기 6대 파괴"
+    },
+    {
+      "id": "o2",
+      "kind": "destroy",
+      "units": [
+        "a1",
+        "a2"
+      ],
+      "primary": true,
+      "label": "이륙한 적 헬기 2대 격추"
+    },
+    {
+      "id": "o3",
+      "kind": "land",
+      "farp": "farp_a",
+      "primary": true,
+      "label": "FARP 귀환"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "tr_start",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 3
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "하운드 1, 기지는 아직 잔다. 발각되면 두 대가 뜬다 — 스팅어를 준비해라."
+        }
+      ]
+    },
+    {
+      "id": "tr_scramble",
+      "once": true,
+      "when": {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "playerDetected"
+          },
+          {
+            "kind": "unitDestroyed",
+            "units": [
+              "p1",
+              "p2",
+              "p3",
+              "p4",
+              "p5",
+              "p6"
+            ],
+            "count": 1
+          },
+          {
+            "kind": "time",
+            "afterSec": 300
+          }
+        ]
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "a1",
+            "a2"
+          ]
+        },
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "적 헬기 두 대 이륙! 스팅어로 떨어뜨려라."
+        }
+      ]
+    },
+    {
+      "id": "tr_done",
+      "once": true,
+      "when": {
+        "kind": "all",
+        "of": [
+          {
+            "kind": "objectiveDone",
+            "objective": "o1"
+          },
+          {
+            "kind": "objectiveDone",
+            "objective": "o2"
+          }
+        ]
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "기지가 불탄다. 하늘은 우리 것이다. 귀환하라."
+        }
+      ]
+    }
+  ],
+  "par": 4200,
+  "parTimeSec": 1100,
+  "wingman": false,
+  "unlocks": [
+    "stinger",
+    "fcr",
+    "agm114l",
+    "chaff"
+  ]
+}

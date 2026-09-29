@@ -182,7 +182,8 @@ export class MissionRuntime implements Objective {
     if (!w || this.unitIds.has(missionUnitId)) return null;
     const s = this.mission.units.find(u => u.id === missionUnitId);
     if (!s) return null;
-    const u = w.spawnUnit(s.type, s.position[0], s.position[1], -(s.headingDeg ?? 0) * Math.PI / 180, { missionId: s.id, group: s.group, skill: s.skill, passive: s.passive, aam: s.aam });
+    const u = w.spawnUnit(s.type, s.position[0], s.position[1], -(s.headingDeg ?? 0) * Math.PI / 180, { missionId: s.id, group: s.group, skill: s.skill, passive: s.passive || s.parked, aam: s.aam });
+    if (s.parked) u.pos.y = w.terrain.surfaceAt(u.pos.x, u.pos.z);
     this.unitIds.set(s.id, u.id);
     if (s.group) w.groups.get(s.group)?.members.push({ unit: u.id, leg: 0, dir: 1, arrived: false });
     return u;

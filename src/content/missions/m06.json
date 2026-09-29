@@ -1,0 +1,371 @@
+{
+  "id": "m06",
+  "title": "레이더 사이트",
+  "act": 2,
+  "kind": "sead",
+  "briefing": {
+    "summary": "롱보우 FCR과 레이더 유도 헬파이어로 VPA SAM 레이더 두 곳을 제압하라.",
+    "situation": [
+      "VPA 단거리 SAM 대대가 레이더 두 곳에 기대고 있다. 레이더가 살아 있는 한 반격 부대는 하늘을 쓸 수 없다.",
+      "이번 출격부터 롱보우 레이더를 단다. 능선 위로 잠깐 떠서 R로 훑고, L을 쏜 뒤 바로 숨어라. 레이더는 민간 차량을 구별하지 못한다."
+    ],
+    "threats": [
+      "단거리 SAM 2",
+      "대공포",
+      "SAM 레이더 2"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "agm114l",
+        "L1": "agm114l",
+        "R1": "agm114l",
+        "R2": "agm114l"
+      },
+      "stingers": false,
+      "gunRounds": 1200,
+      "fuel": 80
+    }
+  },
+  "environment": {
+    "seed": 1106,
+    "time": "day",
+    "fog": false,
+    "wind": {
+      "dirDeg": 220,
+      "speed": 4,
+      "gust": 2
+    }
+  },
+  "terrain": {
+    "size": 12000,
+    "features": [
+      {
+        "kind": "base",
+        "center": [
+          -3200,
+          4000
+        ],
+        "radius": 120
+      },
+      {
+        "kind": "village",
+        "center": [
+          400,
+          1200
+        ],
+        "radius": 150,
+        "houses": 6
+      }
+    ],
+    "roads": [
+      [
+        [
+          -3200,
+          4000
+        ],
+        [
+          -1500,
+          1500
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          2200,
+          -1000
+        ]
+      ],
+      [
+        [
+          0,
+          0
+        ],
+        [
+          -1200,
+          -1800
+        ]
+      ]
+    ]
+  },
+  "start": {
+    "kind": "farp_hot",
+    "position": [
+      -3200,
+      4000
+    ],
+    "headingDeg": 34
+  },
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -3200,
+        4000
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    }
+  ],
+  "waypoints": [
+    {
+      "id": "sites",
+      "name": "레이더 지역",
+      "position": [
+        500,
+        -1400
+      ]
+    },
+    {
+      "id": "bp1",
+      "name": "BP1",
+      "position": [
+        -2400,
+        200
+      ]
+    },
+    {
+      "id": "bp2",
+      "name": "BP2",
+      "position": [
+        1800,
+        1400
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "ra1",
+      "type": "sam_radar",
+      "position": [
+        -1200,
+        -1800
+      ],
+      "group": "site1"
+    },
+    {
+      "id": "rb1",
+      "type": "sam_radar",
+      "position": [
+        2200,
+        -1000
+      ],
+      "group": "site2"
+    },
+    {
+      "id": "sa1",
+      "type": "sam_short",
+      "position": [
+        -1050,
+        -1650
+      ],
+      "group": "site1"
+    },
+    {
+      "id": "sa2",
+      "type": "aaa_light",
+      "position": [
+        -1100,
+        -1611
+      ],
+      "group": "site1"
+    },
+    {
+      "id": "sa3",
+      "type": "inf",
+      "position": [
+        -1011,
+        -1724
+      ],
+      "group": "site1"
+    },
+    {
+      "id": "sb1",
+      "type": "sam_short",
+      "position": [
+        2059,
+        -845
+      ],
+      "group": "site2"
+    },
+    {
+      "id": "sb2",
+      "type": "aaa_light",
+      "position": [
+        1979,
+        -861
+      ],
+      "group": "site2"
+    },
+    {
+      "id": "sb3",
+      "type": "inf",
+      "position": [
+        2136,
+        -835
+      ],
+      "group": "site2"
+    },
+    {
+      "id": "p1",
+      "type": "technical",
+      "position": [
+        600,
+        -600
+      ],
+      "group": "patrol"
+    },
+    {
+      "id": "p2",
+      "type": "technical",
+      "position": [
+        569,
+        -656
+      ],
+      "group": "patrol"
+    },
+    {
+      "id": "v1",
+      "type": "civ_car",
+      "position": [
+        310,
+        1150
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "civ_car",
+      "position": [
+        297,
+        1171
+      ]
+    },
+    {
+      "id": "v3",
+      "type": "civ_house",
+      "position": [
+        348,
+        1104
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "site1",
+      "behavior": "defend"
+    },
+    {
+      "id": "site2",
+      "behavior": "defend"
+    },
+    {
+      "id": "patrol",
+      "behavior": "patrol",
+      "route": [
+        [
+          600,
+          -600
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          -1500,
+          1500
+        ]
+      ]
+    }
+  ],
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "destroy",
+      "units": [
+        "ra1",
+        "rb1"
+      ],
+      "primary": true,
+      "label": "SAM 레이더 2곳 파괴"
+    },
+    {
+      "id": "o2",
+      "kind": "destroy",
+      "units": [
+        "sa1",
+        "sb1"
+      ],
+      "primary": false,
+      "label": "단거리 SAM 발사대 2기 제거"
+    },
+    {
+      "id": "o3",
+      "kind": "land",
+      "farp": "farp_a",
+      "primary": true,
+      "label": "FARP 귀환"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "tr_start",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 3
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "하운드 1, 롱보우 점검 끝. 레이더 지역은 북쪽 두 곳이다."
+        }
+      ]
+    },
+    {
+      "id": "tr_one",
+      "once": true,
+      "when": {
+        "kind": "unitDestroyed",
+        "units": [
+          "ra1",
+          "rb1"
+        ],
+        "count": 1
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "레이더 하나 꺼졌다. 남은 SAM은 눈이 멀어간다."
+        }
+      ]
+    },
+    {
+      "id": "tr_done",
+      "once": true,
+      "when": {
+        "kind": "objectiveDone",
+        "objective": "o1"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "하늘이 열렸다. 귀환하라."
+        }
+      ]
+    }
+  ],
+  "par": 3000,
+  "parTimeSec": 1000,
+  "wingman": false,
+  "unlocks": [
+    "fcr",
+    "agm114l",
+    "chaff"
+  ]
+}

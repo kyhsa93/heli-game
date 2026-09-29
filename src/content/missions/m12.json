@@ -1,0 +1,566 @@
+{
+  "id": "m12",
+  "title": "카르다 해방",
+  "act": 3,
+  "kind": "strike",
+  "briefing": {
+    "summary": "VPA 사령부와 그 대공망을 무너뜨려 카르다를 해방하라. 하운드 2를 지휘해 모든 것을 쏟아부어라.",
+    "situation": [
+      "마지막 공세다. VPA 사령부는 레이더 두 곳과 SAM·자주대공포에 겹겹이 둘러싸여 있다. 기갑 예비대가 사령부를 지킨다.",
+      "대공망부터 걷어 내고 사령부를 친다. G로 하운드 2에게 대공 제압을 맡길 수 있다. 적 헬기는 공대공 미사일을 달고 있다."
+    ],
+    "threats": [
+      "SAM 레이더 2",
+      "단거리 SAM 2",
+      "자주대공포 2",
+      "적 헬기 2",
+      "전차"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "agm114l",
+        "L1": "agm114k",
+        "R1": "agm114k",
+        "R2": "agm114l"
+      },
+      "stingers": true,
+      "gunRounds": 1200,
+      "fuel": 90
+    }
+  },
+  "environment": {
+    "seed": 1112,
+    "time": "dusk",
+    "fog": false,
+    "wind": {
+      "dirDeg": 200,
+      "speed": 5,
+      "gust": 3
+    }
+  },
+  "terrain": {
+    "size": 12000,
+    "features": [
+      {
+        "kind": "base",
+        "center": [
+          -1800,
+          2600
+        ],
+        "radius": 120
+      },
+      {
+        "kind": "base",
+        "center": [
+          3000,
+          -3400
+        ],
+        "radius": 200
+      },
+      {
+        "kind": "village",
+        "center": [
+          -500,
+          1300
+        ],
+        "radius": 170,
+        "houses": 8
+      },
+      {
+        "kind": "village",
+        "center": [
+          800,
+          -1000
+        ],
+        "radius": 130,
+        "houses": 5
+      }
+    ],
+    "roads": [
+      [
+        [
+          -1800,
+          2600
+        ],
+        [
+          -1200,
+          1600
+        ],
+        [
+          0,
+          -200
+        ],
+        [
+          1800,
+          -2000
+        ],
+        [
+          3000,
+          -3400
+        ]
+      ],
+      [
+        [
+          1800,
+          -2000
+        ],
+        [
+          4200,
+          -2600
+        ]
+      ],
+      [
+        [
+          0,
+          -200
+        ],
+        [
+          2000,
+          -2700
+        ]
+      ]
+    ]
+  },
+  "start": {
+    "kind": "farp_hot",
+    "position": [
+      -1800,
+      2600
+    ],
+    "headingDeg": 39
+  },
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -1800,
+        2600
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    }
+  ],
+  "waypoints": [
+    {
+      "id": "hq",
+      "name": "적 사령부",
+      "position": [
+        3000,
+        -3400
+      ]
+    },
+    {
+      "id": "bp1",
+      "name": "BP1",
+      "position": [
+        600,
+        -300
+      ]
+    },
+    {
+      "id": "bp2",
+      "name": "BP2",
+      "position": [
+        4190,
+        -761
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "hq1",
+      "type": "hq",
+      "position": [
+        3000,
+        -3400
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "hq2",
+      "type": "bunker",
+      "position": [
+        2942,
+        -3373
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "hq3",
+      "type": "bunker",
+      "position": [
+        3051,
+        -3462
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "hq4",
+      "type": "inf_mg",
+      "position": [
+        2986,
+        -3346
+      ],
+      "group": "hq"
+    },
+    {
+      "id": "ra1",
+      "type": "sam_radar",
+      "position": [
+        2000,
+        -2700
+      ],
+      "group": "adA"
+    },
+    {
+      "id": "ra2",
+      "type": "sam_short",
+      "position": [
+        1972,
+        -2703
+      ],
+      "group": "adA"
+    },
+    {
+      "id": "ra3",
+      "type": "aaa_light",
+      "position": [
+        2095,
+        -2669
+      ],
+      "group": "adA"
+    },
+    {
+      "id": "rb1",
+      "type": "sam_radar",
+      "position": [
+        4200,
+        -2600
+      ],
+      "group": "adB"
+    },
+    {
+      "id": "rb2",
+      "type": "sam_short",
+      "position": [
+        4128,
+        -2566
+      ],
+      "group": "adB"
+    },
+    {
+      "id": "rb3",
+      "type": "aaa_light",
+      "position": [
+        4248,
+        -2651
+      ],
+      "group": "adB"
+    },
+    {
+      "id": "z1",
+      "type": "spaag",
+      "position": [
+        2600,
+        -2200
+      ],
+      "group": "adC"
+    },
+    {
+      "id": "z2",
+      "type": "spaag",
+      "position": [
+        2449,
+        -2183
+      ],
+      "group": "adC"
+    },
+    {
+      "id": "z3",
+      "type": "manpads",
+      "position": [
+        2870,
+        -2196
+      ],
+      "group": "adC"
+    },
+    {
+      "id": "z4",
+      "type": "manpads",
+      "position": [
+        2431,
+        -2145
+      ],
+      "group": "adC"
+    },
+    {
+      "id": "ar1",
+      "type": "tank",
+      "position": [
+        3300,
+        -3000
+      ],
+      "group": "armor"
+    },
+    {
+      "id": "ar2",
+      "type": "tank",
+      "position": [
+        3249,
+        -2976
+      ],
+      "group": "armor"
+    },
+    {
+      "id": "ar3",
+      "type": "tank",
+      "position": [
+        3374,
+        -3054
+      ],
+      "group": "armor"
+    },
+    {
+      "id": "ar4",
+      "type": "apc",
+      "position": [
+        3288,
+        -2952
+      ],
+      "group": "armor"
+    },
+    {
+      "id": "h1",
+      "type": "heli_attack",
+      "position": [
+        3600,
+        -3900
+      ],
+      "group": "air",
+      "hidden": true,
+      "aam": true
+    },
+    {
+      "id": "h2",
+      "type": "heli_attack",
+      "position": [
+        3513,
+        -3983
+      ],
+      "group": "air",
+      "hidden": true,
+      "aam": true
+    },
+    {
+      "id": "v1",
+      "type": "civ_car",
+      "position": [
+        750,
+        -950
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "civ_car",
+      "position": [
+        715,
+        -918
+      ]
+    },
+    {
+      "id": "v3",
+      "type": "civ_bus",
+      "position": [
+        773,
+        -1006
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "hq",
+      "behavior": "defend"
+    },
+    {
+      "id": "adA",
+      "behavior": "defend"
+    },
+    {
+      "id": "adB",
+      "behavior": "defend"
+    },
+    {
+      "id": "adC",
+      "behavior": "defend"
+    },
+    {
+      "id": "armor",
+      "behavior": "defend"
+    },
+    {
+      "id": "air",
+      "behavior": "hold"
+    }
+  ],
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "destroy",
+      "units": [
+        "ra1",
+        "rb1"
+      ],
+      "primary": true,
+      "label": "SAM 레이더 2곳 파괴"
+    },
+    {
+      "id": "o2",
+      "kind": "destroy",
+      "units": [
+        "hq1"
+      ],
+      "primary": true,
+      "label": "적 사령부 파괴"
+    },
+    {
+      "id": "o3",
+      "kind": "destroy",
+      "units": [
+        "ar1",
+        "ar2",
+        "ar3",
+        "ar4"
+      ],
+      "count": 3,
+      "primary": false,
+      "label": "기갑 예비대 격파 (3대 이상)"
+    },
+    {
+      "id": "o4",
+      "kind": "destroy",
+      "units": [
+        "h1",
+        "h2"
+      ],
+      "primary": false,
+      "label": "적 헬기 2대 격추"
+    },
+    {
+      "id": "o5",
+      "kind": "protect",
+      "units": [
+        "hound2"
+      ],
+      "minSurvive": 1,
+      "untilTrigger": "tr_end",
+      "primary": false,
+      "label": "하운드 2 생존"
+    },
+    {
+      "id": "o6",
+      "kind": "land",
+      "farp": "farp_a",
+      "primary": true,
+      "label": "FARP 귀환"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "tr_start",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 3
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "모든 부대, 카르다 해방 작전 개시. 하운드 1, 대공망부터 걷어 내라."
+        }
+      ]
+    },
+    {
+      "id": "tr_air",
+      "once": true,
+      "when": {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "playerDetected",
+            "byGroup": "hq"
+          },
+          {
+            "kind": "unitDestroyed",
+            "units": [
+              "ra1",
+              "rb1"
+            ],
+            "count": 1
+          },
+          {
+            "kind": "time",
+            "afterSec": 420
+          }
+        ]
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "h1",
+            "h2"
+          ]
+        },
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "적 헬기 두 대, 공대공 미사일 장착! 플레어 준비!"
+        }
+      ]
+    },
+    {
+      "id": "tr_open",
+      "once": true,
+      "when": {
+        "kind": "objectiveDone",
+        "objective": "o1"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "레이더가 모두 꺼졌다. 사령부를 쳐라!"
+        }
+      ]
+    },
+    {
+      "id": "tr_end",
+      "once": true,
+      "when": {
+        "kind": "objectiveDone",
+        "objective": "o2"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "사령부 파괴 확인. 카르다가 해방됐다. 집으로 돌아와라, 하운드."
+        }
+      ]
+    }
+  ],
+  "par": 6000,
+  "parTimeSec": 1500,
+  "wingman": true,
+  "unlocks": [
+    "stinger",
+    "fcr",
+    "agm114l",
+    "chaff",
+    "wingmanMenu"
+  ]
+}

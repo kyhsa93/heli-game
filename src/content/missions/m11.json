@@ -1,0 +1,689 @@
+{
+  "id": "m11",
+  "title": "반격 저지",
+  "act": 3,
+  "kind": "defense",
+  "briefing": {
+    "summary": "아군 진지로 밀려오는 VPA 기갑 3파를 막아라. 무엇부터 쏠지 정하는 게 관건이다.",
+    "situation": [
+      "VPA가 마지막 반격에 나섰다. 스틸 6 진지로 세 차례 기갑이 몰려온다. 두 번째 파도엔 자주대공포가, 세 번째엔 공격 헬기가 따라온다.",
+      "하운드 2가 함께 막는다. 진지가 무너지면 카르다로 가는 길이 닫힌다."
+    ],
+    "threats": [
+      "전차 다수",
+      "자주대공포",
+      "적 헬기"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "agm114k",
+        "L1": "agm114k",
+        "R1": "agm114k",
+        "R2": "agm114k"
+      },
+      "stingers": true,
+      "gunRounds": 1200,
+      "fuel": 90
+    }
+  },
+  "environment": {
+    "seed": 1111,
+    "time": "day",
+    "fog": false,
+    "wind": {
+      "dirDeg": 60,
+      "speed": 5,
+      "gust": 3
+    }
+  },
+  "terrain": {
+    "size": 12000,
+    "features": [
+      {
+        "kind": "base",
+        "center": [
+          -2600,
+          2750
+        ],
+        "radius": 120
+      },
+      {
+        "kind": "base",
+        "center": [
+          0,
+          1200
+        ],
+        "radius": 150
+      },
+      {
+        "kind": "village",
+        "center": [
+          -1600,
+          2900
+        ],
+        "radius": 150,
+        "houses": 6
+      }
+    ],
+    "roads": [
+      [
+        [
+          1500,
+          -4200
+        ],
+        [
+          900,
+          -2000
+        ],
+        [
+          300,
+          0
+        ],
+        [
+          0,
+          1200
+        ]
+      ],
+      [
+        [
+          -2600,
+          -4000
+        ],
+        [
+          -1500,
+          -1800
+        ],
+        [
+          -400,
+          200
+        ],
+        [
+          0,
+          1200
+        ]
+      ],
+      [
+        [
+          -2600,
+          2750
+        ],
+        [
+          -1500,
+          2800
+        ],
+        [
+          0,
+          1200
+        ]
+      ]
+    ]
+  },
+  "start": {
+    "kind": "farp_hot",
+    "position": [
+      -2600,
+      2750
+    ],
+    "headingDeg": 59
+  },
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -2600,
+        2750
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    }
+  ],
+  "waypoints": [
+    {
+      "id": "pos",
+      "name": "아군 진지",
+      "position": [
+        0,
+        1200
+      ]
+    },
+    {
+      "id": "bp1",
+      "name": "BP1",
+      "position": [
+        -1200,
+        -300
+      ]
+    },
+    {
+      "id": "bp2",
+      "name": "BP2",
+      "position": [
+        1600,
+        300
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "f1",
+      "type": "c_tank",
+      "position": [
+        0,
+        1200
+      ],
+      "group": "friends"
+    },
+    {
+      "id": "f2",
+      "type": "c_tank",
+      "position": [
+        -24,
+        1158
+      ],
+      "group": "friends"
+    },
+    {
+      "id": "f3",
+      "type": "c_apc",
+      "position": [
+        5,
+        1140
+      ],
+      "group": "friends"
+    },
+    {
+      "id": "f4",
+      "type": "c_apc",
+      "position": [
+        15,
+        1239
+      ],
+      "group": "friends"
+    },
+    {
+      "id": "f5",
+      "type": "c_inf",
+      "position": [
+        -39,
+        1162
+      ],
+      "group": "friends"
+    },
+    {
+      "id": "f6",
+      "type": "c_inf",
+      "position": [
+        34,
+        1212
+      ],
+      "group": "friends"
+    },
+    {
+      "id": "wa1",
+      "type": "tank",
+      "position": [
+        1500,
+        -4200
+      ],
+      "headingDeg": 195,
+      "group": "w1",
+      "hidden": true
+    },
+    {
+      "id": "wa2",
+      "type": "apc",
+      "position": [
+        1503,
+        -4210
+      ],
+      "headingDeg": 195,
+      "group": "w1",
+      "hidden": true
+    },
+    {
+      "id": "wa3",
+      "type": "tank",
+      "position": [
+        1546,
+        -4258
+      ],
+      "headingDeg": 195,
+      "group": "w1",
+      "hidden": true
+    },
+    {
+      "id": "wa4",
+      "type": "apc",
+      "position": [
+        1534,
+        -4287
+      ],
+      "headingDeg": 195,
+      "group": "w1",
+      "hidden": true
+    },
+    {
+      "id": "wb1",
+      "type": "tank",
+      "position": [
+        -2600,
+        -4000
+      ],
+      "headingDeg": 153,
+      "group": "w2",
+      "hidden": true
+    },
+    {
+      "id": "wb2",
+      "type": "tank",
+      "position": [
+        -2603,
+        -4010
+      ],
+      "headingDeg": 153,
+      "group": "w2",
+      "hidden": true
+    },
+    {
+      "id": "wb3",
+      "type": "apc",
+      "position": [
+        -2602,
+        -4011
+      ],
+      "headingDeg": 153,
+      "group": "w2",
+      "hidden": true
+    },
+    {
+      "id": "wb4",
+      "type": "spaag",
+      "position": [
+        -2600,
+        -4011
+      ],
+      "headingDeg": 153,
+      "group": "w2",
+      "hidden": true
+    },
+    {
+      "id": "wb5",
+      "type": "tank",
+      "position": [
+        -2599,
+        -4012
+      ],
+      "headingDeg": 153,
+      "group": "w2",
+      "hidden": true
+    },
+    {
+      "id": "wc1",
+      "type": "tank",
+      "position": [
+        1500,
+        -4200
+      ],
+      "headingDeg": 195,
+      "group": "w3",
+      "hidden": true
+    },
+    {
+      "id": "wc2",
+      "type": "apc",
+      "position": [
+        1503,
+        -4210
+      ],
+      "headingDeg": 195,
+      "group": "w3",
+      "hidden": true
+    },
+    {
+      "id": "wc3",
+      "type": "tank",
+      "position": [
+        1546,
+        -4258
+      ],
+      "headingDeg": 195,
+      "group": "w3",
+      "hidden": true
+    },
+    {
+      "id": "wc4",
+      "type": "apc",
+      "position": [
+        1534,
+        -4287
+      ],
+      "headingDeg": 195,
+      "group": "w3",
+      "hidden": true
+    },
+    {
+      "id": "hc1",
+      "type": "heli_attack",
+      "position": [
+        800,
+        -3800
+      ],
+      "group": "w3air",
+      "hidden": true,
+      "aam": true
+    },
+    {
+      "id": "v1",
+      "type": "civ_car",
+      "position": [
+        -1650,
+        2850
+      ]
+    },
+    {
+      "id": "v2",
+      "type": "civ_house",
+      "position": [
+        -1670,
+        2815
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "friends",
+      "behavior": "defend"
+    },
+    {
+      "id": "w1",
+      "behavior": "convoy",
+      "route": [
+        [
+          1500,
+          -4200
+        ],
+        [
+          900,
+          -2000
+        ],
+        [
+          300,
+          0
+        ],
+        [
+          0,
+          1200
+        ]
+      ],
+      "startTrigger": "tr_w1"
+    },
+    {
+      "id": "w2",
+      "behavior": "convoy",
+      "route": [
+        [
+          -2600,
+          -4000
+        ],
+        [
+          -1500,
+          -1800
+        ],
+        [
+          -400,
+          200
+        ],
+        [
+          0,
+          1200
+        ]
+      ],
+      "startTrigger": "tr_w2"
+    },
+    {
+      "id": "w3",
+      "behavior": "convoy",
+      "route": [
+        [
+          1500,
+          -4200
+        ],
+        [
+          900,
+          -2000
+        ],
+        [
+          300,
+          0
+        ],
+        [
+          0,
+          1200
+        ]
+      ],
+      "startTrigger": "tr_w3"
+    },
+    {
+      "id": "w3air",
+      "behavior": "advance",
+      "route": [
+        [
+          800,
+          -3800
+        ],
+        [
+          0,
+          1200
+        ]
+      ],
+      "startTrigger": "tr_w3"
+    }
+  ],
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "destroy",
+      "units": [
+        "wa1",
+        "wa2",
+        "wa3",
+        "wa4"
+      ],
+      "count": 3,
+      "primary": true,
+      "label": "1파 저지 (3대 이상)"
+    },
+    {
+      "id": "o2",
+      "kind": "destroy",
+      "units": [
+        "wb1",
+        "wb2",
+        "wb3",
+        "wb4",
+        "wb5"
+      ],
+      "count": 4,
+      "primary": true,
+      "label": "2파 저지 (4대 이상)"
+    },
+    {
+      "id": "o3",
+      "kind": "destroy",
+      "units": [
+        "wc1",
+        "wc2",
+        "wc3",
+        "wc4",
+        "hc1"
+      ],
+      "count": 4,
+      "primary": true,
+      "label": "3파 저지 (4대 이상)"
+    },
+    {
+      "id": "o4",
+      "kind": "protect",
+      "units": {
+        "group": "friends"
+      },
+      "minSurvive": 3,
+      "untilTrigger": "tr_end",
+      "primary": false,
+      "label": "스틸 6 진지 보호"
+    },
+    {
+      "id": "o5",
+      "kind": "protect",
+      "units": [
+        "hound2"
+      ],
+      "minSurvive": 1,
+      "untilTrigger": "tr_end",
+      "primary": false,
+      "label": "하운드 2 생존"
+    },
+    {
+      "id": "o6",
+      "kind": "land",
+      "farp": "farp_a",
+      "primary": true,
+      "label": "FARP 귀환"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "tr_w1",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 30
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "wa1",
+            "wa2",
+            "wa3",
+            "wa4"
+          ]
+        },
+        {
+          "kind": "radio",
+          "from": "steel6",
+          "text": "하운드, 스틸 6. 1파가 동쪽 도로로 온다. 전차 둘."
+        }
+      ]
+    },
+    {
+      "id": "tr_w2",
+      "once": true,
+      "when": {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "objectiveDone",
+            "objective": "o1"
+          },
+          {
+            "kind": "time",
+            "afterSec": 300
+          }
+        ]
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "wb1",
+            "wb2",
+            "wb3",
+            "wb4",
+            "wb5"
+          ]
+        },
+        {
+          "kind": "objectiveAdd",
+          "objective": "o2"
+        },
+        {
+          "kind": "radio",
+          "from": "steel6",
+          "text": "2파는 서쪽이다! 자주대공포가 섞였다 — 먼저 잡아라."
+        }
+      ]
+    },
+    {
+      "id": "tr_w3",
+      "once": true,
+      "when": {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "objectiveDone",
+            "objective": "o2"
+          },
+          {
+            "kind": "time",
+            "afterSec": 600
+          }
+        ]
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "wc1",
+            "wc2",
+            "wc3",
+            "wc4",
+            "hc1"
+          ]
+        },
+        {
+          "kind": "objectiveAdd",
+          "objective": "o3"
+        },
+        {
+          "kind": "radio",
+          "from": "steel6",
+          "text": "마지막이다. 동쪽 도로, 그리고 헬기 한 대가 붙었다!"
+        }
+      ]
+    },
+    {
+      "id": "tr_end",
+      "once": true,
+      "when": {
+        "kind": "objectiveDone",
+        "objective": "o3"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "steel6",
+          "text": "막았다. 스틸 6, 진지 유지. 고맙다, 하운드."
+        }
+      ]
+    }
+  ],
+  "initialObjectives": [
+    "o1",
+    "o4",
+    "o5",
+    "o6"
+  ],
+  "par": 4800,
+  "parTimeSec": 1100,
+  "wingman": true,
+  "unlocks": [
+    "stinger",
+    "fcr",
+    "agm114l",
+    "chaff"
+  ]
+}
