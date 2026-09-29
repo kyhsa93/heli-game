@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { BLADES, EYE, GEAR_Y, ROTOR_R, ROTOR_Y } from '../sim/heli/airframe';
 import { PYLON_X, PYLONS, type Loadout, type PylonId } from '../sim/heli/loadout';
 import { buildCockpit, type Screens } from './cockpit/cockpitModel';
-import { add, bar, box, extrudeSide, lambert, MAT, taperBox, tube, v } from './modelKit';
+import { add, bar, box, extrudeSide, lambert, MAT, mergeStatic, taperBox, tube, v } from './modelKit';
 
 export interface HeliModel {
   root: THREE.Group;
@@ -93,7 +93,7 @@ function buildExterior(root: THREE.Group) {
   }
   ext.add(tailRotor);
 
-  return { tailRotor, stores, stingers };
+  return { ext, tailRotor, stores, stingers };
 }
 
 export interface PylonStores { hellfire: THREE.Group; missiles: THREE.Object3D[]; pod: THREE.Group }
@@ -173,11 +173,13 @@ export function buildHeliExterior(): THREE.Group {
 
 export function buildHeli(): HeliModel {
   const root = new THREE.Group();
-  const { tailRotor, stores, stingers } = buildExterior(root);
+  const { ext, tailRotor, stores, stingers } = buildExterior(root);
   const { rotor, blades, disc } = buildRotor(root);
   const shell = buildShell(root);
   const parts = buildCockpit();
   root.add(parts.cockpit);
+  mergeStatic(ext, [tailRotor, ...Object.values(stores).flatMap(st => [st.hellfire, st.pod]), ...stingers]);
+  mergeStatic(parts.cockpit, [parts.cyclic, parts.collective, parts.pedalL, parts.pedalR, ...Object.values(parts.screens)]);
   const head = new THREE.Group();
   head.position.copy(EYE);
   root.add(head);

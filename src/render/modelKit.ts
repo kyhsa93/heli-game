@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 export const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
@@ -86,4 +87,41 @@ export function canvasTex(w: number, h: number, draw: (g: CanvasRenderingContext
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
   return t;
+}
+
+export function mergeStatic(root: THREE.Object3D, keep: readonly THREE.Object3D[]) {
+  root.updateMatrixWorld(true);
+  const kept = new Set(keep);
+  const inv = root.matrixWorld.clone().invert();
+  const byMat = new Map<THREE.Material, THREE.Mesh[]>();
+  root.traverse(o => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || Array.isArray(m.material) || !m.visible) return;
+    for (let p: THREE.Object3D | null = m; p && p !== root; p = p.parent) if (kept.has(p)) return;
+    const list = byMat.get(m.material) ?? [];
+    list.push(m);
+    byMat.set(m.material, list);
+  });
+  let merged = 0;
+  for (const [mat, meshes] of byMat) {
+    if (meshes.length < 2) continue;
+    const needUv = !!(mat as THREE.MeshLambertMaterial).map;
+    const geos = meshes.map(m => {
+      const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone());
+      for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal' && !(needUv && k === 'uv')) g.deleteAttribute(k);
+      if (!g.getAttribute('normal')) g.computeVertexNormals();
+      g.clearGroups();
+      g.morphAttributes = {};
+      return g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld));
+    });
+    if (needUv && geos.some(g => !g.getAttribute('uv'))) continue;
+    const geo = mergeGeometries(geos, false);
+    if (!geo) continue;
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.renderOrder = Math.max(...meshes.map(m => m.renderOrder));
+    for (const m of meshes) m.removeFromParent();
+    root.add(mesh);
+    merged += meshes.length - 1;
+  }
+  return merged;
 }

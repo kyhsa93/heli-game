@@ -23,6 +23,7 @@ import { TIME_PRESETS } from './timeOfDay';
 import { FOG_FLIR_RANGE, FOG_TV_RANGE } from '../sim/sensors/laser';
 
 const PANEL_LIGHT = 1.6;
+const STATS_EVERY_MS = 5000;
 const PNVS_SCALE = 0.5;
 const PNVS_OVERLAY = { tint: 0x9dffb0, opacity: 0.82 };
 import { drawIhadss } from './ihadss';
@@ -91,6 +92,8 @@ export class FlightRenderer {
   private baseFov = 72;
   ihadssAlpha = 1;
   showFps = false;
+  logStats = false;
+  private statsAt = 0;
   private fps = { frames: 0, since: 0, value: 0, calls: 0, triangles: 0 };
   private mpdVideoAt = -Infinity;
   private raycaster = new THREE.Raycaster();
@@ -161,7 +164,7 @@ export class FlightRenderer {
     this.scene.setTreeFraction(q.trees);
     this.baseFov = s.display.fov;
     this.ihadssAlpha = s.display.ihadssBrightness;
-    this.showFps = s.display.showFps;
+    this.showFps = s.display.showFps || this.logStats;
     this.resize();
   }
 
@@ -218,6 +221,7 @@ export class FlightRenderer {
     model.pedalR.position.z = -3.18 - c.pedal * 0.05;
 
     const cockpit = this.view === 'cockpit' && !this.debugCamera;
+    model.cockpit.visible = cockpit;
     const speed = airspeed(h, world.wind);
     model.shell.visible = !cockpit;
     if (this.debugCamera) {
@@ -307,6 +311,11 @@ export class FlightRenderer {
     f.calls = this.renderer.info.render.calls;
     f.triangles = this.renderer.info.render.triangles;
     if (now - f.since >= 500) { f.value = f.frames * 1000 / (now - f.since); f.frames = 0; f.since = now; }
+    if (this.logStats && now - this.statsAt >= STATS_EVERY_MS) {
+      this.statsAt = now;
+      const m = this.renderer.info.memory;
+      console.info(`[heli] ${Math.round(f.value)} fps · ${f.calls} calls · ${f.triangles} tris · ${m.geometries} geometries · ${m.textures} textures`);
+    }
     if (this.showFps) {
       og.save(); og.font = 'bold 13px "B612 Mono", monospace'; og.textAlign = 'right'; og.fillStyle = '#e8eef7'; og.shadowColor = 'rgba(0,0,0,0.9)'; og.shadowBlur = 3;
       og.fillText(`${Math.round(f.value)} FPS · ${f.calls} DC`, mount.clientWidth - 12, 20); og.restore();

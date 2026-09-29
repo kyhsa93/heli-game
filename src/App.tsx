@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { assets } from './assets/loader';
 import { BOOT_GROUP } from './assets/manifest';
-import { Flight } from './ui/screens/Flight';
+const Flight = lazy(() => import('./ui/screens/Flight').then(m => ({ default: m.Flight })));
 import { Credits } from './ui/screens/Credits';
 import { Loading } from './ui/screens/Loading';
 import { Title } from './ui/screens/Title';
@@ -75,7 +75,7 @@ export function App() {
     case 'training':
       return <Training completed={completed} onBack={() => ui.go({ name: 'title' })} onPick={id => ui.go({ name: 'flight', missionId: id })} />;
     case 'flight':
-      return <Flight key={screen.mission ? `instant-${screen.mission.environment.seed}` : screen.missionId} missionId={screen.missionId} mission={screen.mission} touch={touch} loadout={screen.loadout}
+      return <Suspense fallback={<Loading progress={1} />}><Flight key={screen.mission ? `instant-${screen.mission.environment.seed}` : screen.missionId} missionId={screen.missionId} mission={screen.mission} touch={touch} loadout={screen.loadout}
         onExit={() => ui.go(screen.mission ? { name: 'instant' } : isMission(screen.missionId) ? { name: 'briefing', missionId: screen.missionId } : { name: 'training' })}
         onComplete={complete}
         settings={save.settings}
@@ -94,6 +94,6 @@ export function App() {
           const r = recordMission(save, screen.missionId, report.success, report.score.total, report.score.grade);
           setSave(r.save);
           ui.go({ name: 'debrief', missionId: screen.missionId, report, newBest: r.newBest });
-        }} />;
+        }} /></Suspense>;
   }
 }

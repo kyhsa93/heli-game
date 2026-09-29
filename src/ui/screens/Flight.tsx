@@ -252,6 +252,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
     });
     rendererRef.current = r;
     r.applySettings(settingsRef.current);
+    if (new URLSearchParams(location.search).has('fps')) { r.showFps = true; r.logStats = true; }
     input.onCommand = cmd => runCommandRef.current(cmd);
     if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, renderer: r, model: r.model, weapons: { rocketSolution, sightPoint, hellfireSolution } } });
     return () => {
