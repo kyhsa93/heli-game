@@ -94,3 +94,4 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .credits small { display: block; color: #8fa0b5; }
 .credits a { color: #ffd166; }
 .credits-link { margin-top: 6px; }
+.tbtn.fire { right: 170px; bottom: calc(150px + env(safe-area-inset-bottom)); width: 64px; height: 64px; border-radius: 50%; padding: 0; background: rgba(239, 71, 111, .45); border-color: #ef476f; }

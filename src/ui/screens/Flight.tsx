@@ -7,7 +7,9 @@ import { FlightRenderer } from '../../render/renderer';
 import { LAND_DESCENT } from '../../sim/heli/airframe';
 import { airspeed } from '../../sim/heli/state';
 import { FlightSession } from '../../sim/session';
-import { createObjective, T1_MAX_FPM, TrainingT1 } from '../../sim/training/t1';
+import { createObjective } from '../../sim/training';
+import { T1_MAX_FPM, TrainingT1 } from '../../sim/training/t1';
+import { T3_NEED, T3_TARGETS } from '../../sim/training/t3';
 import { commandForKey, PREVENT_DEFAULT, type Command } from '../../input/bindings';
 import { FlightInput } from '../../input/input';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
@@ -192,14 +194,21 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
           <VirtualStick className="stick right" label={t('touch.rightStick')} onMove={(x, y) => { input.touch.rx = x; input.touch.ry = y; }} />
           <button className="tbtn engine" onPointerDown={e => { e.preventDefault(); sim.toggleEngine(); }}>{t('touch.engine')}</button>
           <button className="tbtn view" onPointerDown={e => { e.preventDefault(); toggleView(); }}>{t('touch.view')}</button>
+          <button
+            className="tbtn fire"
+            onPointerDown={e => { e.preventDefault(); input.touchFire = true; }}
+            onPointerUp={e => { e.preventDefault(); input.touchFire = false; }}
+            onPointerCancel={() => { input.touchFire = false; }}
+            onPointerLeave={() => { input.touchFire = false; }}
+          >{t('touch.fire')}</button>
         </div>
       )}
 
       {(help || snap.mode === 'brief') && (
         <div className="overlay">
           <div className="card wide">
-            <h1>{missionId === 't1' ? t('training.t1.name') : t('brief.title')}</h1>
-            <p className="sub">{missionId === 't1' ? t('training.t1.brief', { pad: t1Pad.name, max: T1_MAX_FPM }) : t('brief.intro')}<br />{t('brief.introCollective')}</p>
+            <h1>{t(`training.${missionId}.name`)}</h1>
+            <p className="sub">{t(`training.${missionId}.brief`, { pad: t1Pad.name, max: T1_MAX_FPM, need: T3_NEED, total: T3_TARGETS.length })}<br />{t('brief.introCollective')}</p>
             <div className="keys">
               {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
             </div>
@@ -227,8 +236,9 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
           <div className="card">
             <h1>{t('result.title')}</h1>
             <div className="result">
-              <b>{t('result.time')}</b><span>{formatTime(snap.result?.timeSec ?? 0)}</span>
-              <b>{t('result.touchdown')}</b><span>{Math.round(snap.result?.fpm ?? 0)} fpm</span>
+              {Object.entries(snap.result ?? {}).filter(([k]) => RESULT_FORMAT[k]).map(([k, v]) => (
+                <Fragment key={k}><b>{t(`result.keys.${k}`)}</b><span>{RESULT_FORMAT[k](v, snap.result ?? {})}</span></Fragment>
+              ))}
             </div>
             <button className="go" onClick={begin}>{t('result.again')}</button> <button className="go secondary" onClick={onExit}>{t('result.toList')}</button>
           </div>
@@ -237,6 +247,13 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
     </div>
   );
 }
+
+const RESULT_FORMAT: Record<string, (v: number, all: Record<string, number>) => string> = {
+  timeSec: v => formatTime(v),
+  fpm: v => `${Math.round(v)} fpm`,
+  destroyed: (v, all) => `${v} / ${all.targets ?? v}`,
+  accuracy: v => `${Math.round(v)}%`,
+};
 
 function formatTime(sec: number) {
   const m = Math.floor(sec / 60), r = Math.round(sec % 60);

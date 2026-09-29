@@ -8,6 +8,7 @@ describe('screen routing', () => {
     ['#/training', { name: 'training' }],
     ['#/credits', { name: 'credits' }],
     ['#/flight/t1', { name: 'flight', missionId: 't1' }],
+    ['#/flight/t3', { name: 'flight', missionId: 't3' }],
     ['#/flight/t9', { name: 'title' }],
     ['#/nonsense', { name: 'title' }],
   ])('%s', (hash, screen) => {

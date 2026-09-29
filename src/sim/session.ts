@@ -46,6 +46,7 @@ export class FlightSession {
 
   start() {
     this.world.resetPlayer();
+    this.world.clearCombat();
     this.world.target = null;
     this.objective?.start(this.world);
     this.world.active = true;

@@ -79,6 +79,11 @@ export class World {
     return u;
   }
 
+  clearCombat() {
+    this.units = [];
+    this.projectiles = [];
+  }
+
   unit(id: number) {
     return this.units.find(u => u.id === id);
   }

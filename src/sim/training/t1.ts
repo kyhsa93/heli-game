@@ -48,6 +48,4 @@ export class TrainingT1 implements Objective {
   }
 }
 
-export function createObjective(missionId: string): Objective | null {
-  return missionId === 't1' ? new TrainingT1() : null;
-}
+
