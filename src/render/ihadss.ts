@@ -3,6 +3,8 @@ import { clamp } from '../core/math';
 import { bearingDeg, headingDeg, hoverVector } from './cockpit/instruments';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { agl as aglOf, airspeed } from '../sim/heli/state';
+import { gunInLimits } from '../sim/weapons/arms';
+import { predictGunImpact } from '../sim/weapons/ballistics';
 import type { World } from '../sim/world';
 
 const GREEN = '#5dff6e';
@@ -89,6 +91,8 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
   g.textAlign = 'right';
   if (heli.rpm < 0.95) g.fillText(`NR ${Math.round(heli.rpm * 101)}%`, cx + 190 * u, cy + 110 * u);
 
+  drawGun(g, w, h, u, world, camera);
+
   const tp = world.target;
   const sp = tp && project(camera, tmp.set(tp.x, tp.y + 1, tp.z), w, h);
   if (tp && sp && sp.x > 0 && sp.x < w && sp.y > 0 && sp.y < h) {
@@ -105,5 +109,35 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
   if (heli.rpm < 0.85 && !heli.landed) warns.push('LOW ROTOR RPM');
   if (heli.fuel < 10) warns.push('FUEL LOW');
   if (warns.length && Math.sin(world.time * 8) > 0) g.fillText(warns.join('  '), cx, cy + 150 * u);
+  g.restore();
+}
+
+function drawGun(g: CanvasRenderingContext2D, w: number, h: number, u: number, world: World, camera: THREE.Camera) {
+  const cx = w / 2, cy = h / 2, a = world.arms;
+  const inLimits = gunInLimits(world.commands.aim);
+  g.save();
+  g.lineWidth = 2 * u;
+  if (inLimits) {
+    const r = 12 * u;
+    g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+    g.beginPath();
+    g.moveTo(cx - r - 8 * u, cy); g.lineTo(cx - r, cy);
+    g.moveTo(cx + r, cy); g.lineTo(cx + r + 8 * u, cy);
+    g.moveTo(cx, cy + r); g.lineTo(cx, cy + r + 8 * u);
+    g.stroke();
+    const pred = a.gunAmmo > 0 ? predictGunImpact(world) : null;
+    const sp = pred && project(camera, pred.point, w, h);
+    if (pred && sp) {
+      g.beginPath(); g.arc(sp.x, sp.y, 4 * u, 0, Math.PI * 2); g.stroke();
+      g.textAlign = 'left';
+      g.fillText(`${Math.round(pred.range)}`, sp.x + 8 * u, sp.y + 5 * u);
+    }
+  } else {
+    const r = 16 * u;
+    g.beginPath(); g.moveTo(cx - r, cy - r); g.lineTo(cx + r, cy + r); g.moveTo(cx + r, cy - r); g.lineTo(cx - r, cy + r); g.stroke();
+  }
+  g.textAlign = 'right';
+  const status = a.gunAmmo <= 0 ? 'GUN EMPTY' : `GUN ${a.gunAmmo}${inLimits ? '' : ' LIMIT'}`;
+  g.fillText(status, cx + 190 * u, cy + 132 * u);
   g.restore();
 }
