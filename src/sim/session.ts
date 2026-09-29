@@ -6,7 +6,7 @@ export type Mode = 'brief' | 'play' | 'crashed' | 'over' | 'done';
 
 export interface Crash { reason: CrashReason; value?: number }
 
-export interface SessionSnapshot { mode: Mode; crash: Crash | null; result: Record<string, number> | null }
+export interface SessionSnapshot { mode: Mode; crash: Crash | null; result: Record<string, number> | null; failure: string | null }
 
 export class FlightSession {
   readonly world: World;
@@ -15,7 +15,9 @@ export class FlightSession {
   paused = false;
   private overTimer = 0;
   private listeners = new Set<() => void>();
-  private snapshot: SessionSnapshot = { mode: 'brief', crash: null, result: null };
+  private snapshot: SessionSnapshot = { mode: 'brief', crash: null, result: null, failure: null };
+  failure: string | null = null;
+  private failTimer = 0;
   private doneTimer = 0;
 
   constructor(seed: number, readonly objective: Objective | null = null) {
@@ -23,6 +25,7 @@ export class FlightSession {
     if (objective) this.world.events.onAny(e => objective.onEvent(e, this.world));
     this.world.events.on('objective', e => {
       if (e.state === 'done' && this.mode === 'play') { this.doneTimer = 1.5; }
+      if (e.state === 'failed' && this.mode === 'play') { this.failure = e.reason ?? 'failed'; this.failTimer = 2; }
     });
     this.world.events.on('crash', e => {
       this.crash = { reason: e.reason, value: e.value };
@@ -40,7 +43,7 @@ export class FlightSession {
   getSnapshot = () => this.snapshot;
 
   private publish() {
-    this.snapshot = { mode: this.mode, crash: this.crash, result: this.mode === 'done' ? this.objective?.result ?? null : null };
+    this.snapshot = { mode: this.mode, crash: this.crash, result: this.mode === 'done' ? this.objective?.result ?? null : null, failure: this.mode === 'over' ? this.failure : null };
     for (const fn of this.listeners) fn();
   }
 
@@ -51,6 +54,8 @@ export class FlightSession {
     this.objective?.start(this.world);
     this.world.active = true;
     this.doneTimer = 0;
+    this.failTimer = 0;
+    this.failure = null;
     this.crash = null;
     this.paused = false;
     this.mode = 'play';
@@ -63,6 +68,10 @@ export class FlightSession {
     if (this.doneTimer > 0 && this.mode === 'play') {
       this.doneTimer -= dt;
       if (this.doneTimer <= 0) { this.mode = 'done'; this.world.active = false; this.publish(); }
+    }
+    if (this.failTimer > 0 && this.mode === 'play') {
+      this.failTimer -= dt;
+      if (this.failTimer <= 0) { this.mode = 'over'; this.world.active = false; this.publish(); }
     }
     if (this.mode === 'crashed') {
       this.overTimer -= dt;

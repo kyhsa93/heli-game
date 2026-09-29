@@ -14,7 +14,8 @@ import { hellfireSolution } from '../../sim/weapons/hellfire';
 import { rocketSolution } from '../../sim/weapons/rockets';
 import { createObjective } from '../../sim/training';
 import { T1_MAX_FPM, TrainingT1 } from '../../sim/training/t1';
-import { T3_NEED, T3_TARGETS } from '../../sim/training/t3';
+import { T3_GUN_NEED, T3_NEED, T3_TARGETS } from '../../sim/training/t3';
+import { T4_NEED, TrainingT4 } from '../../sim/training/t4';
 import { commandForKey, PREVENT_DEFAULT, type Command } from '../../input/bindings';
 import { FlightInput } from '../../input/input';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
@@ -120,7 +121,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         }
         if (missionRef.current) {
           missionRef.current.textContent = tp
-            ? t('hud.target', { name: tp.name, dist: Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) })
+            ? t(tp.area ? 'hud.targetArea' : 'hud.target', { name: tp.area ? t(`targets.${tp.name}`) : tp.name, dist: Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) })
             : t('hud.practice');
           missionRef.current.style.color = '#06d6a0';
         }
@@ -140,6 +141,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
             else if (h.engineOn && h.rpm < 0.95 && h.landed) hint = t('hint.spooling', { pct: Math.round(h.rpm * 100) });
             else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = t(touchRef.current ? 'hint.liftTouch' : 'hint.liftKey');
           }
+          const step = session.objective?.step;
+          if (!hint && step && session.mode === 'play' && h.alive) hint = t(`training.${missionId}.steps.${step}`);
           hintRef.current.textContent = hint;
         }
       },
@@ -250,7 +253,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         <div className="overlay">
           <div className="card wide">
             <h1>{t(`training.${missionId}.name`)}</h1>
-            <p className="sub">{t(`training.${missionId}.brief`, { pad: t1Pad.name, max: T1_MAX_FPM, need: T3_NEED, total: T3_TARGETS.length })}<br />{t('brief.introCollective')}</p>
+            <p className="sub">{t(`training.${missionId}.brief`, { pad: missionId === 't4' ? sim.pads[TrainingT4.farPad(sim)].name : t1Pad.name, max: T1_MAX_FPM, need: missionId === 't4' ? T4_NEED : T3_NEED, gunNeed: T3_GUN_NEED, total: T3_TARGETS.length })}<br />{t('brief.introCollective')}</p>
             <div className="keys">
               {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
             </div>
@@ -267,8 +270,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
       {snap.mode === 'over' && !help && (
         <div className="overlay">
           <div className="card">
-            <h1>{t('crash.title')}</h1>
-            <p className="sub">{snap.crash ? crashText(snap.crash.reason, snap.crash.value) : ''}</p>
+            <h1>{t(snap.failure ? 'fail.title' : 'crash.title')}</h1>
+            <p className="sub">{snap.failure ? t(`fail.${snap.failure}`) : snap.crash ? crashText(snap.crash.reason, snap.crash.value) : ''}</p>
             <button className="go" onClick={begin}>{t('crash.retry')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button>
           </div>
         </div>
@@ -295,6 +298,8 @@ const RESULT_FORMAT: Record<string, (v: number, all: Record<string, number>) => 
   fpm: v => `${Math.round(v)} fpm`,
   destroyed: (v, all) => `${v} / ${all.targets ?? v}`,
   accuracy: v => `${Math.round(v)}%`,
+  missiles: v => `${v}`,
+  loal: v => `${v}`,
 };
 
 function formatTime(sec: number) {

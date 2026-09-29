@@ -53,7 +53,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 - [x] [#22](https://github.com/kyhsa93/heli-game/issues/22) **M2-5 레이저·식별**: 레이저 측거(지형·유닛 레이캐스트), 협각 1초 조준 시 식별. *완료*: 측거 거리 오차 < 1m 테스트, 식별 테스트.
 - [x] [#23](https://github.com/kyhsa93/heli-game/issues/23) **M2-6 헬파이어 레이저**: 미사일 엔티티, LOBL/LOAL, 레이저 추종, 레이저 끊기면 빗나감. *완료*: LOBL 명중 테스트 / 레이저 중단 시 빗나감 테스트 / LOAL로 능선 너머 명중 테스트.
 - [x] [#24](https://github.com/kyhsa93/heli-game/issues/24) **M2-7 MPD 페이지 시스템 + WPN·TADS 페이지**: 베젤 클릭 레이캐스트, `[` `]` 키. *완료*: 스크린샷, 페이지 전환 테스트.
-- [ ] [#25](https://github.com/kyhsa93/heli-game/issues/25) **M2-8 훈련 T3·T4 완성**.
+- [x] [#25](https://github.com/kyhsa93/heli-game/issues/25) **M2-8 훈련 T3·T4 완성**.
 
 ## M3. 위협과 생존
 

@@ -11,11 +11,12 @@ export type SimEvent =
   | { t: 'engine'; on: boolean; cause?: 'fuel' }
   | { t: 'refuel' }
   | { t: 'boundary' }
-  | { t: 'objective'; id: string; state: 'done' | 'failed' }
+  | { t: 'objective'; id: string; state: 'done' | 'failed'; reason?: string }
+  | { t: 'missileLost'; id: number; owner: number; reason: 'spotLost' | 'noLock' }
   | { t: 'unitDestroyed'; id: number; defId: string; side: Side; byPlayer: boolean }
   | { t: 'explosion'; pos: Vector3; size: number }
   | { t: 'fire'; weapon: string; pos: Vector3; dir: Vector3; owner: number; tracer: boolean }
-  | { t: 'impact'; weapon: string; pos: Vector3; unit?: number; ground: boolean }
+  | { t: 'impact'; weapon: string; pos: Vector3; unit?: number; ground: boolean; missile?: number }
   | { t: 'advice'; code: AdviceCode; value?: number }
   | { t: 'identified'; id: number; defId: string; side: Side };
 

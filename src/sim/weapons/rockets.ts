@@ -71,24 +71,32 @@ export function rocketSolution(world: World, target: Vector3): RocketSolution | 
   const range = Math.hypot(target.x - pos.x, target.z - pos.z);
   if (range < 1 || range > HYDRA.maxRange) return null;
   const azT = Math.atan2(target.x - pos.x, target.z - pos.z);
-  let az = azT;
-  let el = Math.atan2(target.y - pos.y, range);
-  let time = 0;
-  for (let i = 0; i < 6; i++) {
-    const dir = new Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
-    const f = flyRocket(world, pos, dir, p => Math.hypot(p.x - pos.x, p.z - pos.z) >= range);
-    if (!f) { el += 0.05; continue; }
-    time = f.time;
-    const dy = target.y - f.point.y;
-    const hitAz = Math.atan2(f.point.x - pos.x, f.point.z - pos.z);
-    let dAz = azT - hitAz;
-    dAz = Math.atan2(Math.sin(dAz), Math.cos(dAz));
-    el += Math.atan2(dy, range);
+  const reach = (p: Vector3) => Math.hypot(p.x - pos.x, p.z - pos.z) >= range - 1;
+  const aim = (az: number, el: number) => new Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
+  const miss = (az: number, el: number) => {
+    const f = flyRocket(world, pos, aim(az, el), reach);
+    if (!f || !reach(f.point)) return { dy: Infinity, f: null };
+    return { dy: target.y - f.point.y, f };
+  };
+  let az = azT, el = 0, time = 0;
+  for (let pass = 0; pass < 3; pass++) {
+    let lo = Math.atan2(target.y - pos.y, range) - 0.15, hi = 0.7;
+    if (miss(az, hi).dy > 0) return null;
+    if (miss(az, lo).dy <= 0) hi = lo;
+    for (let k = 0; k < 16 && hi - lo > 1e-4; k++) {
+      const mid = (lo + hi) / 2;
+      if (miss(az, mid).dy > 0) lo = mid; else hi = mid;
+    }
+    el = hi;
+    const r = miss(az, el);
+    if (!r.f || Math.abs(r.dy) > 3) return null;
+    time = r.f.time;
+    const hitAz = Math.atan2(r.f.point.x - pos.x, r.f.point.z - pos.z);
+    const dAz = Math.atan2(Math.sin(azT - hitAz), Math.cos(azT - hitAz));
     az += dAz;
-    if (Math.abs(dy) < 0.5 && Math.abs(dAz) * range < 0.5) break;
+    if (Math.abs(dAz) * range < 0.5) break;
   }
-  if (!time || el > 0.7) return null;
-  const dir = new Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
+  const dir = aim(az, el);
   const local = dir.clone().applyQuaternion(inv.copy(h.q).invert());
   return { yaw: Math.atan2(-local.x, -local.z), pitch: Math.asin(Math.max(-1, Math.min(1, local.y))), range, time, dir };
 }

@@ -7,7 +7,8 @@ import { airborneAt, hoverCollective } from '../testing';
 import { STEP, World } from '../world';
 import { distanceToUnit } from './damage';
 import { integrate, PLAYER_OWNER } from './projectile';
-import { HYDRA, podMuzzle, rocketProjectile, rocketSolution } from './rockets';
+import { flyRocket, HYDRA, podMuzzle, rocketProjectile, rocketSolution } from './rockets';
+import { lineOfSight } from '../sensors/laser';
 
 function setup(y = 60) {
   const w = new World({ seed: 11 });
@@ -159,5 +160,29 @@ describe('Hydra 70 rockets (04-weapons-and-sensors.md 4.2, 4.3)', () => {
     expect(impacts).toHaveLength(4);
     const mean = impacts.reduce((m, p) => m.add(p), new Vector3()).multiplyScalar(1 / 4);
     expect(Math.hypot(mean.x - target.x, mean.z - target.z)).toBeLessThan(25);
+  });
+
+  it('reports no solution for a target masked by a crest instead of skimming it (#70)', () => {
+    const { w } = setup(20);
+    const h = w.player;
+    let masked: Vector3 | null = null;
+    for (let d = 600; d < 1800 && !masked; d += 50) {
+      for (let a = 0; a < Math.PI * 2 && !masked; a += 0.2) {
+        const p = new Vector3(h.pos.x + Math.sin(a) * d, 0, h.pos.z + Math.cos(a) * d);
+        if (Math.abs(p.x) > 1850 || Math.abs(p.z) > 1850 || w.terrain.heightAt(p.x, p.z) < 1) continue;
+        p.y = w.terrain.surfaceAt(p.x, p.z);
+        const lift = p.clone().setY(p.y + 1);
+        if (lineOfSight(w.terrain, h.pos, lift)) continue;
+        const mid = h.pos.clone().lerp(p, 0.5);
+        if (w.terrain.surfaceAt(mid.x, mid.z) > h.pos.y + 150) continue;
+        masked = p;
+      }
+    }
+    expect(masked).not.toBeNull();
+    const sol = rocketSolution(w, masked!);
+    if (sol) {
+      const f = flyRocket(w, h.pos.clone(), sol.dir, q => Math.hypot(q.x - h.pos.x, q.z - h.pos.z) >= Math.hypot(masked!.x - h.pos.x, masked!.z - h.pos.z) - 1);
+      expect(f!.point.distanceTo(masked!)).toBeLessThan(5);
+    }
   });
 });

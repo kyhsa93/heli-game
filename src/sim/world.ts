@@ -22,7 +22,7 @@ import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SAL
 
 export const STEP = 1 / 120;
 
-export interface NavTarget { x: number; y: number; z: number; name: string }
+export interface NavTarget { x: number; y: number; z: number; name: string; area?: boolean }
 
 export class World {
   time = 0;
@@ -341,7 +341,9 @@ export class World {
     for (let i = list.length - 1; i >= 0; i--) {
       const m = list[i];
       const a = m.pos.clone();
+      const before = m.phase, locked = m.seekerLocked;
       stepMissile(m, this.terrain, spots, dt);
+      if (before !== 'lost' && m.phase === 'lost') this.emit({ t: 'missileLost', id: m.id, owner: m.owner, reason: locked ? 'spotLost' : 'noLock' });
       const b = m.pos;
       let bestT = Infinity, bestUnit: Unit | null = null;
       for (const u of this.units) {
@@ -354,14 +356,14 @@ export class World {
       let done = m.age > maxFlight;
       if (bestUnit && (tg === null || bestT <= tg)) {
         const at = a.clone().lerp(b, bestT);
+        this.emit({ t: 'impact', weapon: m.kind, pos: at, unit: bestUnit.id, ground: false, missile: m.id });
         hitUnit(this, bestUnit, w, byPlayer);
         explodeWeapon(this, at, w, byPlayer, bestUnit);
-        this.emit({ t: 'impact', weapon: m.kind, pos: at, unit: bestUnit.id, ground: false });
         done = true;
       } else if (tg !== null) {
         const at = a.clone().lerp(b, tg);
         explodeWeapon(this, at, w, byPlayer);
-        this.emit({ t: 'impact', weapon: m.kind, pos: at, ground: true });
+        this.emit({ t: 'impact', weapon: m.kind, pos: at, ground: true, missile: m.id });
         done = true;
       }
       if (done) { list[i] = list[list.length - 1]; list.pop(); }

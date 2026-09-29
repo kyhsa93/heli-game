@@ -5,7 +5,7 @@ export type Screen =
   | { name: 'flight'; missionId: string };
 
 export const TRAININGS = ['t1', 't2', 't3', 't4', 't5'] as const;
-export const AVAILABLE_MISSIONS = new Set(['t1', 't3']);
+export const AVAILABLE_MISSIONS = new Set(['t1', 't3', 't4']);
 
 export function parseHash(hash: string): Screen {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
