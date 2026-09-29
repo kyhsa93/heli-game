@@ -141,7 +141,7 @@
 
 08장 8.1절과 `CLAUDE.md`가 이 규칙을 따른다.
 
-1. 에셋은 `public/assets/<분류>/`에 두고, **`public/assets/CREDITS.md`** 에 모든 파일의 제목·작가·원본 URL·라이선스·수정 여부를 적는다. 게임 설정 화면에 "크레딧" 항목을 두고 이 내용을 보여 준다(CC-BY는 법적 의무, CC0도 예의상 기재).
+1. 에셋은 `public/assets/<분류>/`에 두고(빌드 산출 JS·CSS는 `dist/static/`으로 분리되어 섞이지 않는다), **`public/assets/CREDITS.md`** 에 모든 파일의 제목·작가·원본 URL·라이선스·수정 여부를 적는다. 게임 설정 화면에 "크레딧" 항목을 두고 이 내용을 보여 준다(CC-BY는 법적 의무, CC0도 예의상 기재).
 2. DVIDS(미 국방 영상) 자료를 쓰면 크레딧에 "The appearance of U.S. Department of War (DoW) visual information does not imply or constitute DoW endorsement." 문구를 넣고, 미군 로고·휘장은 쓰지 않는다.
 3. 추가 전에 **상세 페이지에서 라이선스를 다시 확인**하고, 확인한 날짜를 CREDITS에 적는다.
 4. 용량 예산: 첫 로드 에셋 합계 ≤ 600KB, 임무 하나의 지연 로드 에셋 ≤ 1MB. GLB는 `gltf-transform`으로 메시 압축(meshopt)·텍스처 축소 후 넣는다. 원본(고용량) 파일은 저장소에 넣지 않는다.

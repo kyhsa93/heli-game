@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { assets } from './assets/loader';
+import { BOOT_GROUP } from './assets/manifest';
 import { Flight } from './ui/screens/Flight';
+import { Loading } from './ui/screens/Loading';
 import { Title } from './ui/screens/Title';
 import { Training } from './ui/screens/Training';
 import { UiState } from './ui/state';
@@ -19,6 +22,14 @@ export function App() {
   const screen = useSyncExternalStore(ui.subscribe, ui.getSnapshot);
   const [touch, setTouch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
   const [completed, setCompleted] = useState(loadCompleted);
+  const [boot, setBoot] = useState(0);
+  const [booted, setBooted] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    void assets.loadGroup(BOOT_GROUP, f => { if (alive) setBoot(f); }).then(() => { if (alive) setBooted(true); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     const touchstart = () => setTouch(true);
@@ -37,6 +48,8 @@ export function App() {
     saveCompleted(next);
     return next;
   }), []);
+
+  if (!booted) return <Loading progress={boot} />;
 
   switch (screen.name) {
     case 'title':

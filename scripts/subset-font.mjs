@@ -1,0 +1,38 @@
+#!/usr/bin/env node
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { args, requireTool, run } from './lib/tools.mjs';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const a = args(process.argv.slice(2), { ascii: 'flag', strings: 'flag', extra: 'value' });
+const [input, output] = a._;
+if (!input || !output) {
+  console.error('usage: node scripts/subset-font.mjs <input.ttf|otf|woff2> <output.woff2> [--ascii] [--strings] [--extra "°±"]');
+  process.exit(1);
+}
+
+function walk(dir) {
+  return readdirSync(dir).flatMap(f => {
+    const p = join(dir, f);
+    return statSync(p).isDirectory() ? walk(p) : [p];
+  });
+}
+
+const chars = new Set();
+if (a.ascii) for (let c = 0x20; c < 0x7f; c++) chars.add(String.fromCharCode(c));
+if (a.strings) {
+  for (const f of walk(join(ROOT, 'src', 'content')).filter(f => f.endsWith('.json'))) {
+    for (const ch of readFileSync(f, 'utf8')) chars.add(ch);
+  }
+  for (let c = 0x20; c < 0x7f; c++) chars.add(String.fromCharCode(c));
+}
+for (const ch of a.extra ?? '') chars.add(ch);
+chars.delete('\n'); chars.delete('\r');
+
+const textFile = join(tmpdir(), `subset-${process.pid}.txt`);
+writeFileSync(textFile, [...chars].join(''));
+requireTool('pyftsubset', 'Install fonttools and brotli: pip install --user fonttools brotli');
+run('pyftsubset', [input, `--text-file=${textFile}`, '--flavor=woff2', `--output-file=${output}`, '--layout-features=*', '--no-hinting']);
+console.log(`${output}: ${chars.size} glyphs, ${(statSync(output).size / 1024).toFixed(1)} KB`);

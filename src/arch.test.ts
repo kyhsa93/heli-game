@@ -41,6 +41,12 @@ describe('architecture rules (08-technical-architecture.md 8.3)', () => {
     }
   });
 
+  it('keeps Node built-ins out of browser code', () => {
+    for (const [file, code] of Object.entries(all)) {
+      expect(/from ['"]node:/.test(code), `${file} imports a Node built-in`).toBe(false);
+    }
+  });
+
   it('keeps core free of every other layer', () => {
     for (const [file, code] of inDir('core')) {
       expect(/from ['"]\.\.\/(sim|render|ui|audio|input|content)\//.test(code), `${file} depends on another layer`).toBe(false);

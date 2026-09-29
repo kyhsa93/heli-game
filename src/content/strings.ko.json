@@ -157,5 +157,8 @@
     "touchdown": "접지 하강률",
     "again": "다시 하기",
     "toList": "훈련 목록"
+  },
+  "loading": {
+    "text": "불러오는 중…"
   }
 }
