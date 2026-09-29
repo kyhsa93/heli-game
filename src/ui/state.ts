@@ -1,3 +1,4 @@
+import { CAMPAIGN_IDS } from '../content/campaign';
 import { MISSION_IDS, TRAINING_IDS } from '../content/missions';
 import type { LoadoutDef } from '../sim/heli/loadout';
 import type { MissionDef } from '../sim/mission/schema';
@@ -7,6 +8,7 @@ export type Screen =
   | { name: 'title' }
   | { name: 'training' }
   | { name: 'credits' }
+  | { name: 'campaign'; missionId?: string }
   | { name: 'briefing'; missionId: string }
   | { name: 'loadout'; missionId: string }
   | { name: 'instant' }
@@ -22,6 +24,7 @@ export function parseHash(hash: string): Screen {
   const id = parts[1];
   if (parts[0] === 'training') return { name: 'training' };
   if (parts[0] === 'credits') return { name: 'credits' };
+  if (parts[0] === 'campaign') return id && CAMPAIGN_IDS.includes(id) ? { name: 'campaign', missionId: id } : { name: 'campaign' };
   if (parts[0] === 'instant' || id === 'instant') return { name: 'instant' };
   if (id && isMission(id) && (parts[0] === 'briefing' || parts[0] === 'flight' || parts[0] === 'debrief')) return { name: 'briefing', missionId: id };
   if (id && parts[0] === 'debrief' && AVAILABLE_MISSIONS.has(id)) return { name: 'training' };
@@ -35,6 +38,7 @@ export function toHash(screen: Screen): string {
     case 'title': return '#/title';
     case 'training': return '#/training';
     case 'credits': return '#/credits';
+    case 'campaign': return screen.missionId ? `#/campaign/${screen.missionId}` : '#/campaign';
     case 'instant': return '#/instant';
     case 'briefing': return `#/briefing/${screen.missionId}`;
     case 'loadout': return `#/loadout/${screen.missionId}`;

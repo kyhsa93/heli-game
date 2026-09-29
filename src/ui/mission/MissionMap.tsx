@@ -13,8 +13,7 @@ export function threatRadius(type: string) {
   return Math.min(6000, Math.max(0, ...d.weapons.map(w => w.range)));
 }
 
-function drawMap(cv: HTMLCanvasElement, m: MissionDef, terrain: Terrain) {
-  const size = cv.width, g = cv.getContext('2d')!;
+export function drawRelief(g: CanvasRenderingContext2D, size: number, terrain: Terrain) {
   const img = g.createImageData(size, size);
   const k = terrain.size / size;
   for (let j = 0; j < size; j++) {
@@ -32,6 +31,12 @@ function drawMap(cv: HTMLCanvasElement, m: MissionDef, terrain: Terrain) {
     }
   }
   g.putImageData(img, 0, 0);
+}
+
+function drawMap(cv: HTMLCanvasElement, m: MissionDef, terrain: Terrain) {
+  const size = cv.width, g = cv.getContext('2d')!;
+  const k = terrain.size / size;
+  drawRelief(g, size, terrain);
   const px = (v: number) => (v + terrain.half) / k;
   g.lineWidth = 2; g.strokeStyle = '#c9a36a';
   for (const road of terrain.roads) { g.beginPath(); road.forEach(([x, z], i) => (i ? g.lineTo(px(x), px(z)) : g.moveTo(px(x), px(z)))); g.stroke(); }

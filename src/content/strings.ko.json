@@ -228,7 +228,7 @@
     "settings": "설정",
     "soon": "준비 중",
     "firstTime": "처음이신가요? 훈련 1부터 시작하세요",
-    "campaignFirst": "임무 1부터 (캠페인 지도는 준비 중)"
+    "progress": "{act}막 · 임무 {done}/{total} · {rank}"
   },
   "training": {
     "title": "훈련",
@@ -471,5 +471,21 @@
     "best": "최고 기록 {score} ({grade})",
     "noBest": "아직 기록 없음",
     "newBest": "새 최고 기록!"
+  },
+  "campaign": {
+    "title": "카르다 작전 지도",
+    "rank": "{rank} · 누적 {score}점",
+    "missionNo": "임무 {n}",
+    "enemy": "VPA 점령지",
+    "allied": "연합 통제",
+    "best": "최고 기록",
+    "bestValue": "{score}점 · {grade}",
+    "noBest": "—",
+    "locked": "앞 임무를 완료하면 열립니다.",
+    "notBuilt": "이 임무는 아직 준비 중입니다.",
+    "unlocks": "해금한 장비",
+    "noUnlocks": "아직 없음",
+    "nextUnlock": "다음 해금: {name} (임무 {n} 완료)",
+    "toBriefing": "브리핑 ▶"
   }
 }

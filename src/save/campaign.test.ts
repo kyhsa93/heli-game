@@ -77,8 +77,8 @@ describe('campaign save (02 2.5)', () => {
     expect(unlockedFor(s).has('agm114l')).toBe(true);
     s = recordMission(s, 'm06', true, 5000, 'S').save;
     expect(unlockedFor(s).has('liveries')).toBe(true);
-    expect(rankFor(0)).toBe('secondLt');
-    expect(rankFor(16000)).toBe('captain');
-    expect(rankFor(s.totalScore)).toBe('major');
+    expect(rankFor(0).id).toBe('secondLt');
+    expect(rankFor(16000).id).toBe('captain');
+    expect(rankFor(s.totalScore).id).toBe('major');
   });
 });

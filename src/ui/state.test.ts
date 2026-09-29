@@ -11,6 +11,9 @@ describe('screen routing', () => {
     ['#/flight/t3', { name: 'flight', missionId: 't3' }],
     ['#/flight/t9', { name: 'title' }],
     ['#/nonsense', { name: 'title' }],
+    ['#/campaign', { name: 'campaign' }],
+    ['#/campaign/m05', { name: 'campaign', missionId: 'm05' }],
+    ['#/campaign/m99', { name: 'campaign' }],
   ])('%s', (hash, screen) => {
     expect(parseHash(hash)).toEqual(screen);
   });

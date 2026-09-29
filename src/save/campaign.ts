@@ -1,6 +1,7 @@
 import { isDifficulty, type DifficultyLevel } from '../sim/difficulty';
 import type { Grade } from '../sim/mission/scoring';
 import type { UnlockId } from '../sim/mission/schema';
+import { CAMPAIGN, CAMPAIGN_IDS, type Campaign, type CampaignRank } from '../content/campaign';
 import { browserStorage, read, remove, write, type KeyValue } from './storage';
 
 export const SAVE_KEY = 'heli-campaign-v1';
@@ -117,28 +118,22 @@ export function recordInstant(save: CampaignSave, score: number, grade: string):
   return { save: { ...save, instantBest: { score, grade } }, newBest: true };
 }
 
-const done = (save: CampaignSave, n: number) => !!save.missions[`m${String(n).padStart(2, '0')}`]?.completed;
-
-export function unlockedFor(save: CampaignSave): Set<UnlockId> {
-  const u = new Set<UnlockId>();
-  if (done(save, 4)) u.add('chaff');
-  if (done(save, 5)) { u.add('fcr'); u.add('agm114l'); }
-  if (done(save, 7)) u.add('night');
-  if (done(save, 8)) u.add('stinger');
-  if (done(save, 10)) u.add('wingmanMenu');
-  if (Object.values(save.missions).filter(m => m.bestGrade === 'S').length >= 6) u.add('liveries');
-  return u;
+export function unlockedFor(save: CampaignSave, c: Campaign = CAMPAIGN): Set<UnlockId> {
+  const grades = Object.values(save.missions).filter(m => m.bestGrade === 'S').length;
+  return new Set(c.unlocks.filter(u => (u.after ? !!save.missions[u.after]?.completed : true) && (u.sGrades ? grades >= u.sGrades : true)).map(u => u.id));
 }
 
-export const RANKS = [
-  { id: 'secondLt', min: 0 }, { id: 'firstLt', min: 5000 }, { id: 'captain', min: 15000 }, { id: 'major', min: 30000 },
-] as const;
-
-export function rankFor(total: number) {
-  return [...RANKS].reverse().find(r => total >= r.min)!.id;
+export function rankFor(total: number, c: Campaign = CAMPAIGN): CampaignRank {
+  return [...c.ranks].sort((x, y) => y.min - x.min).find(r => total >= r.min) ?? c.ranks[0];
 }
 
-export function missionAvailable(save: CampaignSave, ids: readonly string[], id: string) {
+export function missionAvailable(save: CampaignSave, id: string, ids: readonly string[] = CAMPAIGN_IDS) {
   const i = ids.indexOf(id);
   return i === 0 || (i > 0 && !!save.missions[ids[i - 1]]?.completed);
+}
+
+export function campaignProgress(save: CampaignSave, c: Campaign = CAMPAIGN) {
+  const completed = c.missions.filter(m => save.missions[m.id]?.completed).length;
+  const next = c.missions.find(m => !save.missions[m.id]?.completed) ?? c.missions[c.missions.length - 1];
+  return { completed, total: c.missions.length, act: next.act, next: next.id, rank: rankFor(save.totalScore, c) };
 }

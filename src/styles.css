@@ -78,6 +78,7 @@ button.go {
 .farp-menu .dim { color: #aebbd0; }
 .ihadss { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
 button.go.secondary { background: transparent; color: #e8eef7; border: 1px solid rgba(255, 255, 255, .35); }
+button.go:disabled { opacity: .4; cursor: default; }
 
 .menu {
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
@@ -159,3 +160,15 @@ button.mode:disabled { opacity: .45; cursor: default; }
   .room-grid { grid-template-columns: 1fr; }
   .room-card h1 { font-size: 24px; }
 }
+.campaign-map .node { position: absolute; transform: translate(-50%, -50%); width: 34px; height: 34px; border-radius: 50%; padding: 0; font: inherit; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; color: #10151d; background: #e8eef7; border: 2px solid #10151d; cursor: pointer; }
+.campaign-map .node.done { background: #06d6a0; }
+.campaign-map .node.open { background: #ffd166; }
+.campaign-map .node.locked { background: rgba(30, 40, 55, .85); color: #8fa0b5; border-color: #8fa0b5; }
+.campaign-map .node.on { outline: 3px solid #fff; outline-offset: 2px; }
+.campaign-map .node small { position: absolute; top: -10px; right: -12px; font-size: 11px; font-weight: 800; background: #10151d; border-radius: 6px; padding: 0 4px; }
+.campaign-map .node small.gS { color: #ffd166; } .campaign-map .node small.gA { color: #06d6a0; } .campaign-map .node small.gB { color: #4cc9f0; } .campaign-map .node small.gC { color: #aebbd0; }
+.campaign-map .side { position: absolute; left: 8px; font-size: 12px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: rgba(6, 12, 22, .6); pointer-events: none; }
+.campaign-map .side.enemy { top: 8px; color: #ef476f; }
+.campaign-map .side.allied { bottom: 8px; color: #4cc9f0; }
+.room-card h2.pick-title { font-size: 22px; color: #e8eef7; margin: 4px 0 8px; letter-spacing: 0; }

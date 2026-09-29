@@ -5,15 +5,16 @@ import { Flight } from './ui/screens/Flight';
 import { Credits } from './ui/screens/Credits';
 import { Loading } from './ui/screens/Loading';
 import { Title } from './ui/screens/Title';
+import { Campaign } from './ui/screens/Campaign';
 import { Training } from './ui/screens/Training';
 import { isMission, UiState } from './ui/state';
-import { MISSION_IDS, MISSIONS } from './content/missions';
+import { MISSIONS } from './content/missions';
 import { Briefing } from './ui/mission/Briefing';
 import { Debrief } from './ui/mission/Debrief';
 import { Loadout } from './ui/mission/Loadout';
 import { InstantSetup } from './ui/mission/InstantSetup';
 import { generateInstant } from './sim/mission/instant';
-import { loadSave, recordInstant, recordMission, recordTraining, storeSave, unlockedFor } from './save/campaign';
+import { campaignProgress, loadSave, missionAvailable, recordInstant, recordMission, recordTraining, storeSave, unlockedFor } from './save/campaign';
 
 export function App() {
   const [ui] = useState(() => new UiState());
@@ -46,21 +47,26 @@ export function App() {
 
   if (!booted) return <Loading progress={boot} />;
 
+  const campaign = (selected?: string) => <Campaign save={save} selected={selected} onSelect={id => ui.go({ name: 'campaign', missionId: id })} onBriefing={id => ui.go({ name: 'briefing', missionId: id })} onBack={() => ui.go({ name: 'title' })} />;
+  if ((screen.name === 'briefing' || screen.name === 'loadout') && !missionAvailable(save, screen.missionId)) return campaign(screen.missionId);
+
   switch (screen.name) {
     case 'title':
-      return <Title trainingDone={completed.has('t1')} onInstant={() => ui.go({ name: 'instant' })} onCampaign={MISSION_IDS.length ? () => ui.go({ name: 'briefing', missionId: MISSION_IDS[0] }) : undefined} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} />;
+      return <Title trainingDone={completed.has('t1')} progress={campaignProgress(save)} onInstant={() => ui.go({ name: 'instant' })} onCampaign={() => ui.go({ name: 'campaign' })} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} />;
     case 'instant':
       return <InstantSetup best={save.instantBest} onBack={() => ui.go({ name: 'title' })} onGo={threat => ui.go({ name: 'flight', missionId: 'instant', mission: generateInstant({ seed: (Math.random() * 1e9) | 0, threat, time: 'day' }) })} />;
+    case 'campaign':
+      return campaign(screen.missionId);
     case 'briefing':
-      return <Briefing mission={MISSIONS[screen.missionId]} onBack={() => ui.go({ name: 'title' })} onNext={() => ui.go({ name: 'loadout', missionId: screen.missionId })} />;
+      return <Briefing mission={MISSIONS[screen.missionId]} onBack={() => ui.go({ name: 'campaign', missionId: screen.missionId })} onNext={() => ui.go({ name: 'loadout', missionId: screen.missionId })} />;
     case 'loadout':
       return <Loadout mission={MISSIONS[screen.missionId]} unlocked={new Set([...unlockedFor(save), ...(MISSIONS[screen.missionId].unlocks ?? [])])} onBack={() => ui.go({ name: 'briefing', missionId: screen.missionId })} onLaunch={def => ui.go({ name: 'flight', missionId: screen.missionId, loadout: def })} />;
     case 'debrief':
       if (screen.missionId === 'instant' && screen.report && screen.mission) return <Debrief mission={screen.mission} report={screen.report} newBest={screen.newBest} onRetry={() => ui.go({ name: 'instant' })} onDone={() => ui.go({ name: 'title' })} />;
-      if (!screen.report) return <Briefing mission={MISSIONS[screen.missionId]} onBack={() => ui.go({ name: 'title' })} onNext={() => ui.go({ name: 'loadout', missionId: screen.missionId })} />;
+      if (!screen.report) return <Briefing mission={MISSIONS[screen.missionId]} onBack={() => ui.go({ name: 'campaign', missionId: screen.missionId })} onNext={() => ui.go({ name: 'loadout', missionId: screen.missionId })} />;
       return <Debrief mission={MISSIONS[screen.missionId]} report={screen.report} newBest={screen.newBest}
         onRetry={() => ui.go(isMission(screen.missionId) ? { name: 'loadout', missionId: screen.missionId } : { name: 'flight', missionId: screen.missionId })}
-        onDone={() => ui.go(isMission(screen.missionId) ? { name: 'title' } : { name: 'training' })} />;
+        onDone={() => ui.go(isMission(screen.missionId) ? { name: 'campaign' } : { name: 'training' })} />;
     case 'credits':
       return <Credits onBack={() => ui.go({ name: 'title' })} />;
     case 'training':
