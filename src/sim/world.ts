@@ -70,7 +70,7 @@ export class World {
   laser: Laser = createLaser();
   identify: { unitId: number | null; time: number } = { unitId: null, time: 0 };
   assists: Assists = { ...DEFAULT_ASSISTS };
-  conditions: Conditions = { night: false, fog: false, playerRadar: false };
+  conditions: Conditions = { night: false, fog: false, playerRadar: false, time: 'day' };
   difficulty: Difficulty = DIFFICULTIES.normal;
   readonly los: LosCache;
   private aiClock = 0;

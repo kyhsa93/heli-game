@@ -10,6 +10,7 @@ export const AI_TICK = 0.1;
 export const BASE_RATE = 0.6;
 export const VIS_RANGE_DAY = 4000;
 export const VIS_RANGE_NIGHT = 1500;
+export const VIS_RANGE_TWILIGHT = 3000;
 export const LOW_AGL = 30 * 0.3048;
 export const SLOW = 10 * 0.514444;
 export const LOW_EXPOSURE = 0.35;
@@ -34,7 +35,13 @@ export function linkedRadars(world: World, u: Unit) {
   return world.units.filter(o => o.defId === 'sam_radar' && o.side === u.side && o.pos.distanceTo(u.pos) <= SAM_LINK_RANGE);
 }
 
-export interface Conditions { night: boolean; fog: boolean; playerRadar: boolean }
+export type TimeOfDay = 'day' | 'dusk' | 'dawn' | 'night';
+export interface Conditions { night: boolean; fog: boolean; playerRadar: boolean; time?: TimeOfDay }
+
+export function visualRange(cond: Conditions) {
+  const time = cond.time ?? (cond.night ? 'night' : 'day');
+  return time === 'night' ? VIS_RANGE_NIGHT : time === 'day' ? VIS_RANGE_DAY : VIS_RANGE_TWILIGHT;
+}
 
 export function eyeOf(u: Unit, out = new Vector3()) {
   return out.set(u.pos.x, u.pos.y + u.def.size[1] + 2, u.pos.z);
@@ -52,7 +59,7 @@ export function skylined(t: Terrain, eye: Vector3, target: Vector3, reach = 3000
 export function visualRate(world: World, eye: Vector3, occlusion: number, cond: Conditions) {
   const h = world.player;
   const dist = eye.distanceTo(h.pos);
-  const range = cond.night ? VIS_RANGE_NIGHT : VIS_RANGE_DAY;
+  const range = visualRange(cond);
   const distF = Math.pow(clamp(1 - dist / range, 0, 1), 1.5);
   if (distF <= 0) return 0;
   const low = agl(h, world.terrain) <= LOW_AGL && Math.hypot(h.vel.x, h.vel.z) <= SLOW;
@@ -123,7 +130,7 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
       }
       continue;
     }
-    const range = cond.night ? VIS_RANGE_NIGHT : VIS_RANGE_DAY;
+    const range = visualRange(cond);
     const sight = dist <= range ? los.visual(u.id, eye, h.pos, world.time) : { clear: false, occlusion: 1 };
     if (sight.clear) {
       u.ai.awareness = Math.min(1, u.ai.awareness + visualRate(world, eye, sight.occlusion, cond) * dt);

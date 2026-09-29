@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { LosCache } from '../los';
 import { hiddenPair, makeWorld, openPair, putPlayer, runAi } from '../testing';
 import type { Unit } from '../units';
-import { AI_TICK, ALERT_LEVEL, eyeOf, SUSPECT, type Conditions } from './awareness';
+import { AI_TICK, ALERT_LEVEL, eyeOf, SUSPECT, visualRange, visualRate, type Conditions } from './awareness';
+import { MISSIONS } from '../../content/missions';
+import { missionSession } from '../mission/runtime';
+import { loadMission } from '../mission/schema';
 
 const DAY: Conditions = { night: false, fog: false, playerRadar: false };
 
@@ -106,5 +109,35 @@ describe('awareness (05-enemies-and-ai.md 5.4)', () => {
     putPlayer(world, g.player.x, g.player.z, 12);
     runAi(world, los, AI_TICK, { ...DAY, playerRadar: true });
     expect(sam.ai.detected).toBe(true);
+  });
+});
+
+describe('time of day (06 6.1)', () => {
+  it('sets the visual detection range by the hour', () => {
+    expect(visualRange({ ...DAY, time: 'day' })).toBe(4000);
+    expect(visualRange({ ...DAY, time: 'dusk' })).toBe(3000);
+    expect(visualRange({ ...DAY, time: 'dawn' })).toBe(3000);
+    expect(visualRange({ ...DAY, time: 'night', night: true })).toBe(1500);
+    expect(visualRange({ ...DAY, night: true })).toBe(1500);
+  });
+
+  it('lets a lookout see the player at 3.5 km by day but not at dusk, and at 2 km only before night', () => {
+    const { world } = setup();
+    for (const [dist, time, sees] of [[3500, 'day', true], [3500, 'dusk', false], [2000, 'dawn', true], [2000, 'night', false], [1200, 'night', true]] as const) {
+      const g = openPair(world, dist, 30);
+      putPlayer(world, g.player.x, g.player.z, 30);
+      const u = world.spawnUnit('inf', g.unit.x, g.unit.z);
+      expect(visualRate(world, eyeOf(u), 0, { ...DAY, time, night: time === 'night' }) > 0, `${dist} ${time}`).toBe(sees);
+      world.clearCombat();
+    }
+  });
+
+  it('takes the hour from the mission', () => {
+    const src = structuredClone(MISSIONS.m01) as unknown as { environment: { time: string } };
+    src.environment.time = 'dusk';
+    const s = missionSession(loadMission(src));
+    s.start();
+    expect(s.world.conditions.time).toBe('dusk');
+    expect(s.world.conditions.night).toBe(false);
   });
 });

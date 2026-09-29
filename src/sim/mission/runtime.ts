@@ -109,7 +109,7 @@ export class MissionRuntime implements Objective {
     world.player.fuelBurnScale = AIRCRAFT.fuel.campaignBurnScale;
     this.stats = emptyStats();
     this.score = null;
-    world.conditions = { ...world.conditions, night: m.environment.time === 'night', fog: m.environment.fog };
+    world.conditions = { ...world.conditions, night: m.environment.time === 'night', fog: m.environment.fog, time: m.environment.time };
     const unlocked = new Set([...this.unlocked, ...(m.unlocks ?? [])]);
     world.cm.chaffUnlocked = unlocked.has('chaff');
     world.fcr.unlocked = unlocked.has('fcr');

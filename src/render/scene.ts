@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { PAD_R, type Pad3, type Terrain } from '../sim/terrain';
 import { roadMesh, TerrainChunks } from './terrainChunks';
+import type { TimeOfDay } from '../sim/ai/awareness';
+import { starField, TIME_PRESETS } from './timeOfDay';
 
 export const SKY_HORIZON = new THREE.Color(0xbcd6ea);
 export const SUN_DIR = new THREE.Vector3(0.45, 0.8, 0.35).normalize();
@@ -19,6 +21,9 @@ export interface WorldScene {
   beam: THREE.Mesh;
   shadow: THREE.Mesh;
   terrain: TerrainChunks;
+  stars: THREE.Points;
+  time: TimeOfDay;
+  setTime(time: TimeOfDay): void;
   dispose(): void;
 }
 
@@ -177,15 +182,18 @@ function buildings(t: Terrain) {
 export function buildWorld(t: Terrain, detail: THREE.Texture | null = null): WorldScene {
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(SKY_HORIZON, 500, 3600);
-  scene.background = SKY_HORIZON;
+  scene.background = SKY_HORIZON.clone();
 
-  scene.add(new THREE.HemisphereLight(0xcfe4ff, 0x4a4030, 1.1));
+  const hemi = new THREE.HemisphereLight(0xcfe4ff, 0x4a4030, 1.1);
+  scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff1d6, 2.2);
   sun.position.copy(SUN_DIR).multiplyScalar(100);
   scene.add(sun);
 
   const sky = skyDome();
   scene.add(sky);
+  const stars = starField();
+  scene.add(stars);
   const terrain = new TerrainChunks(t, detail);
   scene.add(terrain.group);
   if (t.roads.length) scene.add(roadMesh(t));
@@ -218,8 +226,24 @@ export function buildWorld(t: Terrain, detail: THREE.Texture | null = null): Wor
   shadow.renderOrder = 1;
   scene.add(shadow);
 
-  return {
-    scene, sky, pads, beam, shadow, terrain,
+  const view: WorldScene = {
+    scene, sky, pads, beam, shadow, terrain, stars, time: 'day',
+    setTime(time: TimeOfDay) {
+      const p = TIME_PRESETS[time];
+      view.time = time;
+      const dir = new THREE.Vector3(...p.sun).normalize();
+      sun.position.copy(dir).multiplyScalar(100);
+      sun.color.setHex(p.sunColor); sun.intensity = p.sunIntensity;
+      hemi.color.setHex(p.hemiSky); hemi.groundColor.setHex(p.hemiGround); hemi.intensity = p.hemiIntensity;
+      const fog = scene.fog as THREE.Fog;
+      fog.color.setHex(p.fog); fog.near = p.fogNear; fog.far = p.fogFar;
+      (scene.background as THREE.Color).setHex(p.fog);
+      sky.visible = p.sky;
+      const u = (sky.material as THREE.ShaderMaterial).uniforms;
+      if (p.sky) { u.sunPosition.value.copy(dir); u.rayleigh.value = p.rayleigh; u.turbidity.value = p.turbidity; }
+      stars.visible = p.stars > 0;
+      (beam.material as THREE.MeshBasicMaterial).opacity = time === 'night' ? 0.3 : 0.14;
+    },
     dispose() {
       scene.traverse(o => {
         const m = o as THREE.Mesh;
@@ -233,4 +257,5 @@ export function buildWorld(t: Terrain, detail: THREE.Texture | null = null): Wor
       });
     },
   };
+  return view;
 }

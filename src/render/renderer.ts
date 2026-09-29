@@ -16,6 +16,9 @@ import { FarpProps } from './farp';
 import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
 import { RingGates } from './rings';
+import { TIME_PRESETS } from './timeOfDay';
+
+const PANEL_LIGHT = 1.6;
 import { drawIhadss } from './ihadss';
 import { hellfireSolution, longbowSolution } from '../sim/weapons/hellfire';
 import { aseThreats } from '../sim/sensors/ase';
@@ -66,6 +69,7 @@ export class FlightRenderer {
   readonly effects: Effects;
   readonly units = new UnitRenderer();
   private rings = new RingGates();
+  private panelLight = new THREE.PointLight(0xbfe6ff, 0, 2.2, 1.5);
   readonly farp: FarpProps;
   readonly tads = new TadsView();
   private mpdTads = new TadsView();
@@ -99,6 +103,8 @@ export class FlightRenderer {
     }
     this.overlayCtx = overlay.getContext('2d')!;
     this.model.head.add(this.camera);
+    this.panelLight.position.set(EYE.x, EYE.y - 0.35, EYE.z - 0.55);
+    this.model.root.add(this.panelLight);
     this.effects = new Effects(assets.get<THREE.Texture>('tex.particles') ?? fallbackAtlas());
     this.scene.scene.add(this.effects.group);
     this.scene.scene.add(this.units.group);
@@ -227,8 +233,11 @@ export class FlightRenderer {
     scn.shadow.scale.setScalar(5.5 + Math.max(0, agl) * 0.03);
     (scn.shadow.material as THREE.MeshBasicMaterial).opacity = 0.4 * (1 - clamp(agl / 90, 0, 1));
 
+    const time = world.conditions.time ?? 'day';
+    if (scn.time !== time) { scn.setTime(time); this.panelLight.intensity = TIME_PRESETS[time].panelLight * PANEL_LIGHT; }
     camera.getWorldPosition(this.tmp);
     scn.sky.position.copy(this.tmp);
+    scn.stars.position.copy(this.tmp);
     scn.terrain.update(this.tmp);
     (scn.sky.material as THREE.ShaderMaterial).uniforms.time.value = now * 0.001;
 
