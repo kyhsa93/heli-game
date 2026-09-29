@@ -1,9 +1,10 @@
 import { Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { LosCache, radarSight, terrainClear, treeOcclusion, visualSight } from './los';
-import { HALF, Terrain, type Tree } from './terrain';
+import { Terrain, type Tree } from './terrain';
 
 const terrain = new Terrain(7);
+const HALF = terrain.half;
 
 function findRidge() {
   for (let i = 0; i < 4000; i++) {

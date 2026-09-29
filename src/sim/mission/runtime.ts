@@ -4,6 +4,8 @@ import { GEAR_Y } from '../heli/airframe';
 import { hoverCollective } from '../heli/loadout';
 import { updateQ } from '../heli/state';
 import type { Objective, ObjectiveState } from '../objective';
+import { FlightSession } from '../session';
+import type { TerrainOptions } from '../terrain';
 import type { Unit } from '../units';
 import type { World } from '../world';
 import type { Action, Condition, MissionDef, ObjectiveDef, RadioFrom, UnitRef } from './schema';
@@ -275,4 +277,17 @@ export class MissionRuntime implements Objective {
   }
 
   hasFired(id: string) { return this.fired.has(id); }
+}
+
+export function missionTerrain(m: MissionDef): TerrainOptions {
+  return {
+    size: m.terrain.size,
+    features: m.terrain.features,
+    roads: m.terrain.roads,
+    pads: m.farps.map((f, i) => ({ x: f.position[0], z: f.position[1], name: f.id.replace(/^farp_/, '').toUpperCase(), base: i === 0 })),
+  };
+}
+
+export function missionSession(m: MissionDef) {
+  return new FlightSession(m.environment.seed, new MissionRuntime(m), missionTerrain(m));
 }

@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 import { clamp } from '../../core/math';
 import type { Emit } from '../events';
-import { HALF, type Terrain } from '../terrain';
+import type { Terrain } from '../terrain';
 import {
   AIRCRAFT, G3, GEAR, GEAR_Y, HULL, LAND_ATT, LAND_DESCENT, LAND_HS, MAX_PITCH, MAX_ROLL, MAX_THRUST, ROTOR_R, ROTOR_TIPS, ROTOR_Y, SLOPE_MAX,
 } from './airframe';
@@ -69,8 +69,8 @@ export function stepFlight(h: HeliState, c: Controls, env: FlightEnv, dt: number
   return 'air';
 }
 
-export function clampToArea(h: HeliState) {
-  const lim = HALF - 150;
+export function clampToArea(h: HeliState, half: number) {
+  const lim = half - 150;
   let hit = false;
   for (const k of ['x', 'z'] as const) {
     if (Math.abs(h.pos[k]) > lim) {

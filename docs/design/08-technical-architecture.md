@@ -84,7 +84,7 @@ src/
   render/               # three.js. sim 상태를 읽기만 함. sim에 쓰지 않음
     renderer.ts         # WebGLRenderer, 카메라, 프레임 렌더 조립
     scene.ts, sky.ts, water.ts
-    terrainChunks.ts    # 청크 LOD 지형
+    terrainChunks.ts    # 청크 LOD 지형 (2km 청크, 가까이 12.5m·멀리 50m, 스커트 40m, 디테일 맵 스플랫, 도로 리본)
     heliModel.ts        # (이동) + 로드아웃·피해 표현
     unitModels.ts       # 유닛 유형별 코드 모델
     unitRenderer.ts     # 유형별 InstancedMesh 갱신

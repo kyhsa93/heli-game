@@ -4,7 +4,6 @@ import type { SimEvent } from '../events';
 import { updateQ } from '../heli/state';
 import { lineOfSight, unitCenter } from '../sensors/laser';
 import { lookAngles, tadsPosition } from '../sensors/tads';
-import { HALF } from '../terrain';
 import { airborneAt, makeWorld } from '../testing';
 import { STEP, type World } from '../world';
 import { hellfireSolution } from './hellfire';
@@ -23,6 +22,7 @@ function ground(world: World, x: number, z: number) {
 }
 
 function findOpen(world: World, dist: number) {
+  const HALF = world.terrain.half;
   for (let i = 0; i < 400; i++) {
     const x = ((i * 7919) % 97) / 97 * HALF * 1.6 - HALF * 0.8, z = ((i * 104729) % 89) / 89 * HALF * 1.6 - HALF * 0.8;
     const from = ground(world, x, z).setY(world.terrain.surfaceAt(x, z) + 100);
@@ -37,6 +37,7 @@ function findOpen(world: World, dist: number) {
 }
 
 function findHidden(world: World) {
+  const HALF = world.terrain.half;
   for (let i = 0; i < 600; i++) {
     const x = ((i * 7919) % 101) / 101 * HALF * 1.6 - HALF * 0.8, z = ((i * 104729) % 103) / 103 * HALF * 1.6 - HALF * 0.8;
     const low = ground(world, x, z).setY(world.terrain.surfaceAt(x, z) + 30);

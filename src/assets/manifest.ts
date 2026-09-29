@@ -21,6 +21,7 @@ export const ASSETS: AssetDef[] = [
   { id: 'font.hud', kind: 'font', path: 'fonts/b612-mono.woff2', group: BOOT_GROUP, fontFamily: HUD_FONT },
   { id: 'font.ui', kind: 'font', path: 'fonts/karda-sans-regular.woff2', group: BOOT_GROUP, fontFamily: UI_FONT, fontWeight: '400' },
   { id: 'tex.particles', kind: 'texture', path: 'textures/particles.png', group: BOOT_GROUP },
+  { id: 'tex.ground_detail', kind: 'texture', path: 'textures/ground_detail.png', group: BOOT_GROUP },
   { id: 'audio.rotor_loop', kind: 'audio', path: 'audio/rotor_interior_loop.mp3', group: BOOT_GROUP },
   { id: 'audio.engine_start', kind: 'audio', path: 'audio/engine_start.mp3', group: BOOT_GROUP },
   { id: 'audio.gun_shot', kind: 'audio', path: 'audio/gun_shot.mp3', group: BOOT_GROUP },

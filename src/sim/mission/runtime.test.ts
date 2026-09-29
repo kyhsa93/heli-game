@@ -194,3 +194,23 @@ describe('mission runtime (06-missions-and-world.md 6.2)', () => {
     expect(s.getSnapshot().mode).toBe('over');
   });
 });
+
+describe('mission terrain', () => {
+  it('builds the mission map and starts mission 1 on its FARP pad', async () => {
+    const { missionSession } = await import('./runtime');
+    const m = JSON.parse((await import('node:fs')).readFileSync(new URL('../../content/missions/m01.json', import.meta.url), 'utf8')) as MissionDef;
+    const s = missionSession(m);
+    s.start();
+    const w = s.world;
+    expect(w.terrain.size).toBe(12000);
+    expect(w.pads[0]).toMatchObject({ x: -4200, z: 3800, name: 'A', base: true });
+    expect(w.player.landed).toBe(true);
+    expect(w.player.engineOn).toBe(true);
+    expect(Math.hypot(w.player.pos.x + 4200, w.player.pos.z - 3800)).toBeLessThan(1);
+    expect(w.terrain.roads).toHaveLength(2);
+    expect(w.units.length).toBe(m.units.length);
+    for (let i = 0; i < 240; i++) s.step(STEP);
+    expect(w.player.alive).toBe(true);
+    expect(w.player.landed).toBe(true);
+  });
+});

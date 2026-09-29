@@ -9,6 +9,8 @@ import { FlightRenderer } from '../../render/renderer';
 import { LAND_DESCENT } from '../../sim/heli/airframe';
 import { airspeed } from '../../sim/heli/state';
 import { FlightSession } from '../../sim/session';
+import { MISSIONS } from '../../content/missions';
+import { missionSession } from '../../sim/mission/runtime';
 import { DIFFICULTIES } from '../../sim/difficulty';
 import { loadDifficulty } from '../settings';
 import { zoomTads } from '../../sim/sensors/tads';
@@ -33,7 +35,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
   const missionRef = useRef<HTMLDivElement>(null);
   const msgRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
-  const [session] = useState(() => new FlightSession((Math.random() * 1e9) | 0, createObjective(missionId)));
+  const mission = MISSIONS[missionId];
+  const [session] = useState(() => mission ? missionSession(mission) : new FlightSession((Math.random() * 1e9) | 0, createObjective(missionId)));
   const sim = session.world;
   sim.difficulty = DIFFICULTIES[loadDifficulty()];
   const logRef = useRef(new MessageLog());
@@ -261,8 +264,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
       {(help || snap.mode === 'brief') && (
         <div className="overlay">
           <div className="card wide">
-            <h1>{t(`training.${missionId}.name`)}</h1>
-            <p className="sub">{t(`training.${missionId}.brief`, { pad: missionId === 't4' || missionId === 't5' ? sim.pads[TrainingT4.farPad(sim)].name : t1Pad.name, hits: T5_MAX_HITS, max: T1_MAX_FPM, need: missionId === 't4' ? T4_NEED : T3_NEED, gunNeed: T3_GUN_NEED, total: T3_TARGETS.length })}<br />{t('brief.introCollective')}</p>
+            <h1>{mission ? mission.title : t(`training.${missionId}.name`)}</h1>
+            <p className="sub">{mission ? mission.briefing.summary : t(`training.${missionId}.brief`, { pad: missionId === 't4' || missionId === 't5' ? sim.pads[TrainingT4.farPad(sim)].name : t1Pad.name, hits: T5_MAX_HITS, max: T1_MAX_FPM, need: missionId === 't4' ? T4_NEED : T3_NEED, gunNeed: T3_GUN_NEED, total: T3_TARGETS.length })}<br />{t('brief.introCollective')}</p>
             <div className="keys">
               {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
             </div>

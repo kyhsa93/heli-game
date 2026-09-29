@@ -18,7 +18,7 @@ import { LosCache } from './los';
 import { castRay, createLaser, crosshairUnit, unitCenter, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
 import { CHAFF_JAM, createCountermeasures, decoyChaff, decoyFlare, FLARE_LIFE, FLARE_PER_DROP, type Countermeasures, type Flare } from './sensors/ase';
 import { constrainTads, createTads, lookAngles, tadsDirection, tadsFovDeg, tadsLocal, tadsPosition, type Tads } from './sensors/tads';
-import { PAD_R, Terrain, type Pad3 } from './terrain';
+import { PAD_R, Terrain, type Pad3, type TerrainOptions } from './terrain';
 import { createAiState, UNIT_DEFS, type Unit } from './units';
 import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
 import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
@@ -68,9 +68,9 @@ export class World {
   private atBoundary = false;
   private refuelNoted = false;
 
-  constructor(opts: { seed: number }) {
+  constructor(opts: { seed: number; terrain?: TerrainOptions }) {
     this.rng = rng(opts.seed);
-    this.terrain = new Terrain(opts.seed);
+    this.terrain = new Terrain(opts.seed, opts.terrain);
     this.los = new LosCache(this.terrain);
     this.events.on('playerHit', e => this.hitPlayer(e.by, e.damage));
     this.resetPlayer();
@@ -280,7 +280,7 @@ export class World {
       const phase = stepFlight(h, this.controls, this, dt, this.emit);
       if (phase === 'ground') this.onGround(dt);
       else {
-        const hit = clampToArea(h);
+        const hit = clampToArea(h, this.terrain.half);
         if (hit && !this.atBoundary) this.emit({ t: 'boundary' });
         this.atBoundary = hit;
         const wasLanded = h.landed;

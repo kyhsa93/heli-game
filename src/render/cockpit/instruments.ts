@@ -3,7 +3,6 @@ import { clamp } from '../../core/math';
 import { M_TO_FT, MS_TO_KT } from '../../core/units';
 import { damageWarnings } from '../../sim/heli/damage';
 import { airspeed } from '../../sim/heli/state';
-import { N } from '../../sim/terrain';
 import type { World } from '../../sim/world';
 import { AMBER, FUEL_LB } from './pages/common';
 import { MpdState, PAGE_LABELS, type MpdSide, type PageId } from './mpd';
@@ -144,6 +143,7 @@ function smallDial(g: CanvasRenderingContext2D, cx: number, cy: number, r: numbe
 }
 
 function reliefMap(world: World) {
+  const N = world.terrain.n;
   const cv = document.createElement('canvas');
   cv.width = cv.height = N;
   const g = cv.getContext('2d')!;

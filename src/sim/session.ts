@@ -1,5 +1,6 @@
 import type { CrashReason } from './events';
 import type { Objective } from './objective';
+import type { TerrainOptions } from './terrain';
 import { World } from './world';
 
 export type Mode = 'brief' | 'play' | 'crashed' | 'over' | 'done';
@@ -20,8 +21,8 @@ export class FlightSession {
   private failTimer = 0;
   private doneTimer = 0;
 
-  constructor(seed: number, readonly objective: Objective | null = null) {
-    this.world = new World({ seed });
+  constructor(seed: number, readonly objective: Objective | null = null, terrain?: TerrainOptions) {
+    this.world = new World({ seed, terrain });
     if (objective) this.world.events.onAny(e => objective.onEvent(e, this.world));
     this.world.events.on('objective', e => {
       if (e.state === 'done' && this.mode === 'play') { this.doneTimer = 1.5; }

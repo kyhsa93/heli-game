@@ -6,7 +6,6 @@ import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
 import { stepBrains } from './ai/brain';
 import { GEAR_Y } from './heli/airframe';
 import { LosCache, terrainClear } from './los';
-import { HALF } from './terrain';
 import { STEP, World } from './world';
 
 const DAY: Conditions = { night: false, fog: false, playerRadar: false };
@@ -77,6 +76,7 @@ export function runAi(world: World, los: LosCache, seconds: number, cond: Condit
 }
 
 export function openPair(world: World, dist: number, lowAgl = 9) {
+  const HALF = world.terrain.half;
   for (let i = 0; i < 3000; i++) {
     const x = ((i * 7919) % 173) / 173 * HALF * 1.4 - HALF * 0.7, z = ((i * 104729) % 181) / 181 * HALF * 1.4 - HALF * 0.7;
     if (world.terrain.heightAt(x, z) < 1) continue;
@@ -94,6 +94,7 @@ export function openPair(world: World, dist: number, lowAgl = 9) {
 }
 
 export function hiddenPair(world: World) {
+  const HALF = world.terrain.half;
   for (let i = 0; i < 3000; i++) {
     const x = ((i * 7919) % 173) / 173 * HALF * 1.4 - HALF * 0.7, z = ((i * 104729) % 181) / 181 * HALF * 1.4 - HALF * 0.7;
     const ang = (i % 8) * Math.PI / 4;
@@ -107,6 +108,7 @@ export function hiddenPair(world: World) {
 }
 
 export function popupPair(world: World, dist = 2500, low = 25, high = 300, shadow = 0) {
+  const HALF = world.terrain.half;
   for (let i = 0; i < 4000; i++) {
     const x = ((i * 7919) % 173) / 173 * HALF * 1.4 - HALF * 0.7, z = ((i * 104729) % 181) / 181 * HALF * 1.4 - HALF * 0.7;
     if (world.terrain.heightAt(x, z) < 1) continue;

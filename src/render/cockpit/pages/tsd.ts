@@ -1,5 +1,4 @@
 import { MS_TO_KT } from '../../../core/units';
-import { HALF, SIZE } from '../../../sim/terrain';
 import type { World } from '../../../sim/world';
 import { AMBER, bearingDeg, bezel, DIM, FUEL_LB, GREEN, headingDeg, screenClip, tape } from './common';
 
@@ -13,7 +12,7 @@ export function drawTsd(g: CanvasRenderingContext2D, world: World, relief: HTMLC
     g.save();
     g.translate(cx, cy); g.rotate(h.yaw);
     g.globalAlpha = 0.55;
-    g.drawImage(relief, (-HALF - h.pos.x) * scale, (-HALF - h.pos.z) * scale, SIZE * scale, SIZE * scale);
+    g.drawImage(relief, (-world.terrain.half - h.pos.x) * scale, (-world.terrain.half - h.pos.z) * scale, world.terrain.size * scale, world.terrain.size * scale);
     g.globalAlpha = 1;
     const blink = Math.sin(world.time * 6) > 0;
     if (tp) {

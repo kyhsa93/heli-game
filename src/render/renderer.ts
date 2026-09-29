@@ -83,7 +83,7 @@ export class FlightRenderer {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(this.renderer.domElement);
 
-    this.scene = buildWorld(session.world.terrain);
+    this.scene = buildWorld(session.world.terrain, assets.get<THREE.Texture>('tex.ground_detail') ?? null);
     this.model = buildHeli();
     this.scene.scene.add(this.model.root);
     this.instruments = new Instruments(session.world);
@@ -217,6 +217,7 @@ export class FlightRenderer {
 
     camera.getWorldPosition(this.tmp);
     scn.sky.position.copy(this.tmp);
+    scn.terrain.update(this.tmp);
     (scn.sky.material as THREE.ShaderMaterial).uniforms.time.value = now * 0.001;
 
     if (world.units.length && !this.unitAssetsRequested) this.loadUnitModels();

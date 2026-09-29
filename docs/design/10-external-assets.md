@@ -85,7 +85,7 @@
 | (대안) 하늘 이미지 | Poly Haven pure skies HDRI | polyhaven.com/hdris | CC0 | HDR은 1.2MB+라 부적합. 1024×512 LDR WebP로 변환 시 13KB |
 | 연기·폭발 | Kenney Smoke Particles | kenney.nl/assets/smoke-particles | CC0 | 몇 프레임을 512² 아틀라스로: 약 100~150KB |
 | 총구 섬광·불꽃 | Kenney Particle Pack | kenney.nl/assets/particle-pack | CC0 | 128px 2~3장: 약 20KB |
-| 지면 디테일 | ambientCG Grass004, Rock030, Ground037, Snow006, Asphalt026B | ambientcg.com | CC0 | 512px 회색조, 장당 약 75KB. PNG 채널에 묶어 저장(JPG는 채널 묶음이 깨짐) |
+| 지면 디테일 | ambientCG Grass004, Rock030, Ground037, Snow006, Asphalt026B | ambientcg.com | CC0 | 512px 회색조, 장당 약 75KB. PNG 채널에 묶어 저장(JPG는 채널 묶음이 깨짐). **채택(M4-3)**: 네 장을 RGBA 한 장으로 묶었는데 512px는 노이즈라 PNG가 540~890KB → **256px·32단계 양자화 169KB**로 줄였다(`textures/ground_detail.png`). 16m·117m 두 배율로 겹쳐 반복을 숨긴다. Asphalt는 도로가 흙길이라 쓰지 않음 |
 
 - KTX2/Basis 압축은 **쓰지 않는다**: 트랜스코더만 약 260KB(gzip)로, 텍스처 5장 이하에선 오히려 손해.
 - 지면 디테일은 `onBeforeCompile`로 경사·높이 기반 스플랫(가파르면 바위, 높으면 눈)에 두 배율로 타일링해 반복 무늬를 숨긴다.

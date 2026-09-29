@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-import { CELL, HALF, N, PAD_R, SIZE, type Pad3, type Terrain } from '../sim/terrain';
+import { PAD_R, type Pad3, type Terrain } from '../sim/terrain';
+import { roadMesh, TerrainChunks } from './terrainChunks';
 
 export const SKY_HORIZON = new THREE.Color(0xbcd6ea);
 export const SUN_DIR = new THREE.Vector3(0.45, 0.8, 0.35).normalize();
@@ -17,49 +18,8 @@ export interface WorldScene {
   pads: PadVisual[];
   beam: THREE.Mesh;
   shadow: THREE.Mesh;
+  terrain: TerrainChunks;
   dispose(): void;
-}
-
-function terrainMesh(t: Terrain) {
-  const geo = new THREE.BufferGeometry();
-  const count = (N + 1) * (N + 1);
-  const pos = new Float32Array(count * 3);
-  const col = new Float32Array(count * 3);
-  const sand = new THREE.Color(0xc8b98a), wet = new THREE.Color(0x6f6a4f), grassA = new THREE.Color(0x4f7a34);
-  const grassB = new THREE.Color(0x76883f), rock = new THREE.Color(0x7a746b), snow = new THREE.Color(0xf2f4f6);
-  const c = new THREE.Color();
-  for (let j = 0; j <= N; j++) {
-    for (let i = 0; i <= N; i++) {
-      const k = j * (N + 1) + i;
-      const x = -HALF + i * CELL, z = -HALF + j * CELL, h = t.heights[k];
-      pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z;
-      const ny = t.normalAt(x, z).y;
-      if (h < 0) c.copy(wet);
-      else if (h < 3) c.copy(sand);
-      else {
-        c.copy(grassA).lerp(grassB, t.forest(x * 1.7, z * 1.7));
-        if (t.forest(x, z) > 0.5) c.multiplyScalar(0.82);
-        c.lerp(rock, Math.min(1, Math.max(0, (0.86 - ny) * 6)));
-        if (h > 300) c.lerp(rock, Math.min(1, (h - 300) / 80));
-        if (h > 400 && ny > 0.7) c.lerp(snow, Math.min(1, (h - 400) / 40));
-      }
-      col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
-    }
-  }
-  const idx = new Uint32Array(N * N * 6);
-  let p = 0;
-  for (let j = 0; j < N; j++) {
-    for (let i = 0; i < N; i++) {
-      const a = j * (N + 1) + i, b = a + 1, d = a + (N + 1), e = d + 1;
-      idx[p++] = a; idx[p++] = d; idx[p++] = b;
-      idx[p++] = b; idx[p++] = d; idx[p++] = e;
-    }
-  }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  geo.setIndex(new THREE.BufferAttribute(idx, 1));
-  geo.computeVertexNormals();
-  return new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
 }
 
 export const SKY_SETTINGS = {
@@ -166,6 +126,28 @@ function trees(t: Terrain) {
   return [canopy, trunk];
 }
 
+function bridges(t: Terrain) {
+  const group = new THREE.Group();
+  const deck = new THREE.MeshLambertMaterial({ color: 0x77736b });
+  for (const b of t.bridges) {
+    const dx = b.to[0] - b.from[0], dz = b.to[1] - b.from[1], len = Math.hypot(dx, dz);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(9, 1.2, len), deck);
+    m.position.set((b.from[0] + b.to[0]) / 2, b.y, (b.from[1] + b.to[1]) / 2);
+    m.rotation.y = Math.atan2(dx, dz);
+    group.add(m);
+    for (let k = 0; k <= Math.floor(len / 40); k++) {
+      const f = len ? k * 40 / len : 0;
+      const px = b.from[0] + dx * f, pz = b.from[1] + dz * f;
+      const ground = t.heightAt(px, pz);
+      if (b.y - ground < 2) continue;
+      const pier = new THREE.Mesh(new THREE.BoxGeometry(2, b.y - ground, 2), deck);
+      pier.position.set(px, (b.y + ground) / 2, pz);
+      group.add(pier);
+    }
+  }
+  return group;
+}
+
 function buildings(t: Terrain) {
   const group = new THREE.Group();
   const wall = new THREE.MeshLambertMaterial({ color: 0xe8dcc6 });
@@ -192,7 +174,7 @@ function buildings(t: Terrain) {
   return group;
 }
 
-export function buildWorld(t: Terrain): WorldScene {
+export function buildWorld(t: Terrain, detail: THREE.Texture | null = null): WorldScene {
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(SKY_HORIZON, 500, 3600);
   scene.background = SKY_HORIZON;
@@ -204,10 +186,12 @@ export function buildWorld(t: Terrain): WorldScene {
 
   const sky = skyDome();
   scene.add(sky);
-  scene.add(terrainMesh(t));
+  const terrain = new TerrainChunks(t, detail);
+  scene.add(terrain.group);
+  if (t.roads.length) scene.add(roadMesh(t));
 
   const water = new THREE.Mesh(
-    new THREE.PlaneGeometry(SIZE * 3, SIZE * 3),
+    new THREE.PlaneGeometry(t.size * 3, t.size * 3),
     new THREE.MeshPhongMaterial({ color: 0x2d6d8e, specular: 0x9fc8e0, shininess: 80, transparent: true, opacity: 0.88 }),
   );
   water.rotation.x = -Math.PI / 2;
@@ -215,6 +199,7 @@ export function buildWorld(t: Terrain): WorldScene {
 
   for (const m of trees(t)) scene.add(m);
   scene.add(buildings(t));
+  scene.add(bridges(t));
 
   const pads = t.pads.map(buildPad);
   for (const p of pads) scene.add(p.group);
@@ -234,7 +219,7 @@ export function buildWorld(t: Terrain): WorldScene {
   scene.add(shadow);
 
   return {
-    scene, sky, pads, beam, shadow,
+    scene, sky, pads, beam, shadow, terrain,
     dispose() {
       scene.traverse(o => {
         const m = o as THREE.Mesh;
