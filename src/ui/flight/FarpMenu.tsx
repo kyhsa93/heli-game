@@ -5,7 +5,7 @@ import { rearmSeconds, REPAIR_SECONDS, startService } from '../../sim/farp';
 import { SYSTEMS } from '../../sim/heli/damage';
 import type { World } from '../../sim/world';
 
-const STORES: Store[] = ['empty', 'hydra70', 'agm114k'];
+const BASE_STORES: Store[] = ['empty', 'hydra70', 'agm114k'];
 const GUN = [300, 600, 1200];
 
 export function FarpMenu({ world }: { world: World }) {
@@ -26,6 +26,7 @@ export function FarpMenu({ world }: { world: World }) {
       </div>
     );
   }
+  const STORES: Store[] = world.fcr.unlocked ? [...BASE_STORES, 'agm114l'] : BASE_STORES;
   const cycle = (p: typeof PYLONS[number]) => setDef(d => ({ ...d, pylons: { ...d.pylons, [p]: STORES[(STORES.indexOf(d.pylons[p]) + 1) % STORES.length] } }));
   const secs = Math.max(repair ? REPAIR_SECONDS : 0, rearm ? rearmSeconds(world, def) : 0);
   return (

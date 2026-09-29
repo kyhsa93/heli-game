@@ -83,3 +83,26 @@ describe('mission playthroughs (scripted pilot)', () => {
     expect(s.getSnapshot().mode).toBe('over');
   });
 });
+
+describe('campaign unlocks reach the aircraft (#77)', () => {
+  it('locks chaff and the FCR until the save unlocks them', () => {
+    const locked = missionSession(MISSIONS.m01);
+    locked.start();
+    expect(locked.world.cm.chaffUnlocked).toBe(false);
+    expect(locked.world.fcr.unlocked).toBe(false);
+    expect(locked.world.dropChaff()).toBe(false);
+    const open = missionSession(MISSIONS.m01, null, new Set(['chaff', 'fcr']));
+    open.start();
+    expect(open.world.cm.chaffUnlocked).toBe(true);
+    expect(open.world.fcr.unlocked).toBe(true);
+    open.world.resetPlayer();
+    expect(open.world.fcr.unlocked).toBe(true);
+    expect(open.world.cm.chaffUnlocked).toBe(true);
+  });
+
+  it('gives the survival training its chaff', () => {
+    const s = missionSession(MISSIONS.t5);
+    s.start();
+    expect(s.world.cm.chaffUnlocked).toBe(true);
+  });
+});

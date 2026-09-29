@@ -6,7 +6,7 @@ import { WEAPONS } from './damage';
 export const GUN_MUZZLE = new Vector3(0, -1.2, -5.0);
 export const GUN_LIMITS = { az: 86 * DEG, up: 11 * DEG, down: -60 * DEG };
 
-export type WeaponId = 'gun30' | 'hydra70' | 'agm114k';
+export type WeaponId = 'gun30' | 'hydra70' | 'agm114k' | 'agm114l';
 export type Salvo = 1 | 2 | 4;
 export const SALVOS: readonly Salvo[] = [1, 2, 4];
 

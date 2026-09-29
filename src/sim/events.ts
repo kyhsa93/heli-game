@@ -22,6 +22,7 @@ export type SimEvent =
   | { t: 'identified'; id: number; defId: string; side: Side }
   | { t: 'detected'; id: number; by: 'visual' | 'radar' }
   | { t: 'radarTrack'; id: number; on: boolean }
+  | { t: 'fcr'; state: 'scan' | 'done' | 'mode'; mode: 'ground' | 'air'; count: number }
   | { t: 'playerHit'; by: number; weapon: string; damage: number }
   | { t: 'systemDamaged'; system: SystemId; level: 'damaged' | 'destroyed' }
   | { t: 'missileWarning'; id: number; kind: 'ir' | 'radar'; from: Vector3; owner: number }

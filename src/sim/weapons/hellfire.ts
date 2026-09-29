@@ -4,6 +4,7 @@ import { castRay } from '../sensors/laser';
 import { tadsPosition } from '../sensors/tads';
 import type { World } from '../world';
 import { PLAYER_OWNER } from './projectile';
+import { selectedTarget } from '../sensors/fcr';
 import { HELLFIRE, loftHeight, nextLauncher, railPosition, seekerSees, type LaserSpot, type Missile } from './missile';
 
 export const LAUNCH_CONSTRAINT = 30 * DEG;
@@ -11,10 +12,10 @@ export const LOAL_CLIMB = 35 * DEG;
 export const LOAL_NAV_ERROR = 0.03;
 export const LOAL_NAV_ERROR_MIN = 40;
 
-export type HellfireStatus = 'lobl' | 'loal' | 'range' | 'align' | 'empty' | 'noTarget';
+export type HellfireStatus = 'lobl' | 'loal' | 'rf' | 'range' | 'align' | 'empty' | 'noTarget';
 
 export interface HellfireSolution {
-  mode: 'lobl' | 'loal' | null;
+  mode: 'lobl' | 'loal' | 'rf' | null;
   status: HellfireStatus;
   range: number | null;
   aim: Vector3 | null;
@@ -58,13 +59,26 @@ export function hellfireSolution(world: World): HellfireSolution {
   return { mode: 'loal', status: 'loal', range, aim, spot: null };
 }
 
+export function longbowSolution(world: World): HellfireSolution {
+  const none = (status: HellfireStatus, range: number | null = null, aim: Vector3 | null = null): HellfireSolution => ({ mode: null, status, range, aim, spot: null });
+  const pylon = nextLauncher(world.loadout, world.arms.missilesFired, 'agm114l');
+  if (!pylon) return none('empty');
+  const target = selectedTarget(world.fcr);
+  if (!target) return none('noTarget');
+  const range = railPosition(world.player, pylon).distanceTo(target.pos);
+  if (!inRange(range)) return none('range', range, target.pos);
+  if (offNose(world, target.pos) > LAUNCH_CONSTRAINT) return none('align', range, target.pos);
+  return { mode: 'rf', status: 'rf', range, aim: target.pos.clone(), spot: null };
+}
+
 export function launchHellfire(world: World, sol: HellfireSolution, id: number): Missile | null {
   const h = world.player, lo = world.loadout;
-  const pylon = nextLauncher(lo, world.arms.missilesFired);
+  const kind = sol.mode === 'rf' ? 'agm114l' : 'agm114k';
+  const pylon = nextLauncher(lo, world.arms.missilesFired, kind);
   if (!pylon || !sol.mode || !sol.aim) return null;
   const pos = railPosition(h, pylon);
   const dir = sol.aim.clone().sub(pos).normalize();
-  if (sol.mode === 'loal') {
+  if (sol.mode === 'loal' || sol.mode === 'rf') {
     const flat = Math.hypot(dir.x, dir.z) || 1;
     dir.set(dir.x / flat * Math.cos(LOAL_CLIMB), Math.sin(LOAL_CLIMB), dir.z / flat * Math.cos(LOAL_CLIMB));
   }
@@ -77,9 +91,10 @@ export function launchHellfire(world: World, sol: HellfireSolution, id: number):
   }
   lo.rounds[pylon]--;
   return {
-    id, kind: 'agm114k', pos, vel: dir.multiplyScalar(HELLFIRE.launchSpeed ?? 60).add(h.vel), owner: PLAYER_OWNER,
+    id, kind, pos, vel: dir.multiplyScalar(HELLFIRE.launchSpeed ?? 60).add(h.vel), owner: PLAYER_OWNER,
     mode: sol.mode, phase: 'boost', age: 0, seekerLocked: sol.mode === 'lobl', aim,
-    apex: sol.mode === 'loal'
+    targetUnit: null,
+    apex: sol.mode !== 'lobl'
       ? new Vector3((pos.x + aim.x) / 2, Math.max(pos.y, aim.y) + loftHeight(sol.range ?? 0), (pos.z + aim.z) / 2)
       : null,
   };

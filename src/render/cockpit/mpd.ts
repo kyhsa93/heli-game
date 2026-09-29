@@ -1,4 +1,4 @@
-export const PAGES = ['FLT', 'TSD', 'WPN', 'TADS', 'ASE'] as const;
+export const PAGES = ['FLT', 'TSD', 'WPN', 'TADS', 'ASE', 'FCR'] as const;
 export type PageId = typeof PAGES[number];
 export type MpdSide = 'left' | 'right';
 export const PAGE_LABELS: readonly PageId[] = PAGES;

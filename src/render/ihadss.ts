@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { isStale } from '../sim/sensors/fcr';
+import { drawFcrSymbol, drawSelectBrackets } from './fcrSymbol';
 import { clamp } from '../core/math';
 import { bearingDeg, headingDeg, hoverVector } from './cockpit/instruments';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
@@ -100,7 +102,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
   if (heli.rpm < 0.95) g.fillText(`NR ${Math.round(heli.rpm * 101)}%`, cx + 190 * u, cy + 110 * u);
 
   if (world.arms.selected === 'hydra70') drawRockets(g, w, h, u, world, camera);
-  else if (world.arms.selected === 'agm114k') drawHellfire(g, w, h, u, world, camera);
+  else if (world.arms.selected === 'agm114k' || world.arms.selected === 'agm114l') drawHellfire(g, w, h, u, world, camera);
   else drawGun(g, w, h, u, world, camera);
 
   const tp = world.target;
@@ -113,6 +115,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
     g.fillText(`${tp.name} ${d > 999 ? (d / 1000).toFixed(1) + 'K' : Math.round(d)}`, sp.x, sp.y - r - 6 * u);
   }
 
+  drawFcrTargets(g, w, h, u, world, camera);
   drawThreatArcs(g, w, h, u, world, camera);
 
   g.textAlign = 'center';
@@ -223,7 +226,7 @@ function drawHellfire(g: CanvasRenderingContext2D, w: number, h: number, u: numb
     g.strokeRect(Math.min(l.x, r.x), y - hh, Math.abs(r.x - l.x), hh * 2);
     g.setLineDash([]);
   }
-  const spots = world.laserSpots();
+  const spots = world.arms.selected === 'agm114l' ? [] : world.laserSpots();
   for (const s of spots) {
     const p = project(camera, s.pos, w, h);
     if (!p) continue;
@@ -233,6 +236,23 @@ function drawHellfire(g: CanvasRenderingContext2D, w: number, h: number, u: numb
   }
   g.textAlign = 'right';
   g.fillText(tadsWeaponStatus(world), w / 2 + 190 * u, h / 2 + 132 * u);
+  g.restore();
+}
+
+function drawFcrTargets(g: CanvasRenderingContext2D, w: number, h: number, u: number, world: World, camera: THREE.Camera) {
+  const f = world.fcr;
+  if (!f.targets.length) return;
+  g.save();
+  g.lineWidth = 2 * u;
+  g.textAlign = 'left';
+  f.targets.forEach((t, i) => {
+    if (isStale(t, world.time)) return;
+    const p = project(camera, t.pos, w, h);
+    if (!p || p.x < 0 || p.x > w || p.y < 0 || p.y > h) return;
+    drawFcrSymbol(g, t.cls, p.x, p.y, 7 * u);
+    g.fillText(String(i + 1), p.x + 11 * u, p.y - 8 * u);
+    if (i === f.selected) drawSelectBrackets(g, p.x, p.y, 13 * u);
+  });
   g.restore();
 }
 

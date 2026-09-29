@@ -1,10 +1,10 @@
 import { PYLON_X, PYLONS, type PylonId, type Store } from '../../../sim/heli/loadout';
-import { hellfireSolution, type HellfireStatus } from '../../../sim/weapons/hellfire';
+import { hellfireSolution, longbowSolution, type HellfireStatus } from '../../../sim/weapons/hellfire';
 import type { World } from '../../../sim/world';
 import { AMBER, bezel, DIM, GREEN, MONO, screenClip } from './common';
 
 const STORE_TEXT: Record<Store, string> = { empty: '---', agm114k: 'K', agm114l: 'L', hydra70: 'RKT' };
-const MODE_TEXT: Record<HellfireStatus, string> = { lobl: 'LOBL', loal: 'LOAL', range: 'RNG', align: 'ALN', empty: 'EMPTY', noTarget: '----' };
+const MODE_TEXT: Record<HellfireStatus, string> = { lobl: 'LOBL', loal: 'LOAL', rf: 'RF', range: 'RNG', align: 'ALN', empty: 'EMPTY', noTarget: '----' };
 
 export interface PylonLine { id: PylonId; store: Store; label: string; rounds: number; selected: boolean }
 
@@ -12,7 +12,7 @@ export function wpnPylons(world: World): PylonLine[] {
   const sel = world.arms.selected;
   return PYLONS.map(id => {
     const store = world.loadout.def.pylons[id];
-    const selected = (sel === 'hydra70' && store === 'hydra70') || (sel === 'agm114k' && store === 'agm114k');
+    const selected = (sel === 'hydra70' && store === 'hydra70') || (sel === 'agm114k' && store === 'agm114k') || (sel === 'agm114l' && store === 'agm114l');
     return { id, store, label: STORE_TEXT[store], rounds: store === 'empty' ? 0 : world.loadout.rounds[id], selected };
   });
 }
@@ -21,6 +21,7 @@ export function wpnSelected(world: World) {
   const a = world.arms;
   if (a.selected === 'hydra70') return `RKT x${a.salvo}`;
   if (a.selected === 'agm114k') return `MSL ${MODE_TEXT[hellfireSolution(world).status]}`;
+  if (a.selected === 'agm114l') return `MSL L ${MODE_TEXT[longbowSolution(world).status]}`;
   return 'GUN';
 }
 

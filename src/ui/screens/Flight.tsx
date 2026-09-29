@@ -12,6 +12,7 @@ import { farpUnder } from '../../sim/farp';
 import { FarpMenu } from '../flight/FarpMenu';
 import { MISSIONS } from '../../content/missions';
 import { missionSession, type MissionRuntime } from '../../sim/mission/runtime';
+import type { UnlockId } from '../../sim/mission/schema';
 import type { LoadoutDef } from '../../sim/heli/loadout';
 import type { MissionDef } from '../../sim/mission/schema';
 import { reportFrom, type MissionReport } from '../report';
@@ -26,16 +27,16 @@ import { FlightInput } from '../../input/input';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
 import { VirtualStick } from '../components/VirtualStick';
 
-interface FlightProps { missionId: string; mission?: MissionDef; touch: boolean; loadout?: LoadoutDef; settings?: Settings; onSettings?: (s: Settings) => void; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
+interface FlightProps { missionId: string; mission?: MissionDef; touch: boolean; loadout?: LoadoutDef; settings?: Settings; unlocked?: ReadonlySet<UnlockId>; onSettings?: (s: Settings) => void; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
 
-export function Flight({ missionId, mission: given, touch, loadout, settings = freshSave().settings, onSettings, onExit, onComplete, onMissionEnd }: FlightProps) {
+export function Flight({ missionId, mission: given, touch, loadout, settings = freshSave().settings, unlocked, onSettings, onExit, onComplete, onMissionEnd }: FlightProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
   const msgRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
   const mission = given ?? MISSIONS[missionId];
-  const [session] = useState(() => mission ? missionSession(mission, loadout ?? null) : new FlightSession((Math.random() * 1e9) | 0));
+  const [session] = useState(() => mission ? missionSession(mission, loadout ?? null, unlocked) : new FlightSession((Math.random() * 1e9) | 0));
   const training = mission?.kind === 'training';
   const runtime = mission ? session.objective as MissionRuntime : null;
   const radioRef = useRef<HTMLDivElement>(null);
@@ -79,6 +80,9 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
       case 'tads': sim.toggleTads(); break;
       case 'flare': sim.dropFlare(); break;
       case 'chaff': sim.dropChaff(); break;
+      case 'fcr': sim.fcrScan(); break;
+      case 'fcrMode': sim.setFcrMode(); break;
+      case 'targetNext': sim.nextFcrTarget(); break;
       case 'mpdLeftNext': rendererRef.current?.mpd.next('left'); break;
       case 'mpdRightNext': rendererRef.current?.mpd.next('right'); break;
       case 'zoomIn': zoomTads(sim.tads, 1); break;

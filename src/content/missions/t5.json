@@ -162,5 +162,8 @@
       "primary": true,
       "label": "J 패드 착륙"
     }
+  ],
+  "unlocks": [
+    "chaff"
   ]
 }

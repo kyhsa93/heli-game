@@ -25,7 +25,8 @@ import { createAiState, UNIT_DEFS, type Unit } from './units';
 import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
 import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
 import { integrate, PLAYER_OWNER, segmentHitsTerrain, segmentHitsUnit, type Projectile } from './weapons/projectile';
-import { hellfireSolution, launchHellfire } from './weapons/hellfire';
+import { hellfireSolution, launchHellfire, longbowSolution } from './weapons/hellfire';
+import { createFcr, cycleTarget, FCR_SCAN_SECONDS, scanTargets, type Fcr, type FcrMode } from './sensors/fcr';
 import { stepEnemyMissile, threatDef, type EnemyMissile } from './weapons/enemyMissile';
 import { HELLFIRE, hellfireLaunchers, stepMissile, type LaserSpot, type Missile } from './weapons/missile';
 import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SALVO_INTERVAL } from './weapons/rockets';
@@ -53,6 +54,7 @@ export class World {
   enemyMissiles: EnemyMissile[] = [];
   flares: Flare[] = [];
   cm: Countermeasures = createCountermeasures();
+  fcr: Fcr = createFcr();
   remoteLasers: { unitId: number; until: number }[] = [];
   arms: Arms = createArms();
   loadoutDef: LoadoutDef = STANDARD_LOADOUT;
@@ -97,7 +99,9 @@ export class World {
     this.hold = null;
     this.farpService = null;
     this.flares = [];
-    this.cm = createCountermeasures();
+    this.cm = { ...createCountermeasures(), chaffUnlocked: this.cm.chaffUnlocked };
+    this.fcr = { ...createFcr(), unlocked: this.fcr.unlocked, mode: this.fcr.mode };
+    this.conditions.playerRadar = false;
   }
 
   rearm(def: LoadoutDef) {
@@ -111,6 +115,7 @@ export class World {
     const list = ['gun30'];
     if (Object.values(def.pylons).includes('hydra70')) list.push('hydra70');
     if (Object.values(def.pylons).includes('agm114k')) list.push('agm114k');
+    if (Object.values(def.pylons).includes('agm114l')) list.push('agm114l');
     return list;
   }
 
@@ -160,6 +165,7 @@ export class World {
     const list: WeaponId[] = ['gun30'];
     if (rocketPods(this.loadout).length) list.push('hydra70');
     if (hellfireLaunchers(this.loadout).length) list.push('agm114k');
+    if (hellfireLaunchers(this.loadout, 'agm114l').length) list.push('agm114l');
     return list;
   }
 
@@ -169,7 +175,45 @@ export class World {
     else if (slot === 2 && this.availableWeapons().includes('hydra70')) {
       if (a.selected === 'hydra70') a.salvo = SALVOS[(SALVOS.indexOf(a.salvo) + 1) % SALVOS.length];
       else this.setWeapon('hydra70');
-    } else if (slot === 3 && this.availableWeapons().includes('agm114k')) this.setWeapon('agm114k');
+    } else if (slot === 3) {
+      const missiles = this.availableWeapons().filter(w => w === 'agm114k' || w === 'agm114l');
+      if (missiles.length) this.setWeapon(missiles[(missiles.indexOf(a.selected as 'agm114k') + 1) % missiles.length]);
+    }
+  }
+
+  fcrScan(): boolean {
+    const f = this.fcr, h = this.player;
+    if (!this.active || !h.alive || !f.unlocked || f.scanning || h.damage.sensors <= 0) return false;
+    f.scanning = true;
+    f.scanT = 0;
+    this.conditions.playerRadar = true;
+    this.emit({ t: 'fcr', state: 'scan', mode: f.mode, count: 0 });
+    return true;
+  }
+
+  setFcrMode(mode?: FcrMode) {
+    const f = this.fcr;
+    if (!f.unlocked || f.scanning) return;
+    f.mode = mode ?? (f.mode === 'ground' ? 'air' : 'ground');
+    this.emit({ t: 'fcr', state: 'mode', mode: f.mode, count: f.targets.length });
+  }
+
+  nextFcrTarget() {
+    cycleTarget(this.fcr);
+  }
+
+  private stepFcr(dt: number) {
+    const f = this.fcr, h = this.player;
+    if (!f.scanning) return;
+    if (!h.alive || h.damage.sensors <= 0) { f.scanning = false; this.conditions.playerRadar = false; return; }
+    f.scanT += dt;
+    if (f.scanT < FCR_SCAN_SECONDS - 1e-9) return;
+    f.scanning = false;
+    f.scans++;
+    this.conditions.playerRadar = false;
+    f.targets = scanTargets(this.terrain, h, this.units, f.mode, this.time);
+    f.selected = 0;
+    this.emit({ t: 'fcr', state: 'done', mode: f.mode, count: f.targets.length });
   }
 
   nextWeapon() {
@@ -321,6 +365,7 @@ export class World {
         this.commands.aim.yaw = l.az; this.commands.aim.pitch = l.el;
       }
       this.stepSensors(dt);
+      this.stepFcr(dt);
       const pressed = this.commands.fire && !this.arms.trigger;
       this.arms.trigger = this.commands.fire;
       this.stepGun(dt);
@@ -428,15 +473,15 @@ export class World {
   private stepHellfire(dt: number, pressed: boolean) {
     const a = this.arms;
     a.missileTimer = Math.max(0, a.missileTimer - dt);
-    if (!pressed || a.selected !== 'agm114k' || a.missileTimer > 1e-9 || !this.player.alive) return;
-    const sol = hellfireSolution(this);
+    if (!pressed || (a.selected !== 'agm114k' && a.selected !== 'agm114l') || a.missileTimer > 1e-9 || !this.player.alive) return;
+    const sol = a.selected === 'agm114l' ? longbowSolution(this) : hellfireSolution(this);
     if (!sol.mode) return;
     const m = launchHellfire(this, sol, this.nextMissileId++);
     if (!m) return;
     this.missiles.push(m);
     a.missilesFired++;
     a.missileTimer = HELLFIRE.minInterval ?? 0.8;
-    this.emit({ t: 'fire', weapon: 'agm114k', pos: m.pos.clone(), dir: m.vel.clone().normalize(), owner: PLAYER_OWNER, tracer: false });
+    this.emit({ t: 'fire', weapon: m.kind, pos: m.pos.clone(), dir: m.vel.clone().normalize(), owner: PLAYER_OWNER, tracer: false });
   }
 
   private stepMissiles(dt: number) {
@@ -446,7 +491,7 @@ export class World {
       const m = list[i];
       const a = m.pos.clone();
       const before = m.phase, locked = m.seekerLocked;
-      stepMissile(m, this.terrain, spots, dt);
+      stepMissile(m, this.terrain, spots, dt, this.units);
       if (before !== 'lost' && m.phase === 'lost') this.emit({ t: 'missileLost', id: m.id, owner: m.owner, reason: locked ? 'spotLost' : 'noLock' });
       const b = m.pos;
       let bestT = Infinity, bestUnit: Unit | null = null;

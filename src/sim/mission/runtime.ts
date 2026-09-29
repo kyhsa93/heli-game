@@ -10,7 +10,7 @@ import type { Unit } from '../units';
 import type { World } from '../world';
 import type { LoadoutDef } from '../heli/loadout';
 import type { SystemId } from '../heli/damage';
-import type { Action, Condition, MissionDef, ObjectiveDef, RadioFrom, UnitRef } from './schema';
+import type { Action, Condition, MissionDef, ObjectiveDef, RadioFrom, UnitRef, UnlockId } from './schema';
 import { FRIENDLY_FAIL, scoreMission, type Score } from './scoring';
 
 export interface MissionStats {
@@ -62,7 +62,7 @@ export class MissionRuntime implements Objective {
 
   stats: MissionStats = emptyStats();
 
-  constructor(readonly mission: MissionDef, private loadout: LoadoutDef | null = null) {
+  constructor(readonly mission: MissionDef, private loadout: LoadoutDef | null = null, private unlocked: ReadonlySet<UnlockId> = new Set()) {
     this.id = mission.id;
   }
 
@@ -89,7 +89,9 @@ export class MissionRuntime implements Objective {
     this.stats = emptyStats();
     this.score = null;
     world.conditions = { ...world.conditions, night: m.environment.time === 'night', fog: m.environment.fog };
-    world.cm.chaffUnlocked = !!m.unlocks?.includes('chaff') || world.cm.chaffUnlocked;
+    const unlocked = new Set([...this.unlocked, ...(m.unlocks ?? [])]);
+    world.cm.chaffUnlocked = unlocked.has('chaff');
+    world.fcr.unlocked = unlocked.has('fcr');
     for (const g of m.groups) {
       const route = g.route ? (world.terrain.roads.length ? world.roads.route(g.route) : g.route.map(p => [p[0], p[1]] as [number, number])) : [];
       world.groups.set(g.id, { id: g.id, behavior: g.behavior, path: route, loop: !!g.loop, speedScale: g.speedScale ?? 1, started: !g.startTrigger, members: [] });
@@ -381,6 +383,6 @@ export function missionTerrain(m: MissionDef): TerrainOptions {
   };
 }
 
-export function missionSession(m: MissionDef, loadout: LoadoutDef | null = null) {
-  return new FlightSession(m.environment.seed, new MissionRuntime(m, loadout), missionTerrain(m));
+export function missionSession(m: MissionDef, loadout: LoadoutDef | null = null, unlocked: ReadonlySet<UnlockId> = new Set()) {
+  return new FlightSession(m.environment.seed, new MissionRuntime(m, loadout, unlocked), missionTerrain(m));
 }

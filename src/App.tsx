@@ -76,6 +76,7 @@ export function App() {
         onExit={() => ui.go(screen.mission ? { name: 'instant' } : isMission(screen.missionId) ? { name: 'briefing', missionId: screen.missionId } : { name: 'training' })}
         onComplete={complete}
         settings={save.settings}
+        unlocked={isMission(screen.missionId) || screen.mission ? unlockedFor(save) : undefined}
         onSettings={settings => setSave(prev => ({ ...prev, settings }))}
         onMissionEnd={report => {
           if (screen.mission) {

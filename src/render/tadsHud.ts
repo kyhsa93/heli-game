@@ -3,14 +3,14 @@ import { clamp } from '../core/math';
 import { count } from '../sim/heli/loadout';
 import { TADS_FOV_NAMES, tadsFovDeg, tadsLocal } from '../sim/sensors/tads';
 import { gunInLimits } from '../sim/weapons/arms';
-import { hellfireSolution, type HellfireStatus } from '../sim/weapons/hellfire';
+import { hellfireSolution, longbowSolution, type HellfireStatus } from '../sim/weapons/hellfire';
 import type { World } from '../sim/world';
 import { headingDeg } from './cockpit/instruments';
 
 const WHITE = '#f4f4f4';
 const pad3 = (n: number) => `${n < 0 ? '-' : ''}${String(Math.abs(Math.round(n))).padStart(3, '0')}`;
 
-const HF_TEXT: Record<HellfireStatus, string> = { lobl: 'LOBL', loal: 'LOAL', range: 'RNG', align: 'ALN', empty: '', noTarget: '' };
+const HF_TEXT: Record<HellfireStatus, string> = { lobl: 'LOBL', loal: 'LOAL', rf: 'RF', range: 'RNG', align: 'ALN', empty: '', noTarget: '' };
 
 export function missileTof(world: World) {
   let best: number | null = null;
@@ -29,6 +29,11 @@ export function tadsWeaponStatus(world: World) {
     if (n <= 0) return 'MSL EMPTY';
     const tof = missileTof(world);
     return `MSL K ${n} ${HF_TEXT[hellfireSolution(world).status]}${tof !== null ? `  TOF ${Math.ceil(tof)}` : ''}`.trimEnd();
+  }
+  if (a.selected === 'agm114l') {
+    const n = count(world.loadout, 'agm114l');
+    if (n <= 0) return 'MSL L EMPTY';
+    return `MSL L ${n} ${HF_TEXT[longbowSolution(world).status]}`.trimEnd();
   }
   if (a.selected === 'hydra70') {
     const n = count(world.loadout, 'hydra70');

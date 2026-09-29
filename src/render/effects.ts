@@ -189,7 +189,7 @@ export class Effects {
   onEvent(e: SimEvent, world: World) {
     switch (e.t) {
       case 'fire':
-        if (e.weapon === 'agm114k') {
+        if (e.weapon === 'agm114k' || e.weapon === 'agm114l') {
           this.glow.spawn(e.pos, new THREE.Vector3(), 0.15, 3, 4.5, 1, CELL.flash);
           for (let i = 0; i < 5; i++) this.smoke.spawn(e.pos.clone().add(this.jitter(1.5)), e.dir.clone().multiplyScalar(-8).add(this.jitter(3)), 2.5, 2, 7, 0.55, CELL.dust[i % 4], 0.5, 1.2);
           break;

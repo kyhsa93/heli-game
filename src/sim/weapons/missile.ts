@@ -4,7 +4,11 @@ import { G3 } from '../heli/airframe';
 import { PYLON_X, PYLONS, type Loadout, type PylonId } from '../heli/loadout';
 import { toWorld, type HeliState } from '../heli/state';
 import { lineOfSight } from '../sensors/laser';
+import { radarSight } from '../los';
+import { fcrClass } from '../sensors/fcr';
+import { unitCenter } from '../sensors/laser';
 import type { Terrain } from '../terrain';
+import type { Unit } from '../units';
 import { WEAPONS } from './damage';
 
 export const HELLFIRE = WEAPONS.agm114k;
@@ -13,12 +17,15 @@ export const LOAL_WINDOW = HELLFIRE.loalWindow ?? 10;
 export const RAIL_Y = -0.37;
 export const RAIL_Z = -0.7;
 
-export type MissileMode = 'lobl' | 'loal';
+export type MissileMode = 'lobl' | 'loal' | 'rf';
+export type MissileKind = 'agm114k' | 'agm114l';
+export const RF_SEEKER_RANGE = 3000;
+export const RF_ACQUIRE_RADIUS = 150;
 export type MissilePhase = 'boost' | 'cruise' | 'terminal' | 'lost';
 
 export interface Missile {
   id: number;
-  kind: 'agm114k';
+  kind: MissileKind;
   pos: Vector3;
   vel: Vector3;
   owner: number;
@@ -28,16 +35,17 @@ export interface Missile {
   seekerLocked: boolean;
   aim: Vector3;
   apex: Vector3 | null;
+  targetUnit?: number | null;
 }
 
 export interface LaserSpot { pos: Vector3; source: 'player' | 'remote' }
 
-export function hellfireLaunchers(lo: Loadout): PylonId[] {
-  return PYLONS.filter(p => lo.def.pylons[p] === 'agm114k');
+export function hellfireLaunchers(lo: Loadout, kind: MissileKind = 'agm114k'): PylonId[] {
+  return PYLONS.filter(p => lo.def.pylons[p] === kind);
 }
 
-export function nextLauncher(lo: Loadout, fired: number): PylonId | null {
-  const ready = hellfireLaunchers(lo).filter(p => lo.rounds[p] > 0);
+export function nextLauncher(lo: Loadout, fired: number, kind: MissileKind = 'agm114k'): PylonId | null {
+  const ready = hellfireLaunchers(lo, kind).filter(p => lo.rounds[p] > 0);
   if (!ready.length) return null;
   const left = ready.filter(p => PYLON_X[p] < 0), right = ready.filter(p => PYLON_X[p] > 0);
   const side = fired % 2 === 0 ? (left.length ? left : right) : (right.length ? right : left);
@@ -88,8 +96,54 @@ function turnToward(m: Missile, target: Vector3, dt: number) {
   m.vel.copy(dir).multiplyScalar(speedAt(m.age));
 }
 
-export function stepMissile(m: Missile, t: Terrain, spots: readonly LaserSpot[], dt: number) {
+function loftToward(m: Missile, dt: number) {
+  m.phase = m.age < 1 ? 'boost' : 'cruise';
+  const apex = m.apex;
+  const past = !apex || Math.hypot(m.aim.x - m.pos.x, m.aim.z - m.pos.z) <= Math.hypot(m.aim.x - apex.x, m.aim.z - apex.z);
+  turnToward(m, (past ? m.aim : apex).clone(), dt);
+}
+
+export function rfReturn(t: Terrain, m: Missile, heading: Vector3, units: readonly Unit[]): Unit | null {
+  let best: Unit | null = null, bestD = RF_ACQUIRE_RADIUS;
+  const c = new Vector3();
+  for (const u of units) {
+    const cls = u.alive ? fcrClass(u) : null;
+    if (!cls || cls === 'heli') continue;
+    unitCenter(u, c);
+    const d = Math.hypot(c.x - m.aim.x, c.z - m.aim.z);
+    if (d > bestD) continue;
+    const to = c.clone().sub(m.pos);
+    if (to.length() > RF_SEEKER_RANGE || to.normalize().dot(heading) < SEEKER_COS || !radarSight(t, m.pos, c)) continue;
+    best = u; bestD = d;
+  }
+  return best;
+}
+
+function stepRf(m: Missile, t: Terrain, units: readonly Unit[], dt: number) {
+  const heading = dir.copy(m.vel).normalize().clone();
+  let target = m.targetUnit != null ? units.find(u => u.id === m.targetUnit && u.alive) ?? null : null;
+  if (!target && Math.hypot(m.aim.x - m.pos.x, m.aim.z - m.pos.z) <= RF_SEEKER_RANGE) {
+    target = rfReturn(t, m, heading, units);
+    if (target) m.targetUnit = target.id;
+  }
+  if (target) {
+    unitCenter(target, m.aim);
+    m.seekerLocked = true;
+    m.phase = 'terminal';
+    turnToward(m, m.aim.clone(), dt);
+  } else if (m.seekerLocked) {
+    m.phase = 'terminal';
+    turnToward(m, m.aim.clone(), dt);
+  } else loftToward(m, dt);
+}
+
+export function stepMissile(m: Missile, t: Terrain, spots: readonly LaserSpot[], dt: number, units: readonly Unit[] = []) {
   m.age += dt;
+  if (m.mode === 'rf') {
+    stepRf(m, t, units, dt);
+    m.pos.addScaledVector(m.vel, dt);
+    return;
+  }
   if (m.phase === 'lost') {
     m.vel.y -= G3 * dt;
     m.pos.addScaledVector(m.vel, dt);
@@ -105,11 +159,6 @@ export function stepMissile(m: Missile, t: Terrain, spots: readonly LaserSpot[],
   } else if (m.seekerLocked || (m.mode === 'loal' && m.age > LOAL_WINDOW)) {
     m.phase = 'lost';
     m.seekerLocked = false;
-  } else {
-    m.phase = m.age < 1 ? 'boost' : 'cruise';
-    const apex = m.apex;
-    const past = !apex || Math.hypot(m.aim.x - m.pos.x, m.aim.z - m.pos.z) <= Math.hypot(m.aim.x - apex.x, m.aim.z - apex.z);
-    turnToward(m, (past ? m.aim : apex).clone(), dt);
-  }
+  } else loftToward(m, dt);
   m.pos.addScaledVector(m.vel, dt);
 }

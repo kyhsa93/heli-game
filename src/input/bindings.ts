@@ -1,7 +1,7 @@
 export type Command =
   | 'engine' | 'view' | 'centerView' | 'toggleHud' | 'help' | 'mute' | 'pause'
   | 'fire' | 'weaponNext' | 'weapon1' | 'weapon2' | 'weapon3' | 'weapon4'
-  | 'tads' | 'laser' | 'zoomIn' | 'zoomOut' | 'fcr' | 'targetNext'
+  | 'tads' | 'laser' | 'zoomIn' | 'zoomOut' | 'fcr' | 'fcrMode' | 'targetNext'
   | 'flare' | 'chaff' | 'bobUp' | 'pnvs' | 'mpdLeftNext' | 'mpdRightNext' | 'radioMenu';
 
 export const KEY_COMMANDS: Readonly<Record<string, Command>> = {
@@ -25,6 +25,7 @@ export const KEY_COMMANDS: Readonly<Record<string, Command>> = {
   Minus: 'zoomOut',
   NumpadSubtract: 'zoomOut',
   KeyR: 'fcr',
+  KeyE: 'fcrMode',
   Tab: 'targetNext',
   KeyF: 'flare',
   KeyX: 'chaff',
