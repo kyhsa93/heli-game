@@ -1,12 +1,13 @@
 import { clamp } from '../../core/math';
 import type { Emit } from '../events';
 import { AIRCRAFT } from './airframe';
+import { leakFactor } from './damage';
 import type { HeliState } from './state';
 
 export function burnFuel(h: HeliState, collective: number, dt: number, emit: Emit) {
   if (!h.engineOn) return;
   const f = AIRCRAFT.fuel;
-  h.fuel = Math.max(0, h.fuel - (f.burnBase + f.burnPerCollective * collective * h.rpm) * f.burnScale * dt);
+  h.fuel = Math.max(0, h.fuel - (f.burnBase + f.burnPerCollective * collective * h.rpm) * f.burnScale * leakFactor(h.damage) * dt);
   if (h.fuel <= 0) { h.engineOn = false; emit({ t: 'engine', on: false, cause: 'fuel' }); }
 }
 
@@ -22,5 +23,5 @@ export function stepRotor(h: HeliState, inflow: number, collective: number, dt: 
 export function toggleEngine(h: HeliState, emit: Emit) {
   if (!h.alive) return;
   if (h.engineOn) { h.engineOn = false; emit({ t: 'engine', on: false }); }
-  else if (h.fuel > 0) { h.engineOn = true; emit({ t: 'engine', on: true }); }
+  else if (h.fuel > 0 && (h.damage.engine1 > 0 || h.damage.engine2 > 0) && h.rotorFailIn !== 0) { h.engineOn = true; emit({ t: 'engine', on: true }); }
 }

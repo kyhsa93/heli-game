@@ -11,7 +11,9 @@
     "slideLanding": "미끄러지며 접지해 전복됐습니다 ({kt} kt)",
     "tiltLanding": "기울어진 채로 접지해 전복됐습니다",
     "slope": "경사가 너무 급한 곳에 내려앉았습니다",
-    "retry": "다시 비행"
+    "retry": "다시 비행",
+    "rotorLoss": "변속기가 멈춰 주 로터를 잃었습니다 — CHIP 경고 뒤 60초 안에 착륙해야 합니다",
+    "crewKilled": "조종석이 피격돼 승무원을 잃었습니다"
   },
   "msg": {
     "fuelOut": "연료 고갈 — 엔진 정지! 콜렉티브를 내려 로터를 살리세요",
@@ -28,6 +30,10 @@
     "missileLost": {
       "spotLost": "레이저가 끊겨 미사일이 유도를 잃었습니다",
       "noLock": "LOAL 미사일이 10초 안에 레이저를 찾지 못했습니다"
+    },
+    "system": {
+      "damaged": "피격: {name} 손상",
+      "destroyed": "{name} 기능 상실"
     }
   },
   "hud": {
@@ -273,5 +279,15 @@
   },
   "targets": {
     "RKT": "로켓 표적 구역"
+  },
+  "systems": {
+    "engine1": "1번(좌) 엔진",
+    "engine2": "2번(우) 엔진",
+    "rotor": "주 로터·변속기",
+    "tail": "꼬리 로터",
+    "hydraulics": "유압",
+    "sensors": "센서",
+    "fuel": "연료 계통",
+    "cockpit": "조종석"
   }
 }

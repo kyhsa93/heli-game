@@ -11,6 +11,7 @@ const FRAG = `
 uniform sampler2D tImage;
 uniform float flir;
 uniform float time;
+uniform float noise;
 uniform vec2 res;
 varying vec2 vUv;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -26,7 +27,7 @@ void main() {
     v = clamp((l - 0.5) * 1.4 + 0.5, 0.0, 1.0);
   }
   vec2 px = floor(vUv * res);
-  v += (hash(px + fract(time) * 91.0) - 0.5) * 0.07;
+  v += (hash(px + fract(time) * 91.0) - 0.5) * noise;
   v *= 0.93 + 0.07 * sin(vUv.y * res.y * 3.14159);
   float vig = smoothstep(1.25, 0.55, length(vUv - 0.5) * 1.6);
   gl_FragColor = vec4(vec3(v * vig), 1.0);
@@ -44,7 +45,7 @@ export class TadsView {
   constructor() {
     this.post = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, depthTest: false, depthWrite: false,
-      uniforms: { tImage: { value: this.target.texture }, flir: { value: 0 }, time: { value: 0 }, res: { value: new THREE.Vector2(2, 2) } },
+      uniforms: { tImage: { value: this.target.texture }, flir: { value: 0 }, time: { value: 0 }, noise: { value: 0.07 }, res: { value: new THREE.Vector2(2, 2) } },
     });
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.post);
     quad.frustumCulled = false;
@@ -68,7 +69,8 @@ export class TadsView {
     this.camera.updateProjectionMatrix();
   }
 
-  render(renderer: THREE.WebGLRenderer, scene: THREE.Scene, t: Tads, time: number, output: THREE.WebGLRenderTarget | null = null) {
+  render(renderer: THREE.WebGLRenderer, scene: THREE.Scene, t: Tads, time: number, output: THREE.WebGLRenderTarget | null = null, noise = 0.07) {
+    this.post.uniforms.noise.value = noise;
     this.post.uniforms.flir.value = t.sensor === 'flir' ? 1 : 0;
     this.post.uniforms.time.value = time;
     renderer.setRenderTarget(this.target);

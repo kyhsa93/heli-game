@@ -8,6 +8,8 @@ import { clampToArea, collide, stepFlight } from './heli/flight';
 import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
 import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
+import { blastShares, DAMAGED, hitSystem, randomHitPoint, ROTOR_FAIL_SECONDS, systemAt, type SystemId } from './heli/damage';
+import type { CrashReason } from './events';
 import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
 import { stepBrains } from './ai/brain';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
@@ -64,6 +66,7 @@ export class World {
     this.rng = rng(opts.seed);
     this.terrain = new Terrain(opts.seed);
     this.los = new LosCache(this.terrain);
+    this.events.on('playerHit', e => this.hitPlayer(e.by, e.damage));
     this.resetPlayer();
   }
 
@@ -153,7 +156,7 @@ export class World {
   }
 
   toggleTads() {
-    if (!this.active) return;
+    if (!this.active || (!this.tads.active && this.player.damage.sensors <= 0)) return;
     this.tads.active = !this.tads.active;
     if (this.tads.active) lookAngles(aimDirection(this.player, this.commands.aim), this.tads);
     this.hold = this.tads.active ? createHold(this.player) : null;
@@ -172,6 +175,52 @@ export class World {
       if (u?.alive && this.time <= r.until) spots.push({ pos: unitCenter(u), source: 'remote' });
     }
     return spots;
+  }
+
+  hitPlayer(byUnit: number, amount: number) {
+    const h = this.player;
+    if (!h.alive || amount <= 0) return;
+    const u = this.unit(byUnit);
+    const from = u ? u.pos.clone().sub(h.pos).applyQuaternion(h.q.clone().invert()) : new Vector3(1, 0, 0);
+    this.damageSystem(systemAt(randomHitPoint(this.rng, from)), amount);
+  }
+
+  blastPlayer(at: Vector3, amount: number) {
+    const h = this.player;
+    if (!h.alive) return;
+    const local = at.clone().sub(h.pos).applyQuaternion(h.q.clone().invert());
+    for (const [id, share] of blastShares(local, amount)) if (share > 0) this.damageSystem(id, share);
+  }
+
+  damageSystem(id: SystemId, amount: number) {
+    const h = this.player, d = h.damage;
+    if (!h.alive) return;
+    const before = hitSystem(d, id, amount * this.difficulty.damageTaken);
+    const now = d[id];
+    if (before > 0 && now <= 0) this.emit({ t: 'systemDamaged', system: id, level: 'destroyed' });
+    else if (before > DAMAGED && now <= DAMAGED) this.emit({ t: 'systemDamaged', system: id, level: 'damaged' });
+    if (now > 0) return;
+    if ((id === 'engine1' || id === 'engine2') && d.engine1 <= 0 && d.engine2 <= 0 && h.engineOn) {
+      h.engineOn = false;
+      this.emit({ t: 'engine', on: false, cause: 'damage' });
+    } else if (id === 'rotor' && h.rotorFailIn === null) h.rotorFailIn = ROTOR_FAIL_SECONDS;
+    else if (id === 'sensors' && this.tads.active) { this.tads.active = false; this.hold = null; }
+    else if (id === 'cockpit') this.killPlayer('crewKilled');
+  }
+
+  private killPlayer(reason: CrashReason) {
+    const h = this.player;
+    h.alive = false; h.engineOn = false;
+    this.emit({ t: 'crash', reason });
+  }
+
+  private stepRotorFailure(dt: number) {
+    const h = this.player;
+    if (h.rotorFailIn === null || h.rotorFailIn <= 0 || !h.alive) return;
+    h.rotorFailIn = Math.max(0, h.rotorFailIn - dt);
+    if (h.rotorFailIn > 0) return;
+    if (!h.landed) this.killPlayer('rotorLoss');
+    else { h.engineOn = false; h.rpm = 0; }
   }
 
   clearCombat() {
@@ -215,6 +264,7 @@ export class World {
     const h = this.player;
     if (this.active && h.alive) {
       this.updateWeight();
+      this.stepRotorFailure(dt);
       if (this.hold && !h.landed) autoHover(h, this.hold, this, dt, this.controls);
       else if (this.hold) this.hold = createHold(h);
       const phase = stepFlight(h, this.controls, this, dt, this.emit);
@@ -283,7 +333,7 @@ export class World {
   private stepSensors(dt: number) {
     const h = this.player, l = this.laser;
     const origin = tadsPosition(h), dir = this.sensorDirection();
-    l.on = this.commands.laser && h.alive;
+    l.on = this.commands.laser && h.alive && h.damage.sensors > 0;
     if (l.on) {
       const hit = castRay(this.terrain, this.units.filter(u => u.alive), origin, dir);
       l.range = hit?.range ?? null;

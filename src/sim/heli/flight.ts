@@ -5,6 +5,7 @@ import { HALF, type Terrain } from '../terrain';
 import {
   AIRCRAFT, G3, GEAR, GEAR_Y, HULL, LAND_ATT, LAND_DESCENT, LAND_HS, MAX_PITCH, MAX_ROLL, MAX_THRUST, ROTOR_R, ROTOR_TIPS, ROTOR_Y, SLOPE_MAX,
 } from './airframe';
+import { controlFactor, pedalFactor, tailSpin, thrustFactor } from './damage';
 import { agl, groundAttitude, toWorld, updateQ, type Controls, type HeliState } from './state';
 import { burnFuel, stepRotor } from './systems';
 
@@ -17,7 +18,7 @@ export function liftPerCollective(h: HeliState, env: FlightEnv) {
   const ge = AIRCRAFT.groundEffect, ceil = AIRCRAFT.ceiling;
   const ground = height < ge.height ? 1 + ge.gain * (1 - Math.max(0, height) / ge.height) : 1;
   const ceiling = h.pos.y > ceil.start ? Math.max(0, 1 - (h.pos.y - ceil.start) / ceil.fade) : 1;
-  return MAX_THRUST * h.thrustScale * h.rpm * h.rpm * ground * ceiling;
+  return MAX_THRUST * h.thrustScale * thrustFactor(h.damage) * h.rpm * h.rpm * ground * ceiling;
 }
 
 export function stepFlight(h: HeliState, c: Controls, env: FlightEnv, dt: number, emit: Emit): 'air' | 'ground' {
@@ -42,14 +43,15 @@ export function stepFlight(h: HeliState, c: Controls, env: FlightEnv, dt: number
   }
 
   const tp = -c.cyclicY * MAX_PITCH, tr = c.cyclicX * MAX_ROLL;
-  const { stiffness: k, damping: d } = AIRCRAFT.attitude;
+  const response = controlFactor(h.damage);
+  const k = AIRCRAFT.attitude.stiffness * response, d = AIRCRAFT.attitude.damping * Math.sqrt(response);
   h.pRate += (k * (tp - h.pitch) - d * h.pRate) * dt;
   h.rRate += (k * (tr - h.roll) - d * h.rRate) * dt;
   h.pitch += h.pRate * dt; h.roll += h.rRate * dt;
 
   const hs = Math.hypot(air.x, air.z);
   const y = AIRCRAFT.yaw;
-  let yawTarget = -c.pedal * y.pedalRate;
+  let yawTarget = -c.pedal * y.pedalRate * pedalFactor(h.damage) + tailSpin(h.damage, hs, collective);
   if (hs > y.coordinationSpeed) yawTarget -= Math.min(1, (hs - y.coordinationSpeed) / y.coordinationBlend) * G3 * Math.tan(h.roll) / hs;
   h.yRate += (yawTarget - h.yRate) * y.response * dt - dColl * y.torqueCoupling * h.rpm;
   h.yaw += h.yRate * dt;

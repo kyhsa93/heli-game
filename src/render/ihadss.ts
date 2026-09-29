@@ -4,6 +4,7 @@ import { bearingDeg, headingDeg, hoverVector } from './cockpit/instruments';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { agl as aglOf, airspeed } from '../sim/heli/state';
 import { gunInLimits } from '../sim/weapons/arms';
+import { damageWarnings } from '../sim/heli/damage';
 import { predictGunImpact } from '../sim/weapons/ballistics';
 import { count } from '../sim/heli/loadout';
 import { EYE } from '../sim/heli/airframe';
@@ -116,6 +117,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
   if (!heli.engineOn && heli.alive && world.active && !heli.landed) warns.push('ENGINE OUT');
   if (heli.rpm < 0.85 && !heli.landed) warns.push('LOW ROTOR RPM');
   if (heli.fuel < 10) warns.push('FUEL LOW');
+  for (const w of damageWarnings(heli.damage)) if (/OUT|FIRE|LAND NOW|TAIL ROTOR/.test(w)) warns.push(w === 'LAND NOW' && heli.rotorFailIn !== null ? `LAND NOW ${Math.ceil(heli.rotorFailIn)}` : w);
   if (warns.length && Math.sin(world.time * 8) > 0) g.fillText(warns.join('  '), cx, cy + 150 * u);
   g.restore();
 }

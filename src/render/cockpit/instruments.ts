@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { clamp } from '../../core/math';
 import { M_TO_FT, MS_TO_KT } from '../../core/units';
+import { damageWarnings } from '../../sim/heli/damage';
 import { airspeed } from '../../sim/heli/state';
 import { N } from '../../sim/terrain';
 import type { World } from '../../sim/world';
@@ -12,6 +13,9 @@ import { drawWpn } from './pages/wpn';
 import { drawTadsPage } from './pages/tads';
 
 export { bearingDeg, headingDeg, hoverVector } from './pages/common';
+
+const CRITICAL = /OUT|FIRE|LAND NOW|LOW ROTOR|TAIL ROTOR/;
+export const isCritical = (w: string) => CRITICAL.test(w);
 
 interface Surface { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; texture: THREE.CanvasTexture }
 
@@ -80,9 +84,11 @@ export class Instruments {
     if (!h.engineOn && world.active && h.alive) warn.push('ENGINE OUT');
     if (h.rpm < 0.9 && !h.landed) warn.push('LOW ROTOR RPM');
     if (h.fuel < 20) warn.push('FUEL LOW');
+    for (const w of damageWarnings(h.damage)) warn.push(w === 'LAND NOW' && h.rotorFailIn !== null ? `LAND NOW ${Math.ceil(h.rotorFailIn)}` : w);
+    warn.sort((a, b) => Number(isCritical(b)) - Number(isCritical(a)));
     const blink = Math.sin(world.time * 7) > 0;
     warn.slice(0, 6).forEach((w, i) => {
-      const caution = w === 'ENGINE OUT' || w === 'LOW ROTOR RPM';
+      const caution = isCritical(w);
       g.fillStyle = caution && blink ? '#ff5a3a' : AMBER;
       g.fillText(w, 16, 40 + i * 40);
     });

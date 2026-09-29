@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import type { GameAudio } from '../audio/game';
 import { clamp } from '../core/math';
 import { BLADES, EYE, ROTOR_HZ } from '../sim/heli/airframe';
+import { DAMAGED } from '../sim/heli/damage';
+import { drawCanopyCracks } from './canopy';
 import { agl as aglOf, airspeed } from '../sim/heli/state';
 import type { FlightSession } from '../sim/session';
 import { STEP } from '../sim/world';
@@ -169,7 +171,7 @@ export class FlightRenderer {
       camera.lookAt(this.debugCamera.look);
     } else if (cockpit) {
       if (camera.parent !== model.head) { model.head.add(camera); camera.position.set(0, 0, 0); }
-      const vib = h.rpm * (0.0012 + speed * 0.00003) * (h.landed ? 0.5 : 1);
+      const vib = h.rpm * (0.0012 + speed * 0.00003) * (h.landed ? 0.5 : 1) * (h.damage.rotor <= DAMAGED ? 4 : 1);
       model.head.position.set(
         EYE.x + (Math.random() - 0.5) * vib,
         EYE.y + Math.sin(now * 0.001 * Math.PI * 2 * ROTOR_HZ * BLADES * h.rpm) * vib + (Math.random() - 0.5) * vib,
@@ -231,6 +233,7 @@ export class FlightRenderer {
     og.clearRect(0, 0, overlay.width, overlay.height);
     if (tads) drawTads(og, mount.clientWidth, mount.clientHeight, world);
     else if (cockpit && this.hud && h.alive && session.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, world, camera);
+    if (cockpit && !tads && h.damage.cockpit <= DAMAGED) drawCanopyCracks(og, mount.clientWidth, mount.clientHeight, 1 - h.damage.cockpit / DAMAGED);
 
     this.audio?.update({
       rpm: h.alive ? h.rpm : 0, collective: h.collective, airspeed: speed,
@@ -286,7 +289,7 @@ export class FlightRenderer {
     if (flir) { sky.visible = false; scene.background = this.black; fog.color.copy(this.flirFog); }
     view.aim(world.player, world.tads);
     sky.position.copy(view.camera.position);
-    view.render(this.renderer, scene, world.tads, now * 0.001, output);
+    view.render(this.renderer, scene, world.tads, now * 0.001, output, world.player.damage.sensors <= DAMAGED ? 0.3 : 0.07);
     fog.near = saved.near; fog.far = saved.far; fog.color.copy(saved.color);
     scene.background = bg;
     this.model.root.visible = saved.root; beam.visible = saved.beam; sky.visible = saved.sky; this.scene.shadow.visible = saved.shadow;

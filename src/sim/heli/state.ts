@@ -1,6 +1,7 @@
 import { Euler, Quaternion, Vector3 } from 'three';
 import type { Terrain } from '../terrain';
 import { GEAR_Y } from './airframe';
+import { createDamage, type Damage } from './damage';
 
 export interface Controls { cyclicX: number; cyclicY: number; pedal: number; collective: number }
 
@@ -13,6 +14,8 @@ export interface HeliState {
   landed: boolean; alive: boolean;
   touchdownDescent: number;
   thrustScale: number;
+  damage: Damage;
+  rotorFailIn: number | null;
 }
 
 const tmpEuler = new Euler(0, 0, 0, 'YXZ');
@@ -24,6 +27,7 @@ export function createHeli(pos: Vector3, yaw: number): HeliState {
     yaw, pitch: 0, roll: 0, pRate: 0, rRate: 0, yRate: 0,
     q: new Quaternion(), rpm: 0, engineOn: false, collective: 0, fuel: 100,
     landed: true, alive: true, touchdownDescent: 0, thrustScale: 1,
+    damage: createDamage(), rotorFailIn: null,
   };
   updateQ(h);
   return h;
