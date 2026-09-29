@@ -16,6 +16,7 @@ import { FarpProps } from './farp';
 import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
 import { RingGates } from './rings';
+import { watchViewport } from '../core/viewport';
 import { QUALITY } from './quality';
 import type { Settings } from '../save/campaign';
 import { SearchlightBeams } from './searchlights';
@@ -76,6 +77,7 @@ export class FlightRenderer {
   readonly effects: Effects;
   readonly units = new UnitRenderer();
   private rings = new RingGates();
+  private stopViewport: () => void = () => {};
   private searchlights = new SearchlightBeams();
   private panelLight = new THREE.PointLight(0xbfe6ff, 0, 2.2, 1.5);
   readonly farp: FarpProps;
@@ -143,7 +145,7 @@ export class FlightRenderer {
 
     this.mpdTads.setSize(MPD_TADS * 2, MPD_TADS * 2);
     this.resize();
-    window.addEventListener('resize', this.resize);
+    this.stopViewport = watchViewport(this.resize);
     this.raf = requestAnimationFrame(this.tick);
   }
 
@@ -417,7 +419,7 @@ export class FlightRenderer {
     this.units.dispose();
     this.rings.dispose();
     this.searchlights.dispose();
-    window.removeEventListener('resize', this.resize);
+    this.stopViewport();
     this.scene.dispose();
     this.instruments.dispose();
     this.renderer.dispose();

@@ -29,6 +29,7 @@ import { SettingsPanel } from './SettingsScreen';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
 import { VirtualStick } from '../components/VirtualStick';
 import { Pinch } from '../../input/pinch';
+import { watchViewport } from '../../core/viewport';
 
 const COACH_SECONDS = 7;
 const STICK_RADIUS = { S: 46, M: 56, L: 70 } as const;
@@ -174,8 +175,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
   useEffect(() => {
     const check = () => setPortrait(touchRef.current && window.innerHeight > window.innerWidth);
     check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+    return watchViewport(check);
   }, []);
 
 
