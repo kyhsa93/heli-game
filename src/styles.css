@@ -57,7 +57,7 @@ button.go {
 .stick.left { left: 20px; }
 .stick.right { right: 20px; }
 .stick .knob { width: 56px; height: 56px; border-radius: 50%; background: rgba(255, 209, 102, .55); border: 2px solid #ffd166; }
-.stick span { position: absolute; top: -20px; font-size: 11px; color: #cfe0f0; white-space: nowrap; text-shadow: 0 1px 2px #000; }
+.stick span { position: absolute; top: -20px; font-size: 12px; color: #cfe0f0; white-space: nowrap; text-shadow: 0 1px 2px #000; }
 .tbtn {
   position: absolute; pointer-events: auto; font: inherit; font-weight: 700; font-size: 14px; color: #fff; touch-action: none;
   background: rgba(8, 14, 24, .55); border: 1px solid rgba(255, 255, 255, .35); border-radius: 10px; padding: 8px 14px;
@@ -168,7 +168,7 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .campaign-map .node.open { background: #ffd166; }
 .campaign-map .node.locked { background: rgba(30, 40, 55, .85); color: #8fa0b5; border-color: #8fa0b5; }
 .campaign-map .node.on { outline: 3px solid #fff; outline-offset: 2px; }
-.campaign-map .node small { position: absolute; top: -10px; right: -12px; font-size: 11px; font-weight: 800; background: #10151d; border-radius: 6px; padding: 0 4px; }
+.campaign-map .node small { position: absolute; top: -10px; right: -12px; font-size: 12px; font-weight: 800; background: #10151d; border-radius: 6px; padding: 0 4px; }
 .campaign-map .node small.gS { color: #ffd166; } .campaign-map .node small.gA { color: #06d6a0; } .campaign-map .node small.gB { color: #4cc9f0; } .campaign-map .node small.gC { color: #aebbd0; }
 .campaign-map .side { position: absolute; left: 8px; font-size: 12px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: rgba(6, 12, 22, .6); pointer-events: none; }
 .campaign-map .side.enemy { top: 8px; color: #ef476f; }
@@ -205,3 +205,11 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .tbtn.engine { left: 50%; transform: translateX(-50%); bottom: calc(40px + env(safe-area-inset-bottom)); }
 .flight3d.touch .hud3d { left: calc(72px + env(safe-area-inset-left)); }
 .tcol { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; max-width: 150px; }
+.campaign-map .node.locked { border-style: dashed; }
+.campaign-map .node.open::after { content: ''; position: absolute; inset: -6px; border: 2px solid #ffd166; border-radius: 50%; }
+.radio-menu button { min-height: 44px; }
+@media (pointer: coarse) {
+  .campaign-map .node { width: 44px; height: 44px; }
+  .choice button, .setting-row .choice button, .farp-menu button { min-height: 44px; min-width: 44px; }
+  .pylon { min-height: 64px; }
+}

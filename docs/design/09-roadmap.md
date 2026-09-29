@@ -103,7 +103,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 - [x] [#57](https://github.com/kyhsa93/heli-game/issues/57) **M7-2 터치 전투 UI**(07장 7.6절 배치), 게임패드 전투 매핑.
 - [x] [#58](https://github.com/kyhsa93/heli-game/issues/58) **M7-3 성능 작업**: 모바일 30fps 확인, 예산 초과 항목 해결.
 - [x] [#59](https://github.com/kyhsa93/heli-game/issues/59) **M7-4 사운드 믹싱·무전 효과**.
-- [ ] [#60](https://github.com/kyhsa93/heli-game/issues/60) **M7-5 접근성**: 글자 크기, 자막, 색 비의존 확인.
+- [x] [#60](https://github.com/kyhsa93/heli-game/issues/60) **M7-5 접근성**: 글자 크기, 자막, 색 비의존 확인.
 - [ ] [#61](https://github.com/kyhsa93/heli-game/issues/61) **M7-6 플레이테스트 반영 밸런스 패스**: `content/*.json` 수치 조정, 문서 표 갱신.
 
 ## 9.3 결정된 사항

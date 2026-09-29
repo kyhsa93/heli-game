@@ -56,7 +56,7 @@ export function drawTads(g: CanvasRenderingContext2D, w: number, h: number, worl
   g.save();
   g.strokeStyle = WHITE; g.fillStyle = WHITE; g.lineWidth = 2 * u;
   g.shadowColor = 'rgba(0,0,0,0.9)'; g.shadowBlur = 3;
-  g.font = `bold ${Math.round(17 * u)}px "B612 Mono", "Karda Sans", ui-monospace, Menlo, Consolas, monospace`;
+  g.font = `bold ${Math.max(12, Math.round(17 * u))}px "B612 Mono", "Karda Sans", ui-monospace, Menlo, Consolas, monospace`;
 
   g.textAlign = 'left';
   g.fillText(`${t.sensor === 'flir' ? 'FLIR' : 'TV'}   ${TADS_FOV_NAMES[t.fov]} ${tadsFovDeg(t)}°`, m, top);

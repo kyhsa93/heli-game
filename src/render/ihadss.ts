@@ -30,6 +30,8 @@ function project(camera: THREE.Camera, p: THREE.Vector3, w: number, h: number) {
   return { x: (tmp.x + 1) / 2 * w, y: (1 - tmp.y) / 2 * h };
 }
 
+export const MIN_FONT = 12;
+
 export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, world: World, camera: THREE.Camera, pnvs = false) {
   const u = clamp(Math.min(w, h) / 700, 0.6, 1.4);
   const cx = w / 2, cy = h / 2;
@@ -37,7 +39,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
   g.save();
   g.strokeStyle = GREEN; g.fillStyle = GREEN; g.lineWidth = 2 * u;
   g.shadowColor = 'rgba(0,0,0,0.95)'; g.shadowBlur = 6 * u;
-  g.font = `bold ${Math.round(16 * u)}px "B612 Mono", ui-monospace, Menlo, Consolas, monospace`;
+  g.font = `bold ${Math.max(MIN_FONT, Math.round(16 * u))}px "B612 Mono", ui-monospace, Menlo, Consolas, monospace`;
   g.textAlign = 'center';
 
   camera.getWorldPosition(camPos);
@@ -296,7 +298,7 @@ function drawThreatArcs(g: CanvasRenderingContext2D, w: number, h: number, u: nu
     g.lineWidth = (loud ? 4 : 2) * u;
     const span = loud ? 0.18 : 0.1;
     g.beginPath(); g.arc(cx, cy, R, a - Math.PI / 2 - span, a - Math.PI / 2 + span); g.stroke();
-    g.font = `bold ${Math.round((loud ? 20 : 15) * u)}px "B612 Mono", monospace`;
+    g.font = `bold ${Math.max(MIN_FONT, Math.round((loud ? 20 : 15) * u))}px "B612 Mono", monospace`;
     g.textAlign = 'center';
     g.fillText(t.symbol, cx + Math.cos(a - Math.PI / 2) * (R - 22 * u), cy + Math.sin(a - Math.PI / 2) * (R - 22 * u) + 6 * u);
   }
