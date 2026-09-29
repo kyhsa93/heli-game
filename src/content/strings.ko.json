@@ -450,5 +450,26 @@
       "friendly": "아군 오사",
       "civilian": "민간 피해"
     }
+  },
+  "instant": {
+    "title": "즉시 출격",
+    "objective": "표적 지역 {n} 제압",
+    "summaryOne": "표적 지역을 제압하라. 공중에서 시작한다.",
+    "summaryTwo": "표적 지역 두 곳을 제압하라. 공중에서 시작한다.",
+    "radio": "하운드 1, 표적 지역 앞 3킬로. 교전을 허가한다.",
+    "setup": "즉시 출격",
+    "threat": "위협 수준",
+    "time": "시간대",
+    "threatLevel": {
+      "low": "낮음 — 기관총 차량",
+      "medium": "보통 — 대공포·휴대용 SAM",
+      "high": "높음 — 자주대공포·SAM"
+    },
+    "timeSoon": "해질녘·야간·새벽은 준비 중",
+    "go": "출격 ▶",
+    "back": "뒤로",
+    "best": "최고 기록 {score} ({grade})",
+    "noBest": "아직 기록 없음",
+    "newBest": "새 최고 기록!"
   }
 }

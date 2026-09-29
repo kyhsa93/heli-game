@@ -166,7 +166,8 @@ export class MissionRuntime implements Objective {
     if (!w) return;
     const next = this.objectives.find(o => o.state === 'active' && (o.def.kind === 'reach' || o.def.kind === 'land'));
     const at = next?.def.kind === 'reach' ? this.mission.waypoints.find(p => p.id === (next.def as { waypoint: string }).waypoint)
-      : next?.def.kind === 'land' ? this.mission.farps.find(f => f.id === (next.def as { farp: string }).farp) : undefined;
+      : next?.def.kind === 'land' ? this.mission.farps.find(f => f.id === (next.def as { farp: string }).farp)
+        : this.mission.waypoints.find(p => !/^BP/i.test(p.name));
     if (!at) return;
     const [x, z] = at.position;
     w.target = { x, y: w.terrain.surfaceAt(x, z), z, name: 'name' in at ? at.name : at.id.toUpperCase().replace('_', ' '), area: true, raw: true };
@@ -343,7 +344,7 @@ export class MissionRuntime implements Objective {
       return;
     }
     const primaries = this.objectives.filter(o => o.def.primary);
-    if (primaries.length && primaries.every(o => o.state === 'done') && (this.mission.kind === 'training' || !this.mission.farps.length || this.landedAtFarp())) this.finish(true);
+    if (primaries.length && primaries.every(o => o.state === 'done') && (this.mission.kind === 'training' || this.mission.kind === 'instant' || !this.mission.farps.length || this.landedAtFarp())) this.finish(true);
   }
 
   private record(e: SimEvent, world: World) {

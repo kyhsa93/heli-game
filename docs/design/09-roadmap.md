@@ -78,7 +78,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 - [x] [#41](https://github.com/kyhsa93/heli-game/issues/41) **M4-6 화면**: 브리핑, 로드아웃, 디브리핑, 일시정지, 무전 자막, 목표 추적기. *완료*: 화면별 스크린샷(데스크톱·모바일 가로·세로).
 - [x] [#42](https://github.com/kyhsa93/heli-game/issues/42) **M4-7 점수·평점**: `sim/mission/scoring.ts`, 02장 2.4절. *완료*: 점수 항목별 테스트.
 - [x] [#43](https://github.com/kyhsa93/heli-game/issues/43) **M4-8 임무 1~3 작성**: JSON + 플레이 확인(헤드리스로 목표 달성 경로 자동 재생 테스트 1개씩).
-- [ ] [#44](https://github.com/kyhsa93/heli-game/issues/44) **M4-9 즉시 출격 모드**: 시드 무작위 임무 생성(표적 군집 1~2, 위협 수준 선택).
+- [x] [#44](https://github.com/kyhsa93/heli-game/issues/44) **M4-9 즉시 출격 모드**: 시드 무작위 임무 생성(표적 군집 1~2, 위협 수준 선택).
 
 ## M5. 캠페인
 

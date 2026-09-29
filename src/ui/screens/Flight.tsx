@@ -14,6 +14,7 @@ import { FarpMenu } from '../flight/FarpMenu';
 import { MISSIONS } from '../../content/missions';
 import { missionSession, type MissionRuntime } from '../../sim/mission/runtime';
 import type { LoadoutDef } from '../../sim/heli/loadout';
+import type { MissionDef } from '../../sim/mission/schema';
 import { reportFrom, type MissionReport } from '../report';
 import { DIFFICULTIES } from '../../sim/difficulty';
 import { loadDifficulty } from '../settings';
@@ -26,15 +27,15 @@ import { FlightInput } from '../../input/input';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
 import { VirtualStick } from '../components/VirtualStick';
 
-interface FlightProps { missionId: string; touch: boolean; loadout?: LoadoutDef; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
+interface FlightProps { missionId: string; mission?: MissionDef; touch: boolean; loadout?: LoadoutDef; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
 
-export function Flight({ missionId, touch, loadout, onExit, onComplete, onMissionEnd }: FlightProps) {
+export function Flight({ missionId, mission: given, touch, loadout, onExit, onComplete, onMissionEnd }: FlightProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
   const msgRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
-  const mission = MISSIONS[missionId];
+  const mission = given ?? MISSIONS[missionId];
   const [session] = useState(() => mission ? missionSession(mission, loadout ?? null) : new FlightSession((Math.random() * 1e9) | 0));
   const training = mission?.kind === 'training';
   const runtime = mission ? session.objective as MissionRuntime : null;
@@ -313,7 +314,7 @@ export function Flight({ missionId, touch, loadout, onExit, onComplete, onMissio
                 </ul>
               </>
             )}
-            <button className="go" onClick={begin}>{t('brief.start')}</button> <button className="go secondary" onClick={onExit}>{t(mission && !training ? 'pause.toBriefing' : 'brief.toList')}</button>
+            <button className="go" onClick={begin}>{t('brief.start')}</button> <button className="go secondary" onClick={onExit}>{t(mission?.kind === 'instant' ? 'instant.back' : mission && !training ? 'pause.toBriefing' : 'brief.toList')}</button>
           </div>
         </div>
       )}

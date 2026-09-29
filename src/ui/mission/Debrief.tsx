@@ -8,7 +8,7 @@ function mmss(sec: number) {
   return `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 }
 
-export function Debrief({ mission, report, onRetry, onDone }: { mission: MissionDef; report: MissionReport; onRetry: () => void; onDone: () => void }) {
+export function Debrief({ mission, report, newBest, onRetry, onDone }: { mission: MissionDef; report: MissionReport; newBest?: boolean; onRetry: () => void; onDone: () => void }) {
   const s = report.stats;
   const kills = Object.entries(s.kills);
   return (
@@ -18,7 +18,7 @@ export function Debrief({ mission, report, onRetry, onDone }: { mission: Mission
         <h1 className={report.success ? 'ok' : 'bad'}>{t(report.success ? 'debrief.success' : 'debrief.fail')}</h1>
         {report.reason && report.reason !== 'aborted' && <p className="sub">{report.reason}</p>}
         {!report.reason && report.failure && report.failure !== 'mission' && <p className="sub">{t(`fail.${report.failure}`)}</p>}
-        <div className="grade-row"><span className={`grade g${report.score.grade}`}>{report.score.grade}</span><span className="score-total">{t('debrief.score', { n: report.score.total.toLocaleString('en-US') })}<small>{t('debrief.par', { n: mission.par.toLocaleString('en-US') })}</small></span></div>
+        <div className="grade-row"><span className={`grade g${report.score.grade}`}>{report.score.grade}</span><span className="score-total">{t('debrief.score', { n: report.score.total.toLocaleString('en-US') })}<small>{t('debrief.par', { n: mission.par.toLocaleString('en-US') })}</small>{newBest && <small className="best">{t('instant.newBest')}</small>}</span></div>
         {report.reason === 'aborted' && <p className="sub">{t('debrief.aborted')}</p>}
         <div className="room-grid">
           <div className="room-text">

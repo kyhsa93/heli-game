@@ -149,6 +149,11 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .radio-sub { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); max-width: min(760px, calc(100vw - 32px));
   background: rgba(6, 12, 22, .72); color: #e8eef7; padding: 6px 12px; border-radius: 8px; font-size: 16px; pointer-events: none; z-index: 3; text-align: center; }
 .mission { white-space: pre-line; }
+.room-card.narrow { max-width: 560px; }
+.choice { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.choice button { font: inherit; color: #e8eef7; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.3); border-radius: 10px; padding: 8px 12px; }
+.choice button.on { background: rgba(255, 209, 102, .2); border-color: #ffd166; }
+.score-total small.best { color: #ffd166; font-weight: 700; }
 .pause-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 12px; }
 @media (max-width: 720px) {
   .room-grid { grid-template-columns: 1fr; }
