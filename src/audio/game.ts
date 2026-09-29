@@ -2,7 +2,7 @@ import type { Vector3 } from 'three';
 import type { SimEvent } from '../sim/events';
 import { RotorAudio, type AudioState } from './rotor';
 import { SfxPlayer, type SampleId } from './sfx';
-import { loadVoiceEnabled, saveVoiceEnabled, speechBackend, VoiceWarnings, type VoiceBackend, type VoiceLine } from './voice';
+import { speechBackend, VoiceWarnings, type VoiceBackend, type VoiceLine } from './voice';
 
 export const BINGO = 10;
 export const ALTITUDE_FT = 50;
@@ -48,12 +48,6 @@ export class GameAudio {
     this.rotor = new RotorAudio(ctx);
     this.sfx = new SfxPlayer(this.rotor.context, this.rotor.output);
     this.voice = new VoiceWarnings(voice === undefined ? speechBackend() : voice, () => this.rotor.beep(), () => this.rotor.context.currentTime);
-    this.voice.enabled = loadVoiceEnabled();
-  }
-
-  setVoice(on: boolean) {
-    this.voice.enabled = on;
-    saveVoiceEnabled(on);
   }
 
   async loadSamples(get: (id: string) => ArrayBuffer | undefined) {

@@ -5,7 +5,7 @@ import { fakeCtx } from './testing';
 import { GameAudio, voiceFor } from './game';
 import { rwrGateOn, rwrLevel } from './rwr';
 import { SfxPlayer } from './sfx';
-import { loadVoiceEnabled, saveVoiceEnabled, speechBackend, VOICE_COOLDOWN, VOICE_LINES, VoiceWarnings } from './voice';
+import { speechBackend, VOICE_COOLDOWN, VOICE_LINES, VoiceWarnings } from './voice';
 
 const asCtx = (c: ReturnType<typeof fakeCtx>) => c as unknown as AudioContext;
 
@@ -66,13 +66,6 @@ describe('voice warnings (07-ui-ux.md 7.7, 09 9.3)', () => {
     expect(said).toEqual(['Missile launch', 'Bingo fuel', 'Altitude, altitude']);
   });
 
-  it('remembers the on/off setting', () => {
-    const store = new Map<string, string>();
-    const s = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); } };
-    expect(loadVoiceEnabled(s)).toBe(true);
-    saveVoiceEnabled(false, s);
-    expect(loadVoiceEnabled(s)).toBe(false);
-  });
 });
 
 describe('RWR and hit sounds', () => {

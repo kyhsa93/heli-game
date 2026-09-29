@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { t } from '../../content/strings';
 import type { ThreatLevel } from '../../sim/mission/instant';
-import type { InstantBest } from '../settings';
+import type { CampaignSave } from '../../save/campaign';
 
 const LEVELS: ThreatLevel[] = ['low', 'medium', 'high'];
 
-export function InstantSetup({ best, onGo, onBack }: { best: InstantBest | null; onGo: (threat: ThreatLevel) => void; onBack: () => void }) {
+export function InstantSetup({ best, onGo, onBack }: { best: CampaignSave['instantBest']; onGo: (threat: ThreatLevel) => void; onBack: () => void }) {
   const [threat, setThreat] = useState<ThreatLevel>('medium');
   return (
     <div className="menu room">

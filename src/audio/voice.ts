@@ -12,7 +12,6 @@ export const VOICE_LINES = {
 export type VoiceLine = keyof typeof VOICE_LINES;
 
 export const VOICE_COOLDOWN = 5;
-export const VOICE_KEY = 'heli-voice-warnings';
 
 export interface VoiceBackend { speak(text: string): void }
 
@@ -52,16 +51,4 @@ export class VoiceWarnings {
     else this.beep();
     return true;
   }
-}
-
-export function loadVoiceEnabled(storage: { getItem(k: string): string | null } | null = safeStorage()) {
-  try { return storage?.getItem(VOICE_KEY) !== 'off'; } catch { return true; }
-}
-
-export function saveVoiceEnabled(on: boolean, storage: { setItem(k: string, v: string): void } | null = safeStorage()) {
-  try { storage?.setItem(VOICE_KEY, on ? 'on' : 'off'); } catch { /* storage blocked */ }
-}
-
-function safeStorage() {
-  try { return typeof localStorage !== 'undefined' ? localStorage : null; } catch { return null; }
 }

@@ -13,23 +13,15 @@ import { Debrief } from './ui/mission/Debrief';
 import { Loadout } from './ui/mission/Loadout';
 import { InstantSetup } from './ui/mission/InstantSetup';
 import { generateInstant } from './sim/mission/instant';
-import { loadInstantBest, saveInstantBest } from './ui/settings';
-
-const COMPLETED_KEY = 'heli-training-done';
-
-function loadCompleted(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(COMPLETED_KEY) ?? '[]') as string[]); } catch { return new Set(); }
-}
-
-function saveCompleted(done: Set<string>) {
-  try { localStorage.setItem(COMPLETED_KEY, JSON.stringify([...done])); } catch { /* storage unavailable */ }
-}
+import { loadSave, recordInstant, recordMission, recordTraining, storeSave, unlockedFor } from './save/campaign';
 
 export function App() {
   const [ui] = useState(() => new UiState());
   const screen = useSyncExternalStore(ui.subscribe, ui.getSnapshot);
   const [touch, setTouch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
-  const [completed, setCompleted] = useState(loadCompleted);
+  const [save, setSave] = useState(() => loadSave());
+  useEffect(() => { storeSave(save); }, [save]);
+  const completed = new Set(Object.keys(save.training));
   const [boot, setBoot] = useState(0);
   const [booted, setBooted] = useState(false);
 
@@ -50,12 +42,7 @@ export function App() {
     };
   }, [ui]);
 
-  const complete = useCallback((id: string) => setCompleted(prev => {
-    if (prev.has(id)) return prev;
-    const next = new Set(prev).add(id);
-    saveCompleted(next);
-    return next;
-  }), []);
+  const complete = useCallback((id: string) => setSave(prev => recordTraining(prev, id)), []);
 
   if (!booted) return <Loading progress={boot} />;
 
@@ -63,15 +50,15 @@ export function App() {
     case 'title':
       return <Title trainingDone={completed.has('t1')} onInstant={() => ui.go({ name: 'instant' })} onCampaign={MISSION_IDS.length ? () => ui.go({ name: 'briefing', missionId: MISSION_IDS[0] }) : undefined} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} />;
     case 'instant':
-      return <InstantSetup best={loadInstantBest()} onBack={() => ui.go({ name: 'title' })} onGo={threat => ui.go({ name: 'flight', missionId: 'instant', mission: generateInstant({ seed: (Math.random() * 1e9) | 0, threat, time: 'day' }) })} />;
+      return <InstantSetup best={save.instantBest} onBack={() => ui.go({ name: 'title' })} onGo={threat => ui.go({ name: 'flight', missionId: 'instant', mission: generateInstant({ seed: (Math.random() * 1e9) | 0, threat, time: 'day' }) })} />;
     case 'briefing':
       return <Briefing mission={MISSIONS[screen.missionId]} onBack={() => ui.go({ name: 'title' })} onNext={() => ui.go({ name: 'loadout', missionId: screen.missionId })} />;
     case 'loadout':
-      return <Loadout mission={MISSIONS[screen.missionId]} unlocked={new Set(MISSIONS[screen.missionId].unlocks ?? [])} onBack={() => ui.go({ name: 'briefing', missionId: screen.missionId })} onLaunch={def => ui.go({ name: 'flight', missionId: screen.missionId, loadout: def })} />;
+      return <Loadout mission={MISSIONS[screen.missionId]} unlocked={new Set([...unlockedFor(save), ...(MISSIONS[screen.missionId].unlocks ?? [])])} onBack={() => ui.go({ name: 'briefing', missionId: screen.missionId })} onLaunch={def => ui.go({ name: 'flight', missionId: screen.missionId, loadout: def })} />;
     case 'debrief':
       if (screen.missionId === 'instant' && screen.report && screen.mission) return <Debrief mission={screen.mission} report={screen.report} newBest={screen.newBest} onRetry={() => ui.go({ name: 'instant' })} onDone={() => ui.go({ name: 'title' })} />;
       if (!screen.report) return <Briefing mission={MISSIONS[screen.missionId]} onBack={() => ui.go({ name: 'title' })} onNext={() => ui.go({ name: 'loadout', missionId: screen.missionId })} />;
-      return <Debrief mission={MISSIONS[screen.missionId]} report={screen.report}
+      return <Debrief mission={MISSIONS[screen.missionId]} report={screen.report} newBest={screen.newBest}
         onRetry={() => ui.go(isMission(screen.missionId) ? { name: 'loadout', missionId: screen.missionId } : { name: 'flight', missionId: screen.missionId })}
         onDone={() => ui.go(isMission(screen.missionId) ? { name: 'title' } : { name: 'training' })} />;
     case 'credits':
@@ -82,10 +69,19 @@ export function App() {
       return <Flight key={screen.mission ? `instant-${screen.mission.environment.seed}` : screen.missionId} missionId={screen.missionId} mission={screen.mission} touch={touch} loadout={screen.loadout}
         onExit={() => ui.go(screen.mission ? { name: 'instant' } : isMission(screen.missionId) ? { name: 'briefing', missionId: screen.missionId } : { name: 'training' })}
         onComplete={complete}
+        settings={save.settings}
+        onSettings={settings => setSave(prev => ({ ...prev, settings }))}
         onMissionEnd={report => {
-          if (screen.mission) { const newBest = report.success && saveInstantBest({ score: report.score.total, grade: report.score.grade }); ui.go({ name: 'debrief', missionId: 'instant', report, mission: screen.mission, newBest }); return; }
-          if (report.success && !isMission(screen.missionId)) complete(screen.missionId);
-          ui.go({ name: 'debrief', missionId: screen.missionId, report });
+          if (screen.mission) {
+            const r = report.success ? recordInstant(save, report.score.total, report.score.grade) : { save, newBest: false };
+            setSave(r.save);
+            ui.go({ name: 'debrief', missionId: 'instant', report, mission: screen.mission, newBest: r.newBest });
+            return;
+          }
+          if (!isMission(screen.missionId)) { if (report.success) complete(screen.missionId); ui.go({ name: 'debrief', missionId: screen.missionId, report }); return; }
+          const r = recordMission(save, screen.missionId, report.success, report.score.total, report.score.grade);
+          setSave(r.save);
+          ui.go({ name: 'debrief', missionId: screen.missionId, report, newBest: r.newBest });
         }} />;
   }
 }

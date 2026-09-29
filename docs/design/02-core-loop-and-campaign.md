@@ -134,3 +134,5 @@ interface CampaignSave {
 ```
 
 버전이 다르면 이관 함수로 변환하고, 모르는 버전이면 새로 시작한다(데이터를 지우지 말고 `heli-campaign-backup`에 옮긴다).
+
+구현(M5-1, `src/save/campaign.ts`·`src/save/storage.ts`): 형식에 `instantBest: { score, grade } | null`(즉석 임무 최고 기록)을 더했고, `settings`는 `{ difficulty, voiceWarnings, assists: { autoIdentify, autoCountermeasures } }`다. 흩어져 있던 옛 키(`heli-training-done`, `heli-difficulty`, `heli-voice-warnings`, `heli-instant-best`)는 새 키가 없을 때 한 번 읽어 옮긴다. 읽은 JSON의 필드가 깨졌으면 그 필드만 기본값으로 고치고 `totalScore`는 임무별 최고 점수 합으로 다시 계산한다. 해금은 저장 데이터에서 계산한다(`unlockedFor`): 표의 'N 시작'은 'N−1 완료'와 같다. 계급 문턱은 누적 0 / 5,000 / 15,000 / 30,000점.

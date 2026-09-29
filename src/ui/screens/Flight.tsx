@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
 import { assets } from '../../assets/loader';
 import { GameAudio } from '../../audio/game';
-import { loadVoiceEnabled, saveVoiceEnabled } from '../../audio/voice';
 import { hasString, t, tList, tPairs } from '../../content/strings';
 import { clamp } from '../../core/math';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../../core/units';
@@ -17,7 +16,7 @@ import type { LoadoutDef } from '../../sim/heli/loadout';
 import type { MissionDef } from '../../sim/mission/schema';
 import { reportFrom, type MissionReport } from '../report';
 import { DIFFICULTIES } from '../../sim/difficulty';
-import { loadDifficulty } from '../settings';
+import { freshSave, type Settings } from '../../save/campaign';
 import { zoomTads } from '../../sim/sensors/tads';
 import { sightPoint } from '../../sim/weapons/ballistics';
 import { hellfireSolution } from '../../sim/weapons/hellfire';
@@ -27,9 +26,9 @@ import { FlightInput } from '../../input/input';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
 import { VirtualStick } from '../components/VirtualStick';
 
-interface FlightProps { missionId: string; mission?: MissionDef; touch: boolean; loadout?: LoadoutDef; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
+interface FlightProps { missionId: string; mission?: MissionDef; touch: boolean; loadout?: LoadoutDef; settings?: Settings; onSettings?: (s: Settings) => void; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
 
-export function Flight({ missionId, mission: given, touch, loadout, onExit, onComplete, onMissionEnd }: FlightProps) {
+export function Flight({ missionId, mission: given, touch, loadout, settings = freshSave().settings, onSettings, onExit, onComplete, onMissionEnd }: FlightProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
@@ -43,7 +42,9 @@ export function Flight({ missionId, mission: given, touch, loadout, onExit, onCo
   const [showKeys, setShowKeys] = useState(false);
   const [portrait, setPortrait] = useState(false);
   const sim = session.world;
-  sim.difficulty = DIFFICULTIES[loadDifficulty()];
+  sim.difficulty = DIFFICULTIES[settings.difficulty];
+  sim.assists.autoIdentify = settings.assists.autoIdentify;
+  sim.assists.autoCountermeasures = settings.assists.autoCountermeasures;
   const logRef = useRef(new MessageLog());
   const rendererRef = useRef<FlightRenderer | null>(null);
   const [input] = useState(() => new FlightInput());
@@ -56,8 +57,8 @@ export function Flight({ missionId, mission: given, touch, loadout, onExit, onCo
   const ihadssRef = useRef<HTMLCanvasElement>(null);
   const [help, setHelp] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [voiceOn, setVoiceOn] = useState(() => loadVoiceEnabled());
-  const toggleVoice = () => { const on = !voiceOn; setVoiceOn(on); saveVoiceEnabled(on); if (audioRef.current) audioRef.current.voice.enabled = on; };
+  const voiceOn = settings.voiceWarnings;
+  const toggleVoice = () => { const on = !voiceOn; onSettings?.({ ...settings, voiceWarnings: on }); if (audioRef.current) audioRef.current.voice.enabled = on; };
   const snap = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
   const toggleView = () => rendererRef.current?.toggleView();
@@ -96,6 +97,7 @@ export function Flight({ missionId, mission: given, touch, loadout, onExit, onCo
     if (!audioRef.current) {
       try {
         audioRef.current = new GameAudio();
+        audioRef.current.voice.enabled = settings.voiceWarnings;
         void audioRef.current.loadSamples(id => assets.get<ArrayBuffer>(id));
       } catch { audioRef.current = null; }
     }
