@@ -70,7 +70,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 
 ## M4. 임무 시스템
 
-- [ ] [#36](https://github.com/kyhsa93/heli-game/issues/36) **M4-1 임무 스키마·검증기**: `sim/mission/schema.ts`, 콘텐츠 검증 테스트(08장 8.8절).
+- [x] [#36](https://github.com/kyhsa93/heli-game/issues/36) **M4-1 임무 스키마·검증기**: `sim/mission/schema.ts`, 콘텐츠 검증 테스트(08장 8.8절).
 - [ ] [#37](https://github.com/kyhsa93/heli-game/issues/37) **M4-2 임무 런타임**: 목표·트리거·무전 큐, 1Hz 평가, 성공/실패 판정. *완료*: 트리거 조건 종류별 테스트, 목표 상태 전이 테스트.
 - [ ] [#38](https://github.com/kyhsa93/heli-game/issues/38) **M4-3 🅰 지형 확장**: 12km 지도, 임무 `terrain.features`·도로 적용, 청크 LOD 렌더, ambientCG 회색조 디테일 맵 경사·높이 스플랫(10장 10.5절). *완료*: 같은 시드 → 같은 높이 배열 테스트, 도로 평탄화 테스트, 성능 예산 확인.
 - [ ] [#39](https://github.com/kyhsa93/heli-game/issues/39) **M4-4 유닛 이동**: 도로 그래프, A*, 그룹 행동(patrol/advance/convoy). *완료*: 호송 그룹이 경로 끝에 도착 테스트.

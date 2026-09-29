@@ -122,6 +122,13 @@ type Action =
   | { kind: 'missionEnd'; result: 'success' | 'fail'; reason: string };
 ```
 
+구현(M4-1, `src/sim/mission/schema.ts`): 위 타입 그대로에 몇 가지를 확정했다.
+- `TerrainFeature` = `village {center, radius, houses?}` / `base {center, radius}` / `flatten {center, radius}` / `forest {center, radius, density?}` / `bridge {from, to}`.
+- `recommendedLoadout`은 게임의 `LoadoutDef` 형식(`{ pylons: {L2, L1, R1, R2}, stingers, gunRounds, fuel }`)을 쓴다(위 예시의 평평한 형식이 아님).
+- `initialObjectives?: string[]`: 시작부터 활성인 목표. 없으면 전부 활성, 있으면 나머지는 `objectiveAdd`로 연다.
+- `unlocks` ID: `chaff`, `fcr`, `agm114l`, `night`, `stinger`, `wingmanMenu`, `liveries`(02장 2.5절).
+- 검증: 필드 타입·범위·열거값·모르는 필드를 경로(`mission.triggers[0].when.kind`)와 함께 오류로 내고, 통과하면 참조 무결성(유닛·그룹·목표·트리거·웨이포인트·FARP ID, `units.json` 유형, 지도 안 좌표, 중복 ID)을 본다. 파일 40KB 초과는 오류, 활성 유닛 150 초과는 경고. `loadMission`은 개발 모드에서 콘솔에 경로별 오류를 찍고 예외를 던진다. 테스트는 `src/content/missions/*.json`을 전부 검증한다.
+
 ### 임무 런타임 규칙
 - 트리거는 **1Hz로 평가**한다(초당 1번이면 충분하고, 싸다).
 - 목표는 `pending → active → done | failed`. 주 목표가 모두 `done`이고 플레이어가 FARP·기지에 착륙하면 임무 성공(착륙 없이도 끝낼 수 있게 일시정지 메뉴에 "임무 종료" — 이때 착륙 보너스 없음).
