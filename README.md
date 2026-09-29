@@ -29,6 +29,8 @@ https://kyhsa93.github.io/heli-game/
 
 ## 개발
 
+게임 확장 기획(아파치로 전쟁을 수행하는 게임)은 [docs/design/](docs/design/README.md)에 있다. 개발 에이전트는 루트의 [CLAUDE.md](CLAUDE.md)부터 읽는다.
+
 React + TypeScript + Vite. `main`에 push하면 GitHub Actions가 테스트·빌드 후 Pages에 배포한다.
 
 ```sh
