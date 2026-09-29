@@ -3,7 +3,7 @@ import { DEG } from '../../core/math';
 import { updateQ } from '../heli/state';
 import { airborneAt, hoverCollective, makeWorld } from '../testing';
 import { STEP } from '../world';
-import { createTads, slewTads, TADS_FOVS, TADS_LIMITS, tadsDirection, zoomTads } from './tads';
+import { constrainTads, createTads, pointTads, slewTads, TADS_FOVS, TADS_LIMITS, tadsDirection, tadsLocal, zoomTads } from './tads';
 
 describe('TADS (04-weapons-and-sensors.md 4.4)', () => {
   it('steps the field of view 30/10/3/1 and stops at the ends', () => {
@@ -15,26 +15,52 @@ describe('TADS (04-weapons-and-sensors.md 4.4)', () => {
     expect(TADS_FOVS[t.fov]).toBe(3);
   });
 
-  it('slews slower when zoomed in and respects the gimbal limits', () => {
+  it('slews slower when zoomed in', () => {
     const wide = createTads(), narrow = createTads();
     narrow.fov = 3;
     slewTads(wide, 0.1, 0); slewTads(narrow, 0.1, 0);
     expect(narrow.az).toBeCloseTo(wide.az / 30, 6);
-    slewTads(wide, 10, 10);
-    expect(wide.az).toBeCloseTo(TADS_LIMITS.az);
-    expect(wide.el).toBeCloseTo(30 * DEG);
-    slewTads(wide, -20, -20);
-    expect(wide.az).toBeCloseTo(-120 * DEG);
-    expect(wide.el).toBeCloseTo(-60 * DEG);
   });
 
-  it('looks along the nose at az 0, el 0', () => {
+  it('stays on its line of sight while the airframe moves (#69)', () => {
     const { world } = makeWorld();
-    world.player.yaw = 0;
-    updateQ(world.player);
-    const t = createTads(); t.el = 0;
-    const d = tadsDirection(world.player, t);
-    expect(d.z).toBeCloseTo(-1, 3);
+    const h = world.player;
+    h.yaw = 0.3; h.pitch = 0; h.roll = 0; updateQ(h);
+    const t = createTads();
+    pointTads(h, t, { az: 0.2, el: -0.1 });
+    const before = tadsDirection(t).clone();
+    h.pitch = 0.08; h.roll = -0.1; h.yaw = 0.35; updateQ(h);
+    constrainTads(h, t);
+    expect(tadsDirection(t).angleTo(before)).toBeLessThan(1e-9);
+    expect(tadsLocal(h, t).az).toBeCloseTo(0.2 - 0.05, 1);
+  });
+
+  it('holds the gimbal limits relative to the airframe', () => {
+    const { world } = makeWorld();
+    const h = world.player;
+    h.yaw = 0; h.pitch = 0; h.roll = 0; updateQ(h);
+    const t = createTads();
+    pointTads(h, t, { az: 0, el: 0 });
+    h.yaw = Math.PI; updateQ(h);
+    expect(constrainTads(h, t)).toBe(true);
+    expect(Math.abs(tadsLocal(h, t).az)).toBeCloseTo(TADS_LIMITS.az, 5);
+    pointTads(h, t, { az: 0, el: -1.4 });
+    constrainTads(h, t);
+    expect(tadsLocal(h, t).el).toBeCloseTo(-60 * DEG, 5);
+    pointTads(h, t, { az: 0, el: 0.9 });
+    constrainTads(h, t);
+    expect(tadsLocal(h, t).el).toBeCloseTo(30 * DEG, 5);
+  });
+
+  it('starts slaved to the helmet line of sight', () => {
+    const { world } = makeWorld();
+    const p = world.pads[0];
+    airborneAt(world, p.x, p.z, p.y + 60);
+    world.commands.aim.yaw = 0.4; world.commands.aim.pitch = -0.2;
+    world.toggleTads();
+    const l = tadsLocal(world.player, world.tads);
+    expect(l.az).toBeCloseTo(0.4, 2);
+    expect(l.el).toBeCloseTo(-0.2, 2);
   });
 
   for (const seed of [7, 21, 99]) {

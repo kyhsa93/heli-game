@@ -8,7 +8,7 @@ import { integrate, segmentHitsTerrain, type Projectile } from './projectile';
 
 const probe: Projectile = { id: -1, weapon: 'gun30', pos: new Vector3(), vel: new Vector3(), origin: new Vector3(), owner: -1, life: 0, drag: 0, tracer: false };
 
-export interface Prediction { point: Vector3; range: number; time: number }
+export interface Prediction { point: Vector3; range: number; time: number; laser: boolean }
 
 export function predictGunImpact(world: World, step = 1 / 60): Prediction | null {
   const h = world.player, w = WEAPONS.gun30;
@@ -18,14 +18,18 @@ export function predictGunImpact(world: World, step = 1 / 60): Prediction | null
   probe.vel.copy(aimDirection(h, world.commands.aim)).multiplyScalar(w.speed).add(h.vel);
   probe.drag = w.drag ?? 0;
   probe.life = 10;
+  const lased = world.laser.on ? world.laser.range : null;
   let t = 0;
   while (t < 6) {
     const a = integrate(probe, step).clone();
     t += step;
+    if (lased !== null && probe.pos.distanceTo(start) >= lased) {
+      return { point: probe.pos.clone(), range: lased, time: t, laser: true };
+    }
     const hit = segmentHitsTerrain(a, probe.pos, world.terrain);
     if (hit !== null) {
       const point = a.lerp(probe.pos, hit);
-      return { point, range: point.distanceTo(start), time: t - step * (1 - hit) };
+      return { point, range: point.distanceTo(start), time: t - step * (1 - hit), laser: false };
     }
     if (probe.pos.distanceTo(start) > w.maxRange * 1.2) return null;
   }

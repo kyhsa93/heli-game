@@ -17,6 +17,7 @@ export class FlightInput {
   private cy = 0;
   private padButtons: boolean[] = [];
   touchFire = false;
+  touchLaser = false;
   private tads: Tads | null = null;
 
   held(cmd: Command) {
@@ -43,7 +44,7 @@ export class FlightInput {
     let collRate = ((this.heldKeys(K.collectiveUp) ? 1 : 0) - (this.heldKeys(K.collectiveDown) ? 1 : 0)) * 0.45 * fine;
     collRate += -this.touch.ly * 0.5;
 
-    let padFire = false;
+    let padFire = false, padLaser = false;
     const pads = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
     const gp = pads && Array.from(pads).find(p => p && p.connected);
     if (gp) {
@@ -58,6 +59,7 @@ export class FlightInput {
       });
       this.padButtons = pressed;
       padFire = pressed[7] ?? false;
+      padLaser = pressed[6] ?? false;
     }
 
     c.cyclicX = clamp(cyclicX, -1, 1);
@@ -65,10 +67,12 @@ export class FlightInput {
     c.pedal = clamp(pedal, -1, 1);
     c.collective = clamp(c.collective + collRate * dt, 0, 1);
     world.commands.fire = this.held('fire') || this.touchFire || padFire;
+    world.commands.laser = this.held('laser') || this.touchLaser || padLaser;
     this.tads = world.tads;
-    const aim = world.tads.active ? world.tads : { az: this.headYaw, el: this.headPitch };
-    world.commands.aim.yaw = aim.az;
-    world.commands.aim.pitch = aim.el;
+    if (!world.tads.active) {
+      world.commands.aim.yaw = this.headYaw;
+      world.commands.aim.pitch = this.headPitch;
+    }
   }
 
   look(dx: number, dy: number) {

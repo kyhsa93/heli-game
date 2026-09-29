@@ -4,11 +4,11 @@ import { bearingDeg, headingDeg, hoverVector } from './cockpit/instruments';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { agl as aglOf, airspeed } from '../sim/heli/state';
 import { gunInLimits } from '../sim/weapons/arms';
-import { predictGunImpact, sightPoint } from '../sim/weapons/ballistics';
+import { predictGunImpact } from '../sim/weapons/ballistics';
 import { count } from '../sim/heli/loadout';
 import { EYE } from '../sim/heli/airframe';
 import { toWorld } from '../sim/heli/state';
-import { boresight, HYDRA, rocketSolution } from '../sim/weapons/rockets';
+import { boresight, HYDRA, rocketSolution, rocketTarget } from '../sim/weapons/rockets';
 import type { World } from '../sim/world';
 
 const GREEN = '#5dff6e';
@@ -135,7 +135,7 @@ function drawGun(g: CanvasRenderingContext2D, w: number, h: number, u: number, w
     if (pred && sp) {
       g.beginPath(); g.arc(sp.x, sp.y, 4 * u, 0, Math.PI * 2); g.stroke();
       g.textAlign = 'left';
-      g.fillText(`${Math.round(pred.range)}`, sp.x + 8 * u, sp.y + 5 * u);
+      g.fillText(`${pred.laser ? 'L' : ''}${Math.round(pred.range)}`, sp.x + 8 * u, sp.y + 5 * u);
     }
   } else {
     const r = 16 * u;
@@ -165,11 +165,13 @@ function drawRockets(g: CanvasRenderingContext2D, w: number, h: number, u: numbe
   const bx = bore ? clamp(bore.x, edge, w - edge) : w / 2, by = bore ? clamp(bore.y, edge, h - edge) : h / 2;
   g.beginPath(); g.arc(bx, by, 6 * u, 0, Math.PI * 2); g.stroke();
 
-  const target = sightPoint(world, world.commands.aim, HYDRA.maxRange);
+  const aim = rocketTarget(world);
+  const target = aim?.point ?? null;
   const tp = target && project(camera, target, w, h);
   if (tp) {
     const r = 5 * u;
-    g.beginPath(); g.moveTo(tp.x - r, tp.y); g.lineTo(tp.x + r, tp.y); g.moveTo(tp.x, tp.y - r); g.lineTo(tp.x, tp.y + r); g.stroke();
+    if (aim?.laser) { g.strokeRect(tp.x - r, tp.y - r, r * 2, r * 2); }
+    else { g.beginPath(); g.moveTo(tp.x - r, tp.y); g.lineTo(tp.x + r, tp.y); g.moveTo(tp.x, tp.y - r); g.lineTo(tp.x, tp.y + r); g.stroke(); }
   }
   const sol = target && left > 0 ? rocketSolution(world, target) : null;
   const sp = sol && project(camera, dirTmp.copy(sol.dir).multiplyScalar(3000).add(eye), w, h);
@@ -178,7 +180,7 @@ function drawRockets(g: CanvasRenderingContext2D, w: number, h: number, u: numbe
     const range = Math.hypot(target.x - heli.pos.x, target.z - heli.pos.z);
     note = range < HYDRA.minRange ? ' MIN' : range > (HYDRA.effectiveRange ?? HYDRA.maxRange) ? ' MAX' : '';
     g.textAlign = 'center';
-    g.fillText(rangeText(range), bx, by + 58 * u);
+    g.fillText(`${aim?.laser ? 'L ' : ''}${rangeText(range)}`, bx, by + 58 * u);
   }
   if (sol && sp) {
     const ix = clamp(sp.x, edge, w - edge), ey = clamp(sp.y, edge, h - edge);

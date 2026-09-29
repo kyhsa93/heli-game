@@ -60,7 +60,7 @@ export class TadsView {
 
   aim(h: HeliState, t: Tads) {
     tadsPosition(h, this.camera.position);
-    tadsDirection(h, t, this.dir);
+    tadsDirection(t, this.dir);
     this.camera.up.set(0, 1, 0);
     this.camera.lookAt(this.dir.add(this.camera.position));
     const fovH = tadsFovDeg(t) * Math.PI / 180;

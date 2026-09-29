@@ -23,7 +23,8 @@
     "refuel": "연료 보급 중",
     "boundary": "작전 구역 경계입니다",
     "objectiveDone": "목표 달성!",
-    "objectiveFailed": "목표 실패"
+    "objectiveFailed": "목표 실패",
+    "identified": "식별: {name} · {side}"
   },
   "hud": {
     "target": "목표: {name} 패드 ({dist} m)",
@@ -46,7 +47,8 @@
     "tads": "TADS",
     "zoomIn": "줌 +",
     "zoomOut": "줌 −",
-    "sensor": "주간/열상"
+    "sensor": "주간/열상",
+    "laser": "레이저"
   },
   "brief": {
     "title": "AH-64 조종석",
@@ -117,6 +119,10 @@
       [
         "T",
         "TADS 모드 — 기수 센서 화면. 켜 있는 동안 기체가 자동 호버로 제자리를 지킵니다(조종 인계)"
+      ],
+      [
+        "L (누름 유지)",
+        "레이저 측거 — 거리 표시, 찍은 지점은 로켓 표적으로 지정. 협각(3° 이하)에서 조준 십자에 1초 두면 표적 식별"
       ],
       [
         "휠 · + −  /  V",
@@ -227,5 +233,15 @@
     "intro": "이 게임은 아래 외부 에셋을 사용합니다. 모두 상업적 이용이 허용된 라이선스입니다.",
     "source": "출처",
     "open": "크레딧"
+  },
+  "sides": {
+    "veros": "VPA",
+    "coalition": "아군",
+    "civilian": "민간"
+  },
+  "tads": {
+    "target": "TGT {name} · {side}",
+    "unknown": "TGT 미식별",
+    "laser": "레이저"
   }
 }

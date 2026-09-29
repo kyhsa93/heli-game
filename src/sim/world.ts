@@ -8,7 +8,9 @@ import { clampToArea, collide, stepFlight } from './heli/flight';
 import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
 import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
-import { createTads, type Tads } from './sensors/tads';
+import { DEFAULT_ASSISTS, type Assists } from './assists';
+import { castRay, createLaser, crosshairUnit, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
+import { constrainTads, createTads, lookAngles, tadsDirection, tadsFovDeg, tadsLocal, tadsPosition, type Tads } from './sensors/tads';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
 import { UNIT_DEFS, type Unit } from './units';
 import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
@@ -35,7 +37,10 @@ export class World {
   arms: Arms = createArms();
   loadoutDef: LoadoutDef = STANDARD_LOADOUT;
   loadout: Loadout = createLoadout(STANDARD_LOADOUT);
-  commands = { fire: false, aim: { yaw: 0, pitch: 0 } as Aim };
+  commands = { fire: false, laser: false, aim: { yaw: 0, pitch: 0 } as Aim };
+  laser: Laser = createLaser();
+  identify: { unitId: number | null; time: number } = { unitId: null, time: 0 };
+  assists: Assists = { ...DEFAULT_ASSISTS };
   tads: Tads = createTads();
   hold: Hold | null = null;
   private nextUnitId = 1;
@@ -58,7 +63,9 @@ export class World {
     this.atBoundary = false;
     this.refuelNoted = false;
     this.applyLoadout(this.loadoutDef);
-    this.commands = { fire: false, aim: { yaw: 0, pitch: 0 } };
+    this.commands = { fire: false, laser: false, aim: { yaw: 0, pitch: 0 } };
+    this.laser = createLaser();
+    this.identify = { unitId: null, time: 0 };
     this.tads = createTads();
     this.hold = null;
   }
@@ -134,6 +141,7 @@ export class World {
   toggleTads() {
     if (!this.active) return;
     this.tads.active = !this.tads.active;
+    if (this.tads.active) lookAngles(aimDirection(this.player, this.commands.aim), this.tads);
     this.hold = this.tads.active ? createHold(this.player) : null;
   }
 
@@ -186,8 +194,14 @@ export class World {
         collide(h, this.terrain, this.emit);
         if (h.landed && !wasLanded) this.refuelNoted = false;
       }
+      if (this.tads.active) {
+        constrainTads(h, this.tads);
+        const l = tadsLocal(h, this.tads);
+        this.commands.aim.yaw = l.az; this.commands.aim.pitch = l.el;
+      }
       this.stepGun(dt);
       this.stepRockets(dt);
+      this.stepSensors(dt);
     }
     this.stepProjectiles(dt);
     this.events.flush();
@@ -212,6 +226,42 @@ export class World {
       a.gunAmmo--;
       a.shots++;
       a.gunTimer += GUN_INTERVAL;
+    }
+  }
+
+  designation(): Vector3 | null {
+    const l = this.laser;
+    return l.designation && this.time - l.designatedAt <= DESIGNATION_SECONDS ? l.designation : null;
+  }
+
+  sensorDirection(out = new Vector3()) {
+    return this.tads.active ? tadsDirection(this.tads, out) : aimDirection(this.player, this.commands.aim, out);
+  }
+
+  private stepSensors(dt: number) {
+    const h = this.player, l = this.laser;
+    const origin = tadsPosition(h), dir = this.sensorDirection();
+    l.on = this.commands.laser && h.alive;
+    if (l.on) {
+      const hit = castRay(this.terrain, this.units.filter(u => u.alive), origin, dir);
+      l.range = hit?.range ?? null;
+      l.point = hit?.point ?? null;
+      l.unitId = hit?.unit?.id ?? null;
+      if (hit) { l.designation = hit.point.clone(); l.designatedAt = this.time; }
+    } else {
+      l.range = null; l.point = null; l.unitId = null;
+    }
+
+    const id = this.identify;
+    const fov = tadsFovDeg(this.tads);
+    const auto = this.assists.autoIdentify;
+    const u = this.tads.active && (auto || fov <= IDENTIFY_FOV_DEG) ? crosshairUnit(this.terrain, this.units, origin, dir, fov) : null;
+    if (!u) { id.unitId = null; id.time = 0; return; }
+    if (id.unitId !== u.id) { id.unitId = u.id; id.time = 0; }
+    id.time += dt;
+    if (!u.identified && (auto || id.time >= IDENTIFY_SECONDS)) {
+      u.identified = true;
+      this.emit({ t: 'identified', id: u.id, defId: u.defId, side: u.side });
     }
   }
 

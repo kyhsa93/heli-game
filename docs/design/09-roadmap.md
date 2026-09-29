@@ -50,7 +50,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 - [x] [#19](https://github.com/kyhsa93/heli-game/issues/19) **M2-2 외형에 로드아웃 반영**: 파일런별 메시 교체, 발사 시 한 발씩 사라짐. *완료*: 스크린샷(조종석 옆 시점 포함).
 - [x] [#20](https://github.com/kyhsa93/heli-game/issues/20) **M2-3 로켓**: 연사, 조향 큐, 면 피해. *완료*: 연사 수·간격 테스트, 반경 피해 테스트.
 - [x] [#21](https://github.com/kyhsa93/heli-game/issues/21) **M2-4 TADS 모드**: 두 번째 카메라, 렌더 타깃, 줌 단계, TV/FLIR 셰이더, TADS 화면 UI(07장 7.5절), TADS 중 자동 호버. *완료*: 줌 단계별·FLIR 스크린샷, TADS 중 기체 위치 이동 < 2m/10초 테스트.
-- [ ] [#22](https://github.com/kyhsa93/heli-game/issues/22) **M2-5 레이저·식별**: 레이저 측거(지형·유닛 레이캐스트), 협각 1초 조준 시 식별. *완료*: 측거 거리 오차 < 1m 테스트, 식별 테스트.
+- [x] [#22](https://github.com/kyhsa93/heli-game/issues/22) **M2-5 레이저·식별**: 레이저 측거(지형·유닛 레이캐스트), 협각 1초 조준 시 식별. *완료*: 측거 거리 오차 < 1m 테스트, 식별 테스트.
 - [ ] [#23](https://github.com/kyhsa93/heli-game/issues/23) **M2-6 헬파이어 레이저**: 미사일 엔티티, LOBL/LOAL, 레이저 추종, 레이저 끊기면 빗나감. *완료*: LOBL 명중 테스트 / 레이저 중단 시 빗나감 테스트 / LOAL로 능선 너머 명중 테스트.
 - [ ] [#24](https://github.com/kyhsa93/heli-game/issues/24) **M2-7 MPD 페이지 시스템 + WPN·TADS 페이지**: 베젤 클릭 레이캐스트, `[` `]` 키. *완료*: 스크린샷, 페이지 전환 테스트.
 - [ ] [#25](https://github.com/kyhsa93/heli-game/issues/25) **M2-8 훈련 T3·T4 완성**.

@@ -16,7 +16,8 @@ export type SimEvent =
   | { t: 'explosion'; pos: Vector3; size: number }
   | { t: 'fire'; weapon: string; pos: Vector3; dir: Vector3; owner: number; tracer: boolean }
   | { t: 'impact'; weapon: string; pos: Vector3; unit?: number; ground: boolean }
-  | { t: 'advice'; code: AdviceCode; value?: number };
+  | { t: 'advice'; code: AdviceCode; value?: number }
+  | { t: 'identified'; id: number; defId: string; side: Side };
 
 export type AdviceCode = 'landingTooHard' | 'wrongPad';
 

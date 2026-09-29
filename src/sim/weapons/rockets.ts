@@ -3,6 +3,7 @@ import { toWorld, type HeliState } from '../heli/state';
 import { PYLON_X, PYLONS, type Loadout, type PylonId } from '../heli/loadout';
 import type { World } from '../world';
 import { WEAPONS } from './damage';
+import { sightPoint } from './ballistics';
 import { integrate, segmentHitsTerrain, type Projectile } from './projectile';
 
 export const HYDRA = WEAPONS.hydra70;
@@ -90,4 +91,11 @@ export function rocketSolution(world: World, target: Vector3): RocketSolution | 
   const dir = new Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
   const local = dir.clone().applyQuaternion(inv.copy(h.q).invert());
   return { yaw: Math.atan2(-local.x, -local.z), pitch: Math.asin(Math.max(-1, Math.min(1, local.y))), range, time, dir };
+}
+
+export function rocketTarget(world: World): { point: Vector3; laser: boolean } | null {
+  const d = world.designation();
+  if (d) return { point: d, laser: true };
+  const p = sightPoint(world, world.commands.aim, HYDRA.maxRange);
+  return p ? { point: p, laser: false } : null;
 }

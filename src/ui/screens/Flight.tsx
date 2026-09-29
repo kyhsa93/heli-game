@@ -219,6 +219,13 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
               <button className="tbtn" onPointerDown={e => { e.preventDefault(); zoomTads(sim.tads, -1); }}>{t('touch.zoomOut')}</button>
               <button className="tbtn" onPointerDown={e => { e.preventDefault(); zoomTads(sim.tads, 1); }}>{t('touch.zoomIn')}</button>
               <button className="tbtn" onPointerDown={e => { e.preventDefault(); toggleSensor(); }}>{t('touch.sensor')}</button>
+              <button
+                className="tbtn laser"
+                onPointerDown={e => { e.preventDefault(); input.touchLaser = true; }}
+                onPointerUp={() => { input.touchLaser = false; }}
+                onPointerCancel={() => { input.touchLaser = false; }}
+                onPointerLeave={() => { input.touchLaser = false; }}
+              >{t('touch.laser')}</button>
             </div>
           )}
           <button
