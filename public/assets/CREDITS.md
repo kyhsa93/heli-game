@@ -5,3 +5,6 @@
 
 | 파일 | 제목 | 작가 | 원본 URL | 라이선스 | 수정 | 확인 날짜 |
 | --- | --- | --- | --- | --- | --- | --- |
+| fonts/b612-mono.woff2 | B612 Mono (Regular) | The B612 Project Authors (Airbus / PolarSys) | https://github.com/polarsys/b612 | OFL-1.1 | ASCII + 계기 기호만 남긴 서브셋, woff2 변환 (예약 이름 없음) | 2026-09-29 |
+| fonts/karda-sans-regular.woff2 | Pretendard (Regular) → "Karda Sans" | Kil Hyung-jin (orioncactus), Adobe, The Inter Project Authors 외 | https://github.com/orioncactus/pretendard | OFL-1.1 | 게임 문자열에 쓰인 글자만 남긴 서브셋. OFL 예약 이름 'Pretendard' 규정에 따라 "Karda Sans"로 이름 변경 | 2026-09-29 |
+| fonts/karda-sans-bold.woff2 | Pretendard (Bold) → "Karda Sans" | Kil Hyung-jin (orioncactus), Adobe, The Inter Project Authors 외 | https://github.com/orioncactus/pretendard | OFL-1.1 | 게임 문자열에 쓰인 글자만 남긴 서브셋. OFL 예약 이름 'Pretendard' 규정에 따라 "Karda Sans"로 이름 변경 | 2026-09-29 |

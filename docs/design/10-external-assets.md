@@ -69,7 +69,7 @@
 | 폰트 | URL | 라이선스 | 크기 (부분 글꼴, woff2, 실측) | 용도 |
 | --- | --- | --- | --- | --- |
 | **B612 Mono** | github.com/polarsys/b612 | OFL 1.1 | ASCII + ° : **12.5KB** | IHADSS·MPD·EUFD 숫자·영문. 에어버스가 조종석 화면용으로 설계 |
-| **Pretendard** | github.com/orioncactus/pretendard | OFL 1.1 | 실제 쓰는 한글 약 400자: **42KB** / KS X 1001 전체 2,350자: 165KB | 메뉴·브리핑·자막 |
+| **Pretendard** (예약 이름 있음 → "Karda Sans"로 이름 바꿔 배포) | github.com/orioncactus/pretendard | OFL 1.1 | 실제 쓰는 한글 약 400자: **42KB** / KS X 1001 전체 2,350자: 165KB | 메뉴·브리핑·자막 |
 | Share Tech Mono | Google Fonts | OFL 1.1 | 7.4KB | B612 대안 |
 | Noto Sans KR | Google Fonts | OFL 1.1 | 400자 72KB | Pretendard보다 큼 |
 
@@ -144,6 +144,7 @@
 1. 에셋은 `public/assets/<분류>/`에 두고(빌드 산출 JS·CSS는 `dist/static/`으로 분리되어 섞이지 않는다), **`public/assets/CREDITS.md`** 에 모든 파일의 제목·작가·원본 URL·라이선스·수정 여부를 적는다. 게임 설정 화면에 "크레딧" 항목을 두고 이 내용을 보여 준다(CC-BY는 법적 의무, CC0도 예의상 기재).
 2. DVIDS(미 국방 영상) 자료를 쓰면 크레딧에 "The appearance of U.S. Department of War (DoW) visual information does not imply or constitute DoW endorsement." 문구를 넣고, 미군 로고·휘장은 쓰지 않는다.
 3. 추가 전에 **상세 페이지에서 라이선스를 다시 확인**하고, 확인한 날짜를 CREDITS에 적는다.
+   - OFL 글꼴은 LICENSE에서 **예약 글꼴 이름(Reserved Font Name)** 을 확인한다. 예약 이름이 있으면 서브셋(=수정본)은 그 이름을 쓸 수 없으므로 `scripts/subset-font.mjs --rename`으로 이름을 바꾸고, 원래 저작권 고지(name ID 0)는 유지한다. 예: Pretendard → "Karda Sans" (#64).
 4. 용량 예산: 첫 로드 에셋 합계 ≤ 600KB, 임무 하나의 지연 로드 에셋 ≤ 1MB. GLB는 `gltf-transform`으로 메시 압축(meshopt)·텍스처 축소 후 넣는다. 원본(고용량) 파일은 저장소에 넣지 않는다.
 5. 모델은 로드 후 **공용 머티리얼로 교체**(색은 `units.json`에서 지정)해 스타일을 통일하고 드로우콜을 줄인다. 유형별 `InstancedMesh` 규칙(08장 8.6절)은 그대로.
 6. 에셋이 로드되지 않아도 게임은 동작해야 한다: 모델은 코드 도형 대체품, 소리는 합성음 대체품으로 폴백.

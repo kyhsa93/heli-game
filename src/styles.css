@@ -1,7 +1,7 @@
 html, body, #root { margin: 0; height: 100%; }
 body {
   background: #0b1320; overflow: hidden; color: #e8eef7;
-  font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-family: "Karda Sans", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
 
@@ -36,7 +36,7 @@ button.go {
   text-shadow: 0 1px 3px rgba(0, 0, 0, .8); max-width: calc(50% - 150px); min-width: 180px;
 }
 .hud3d .mission { font-weight: 700; font-size: 14px; }
-.hud3d .telemetry { font: 12px ui-monospace, Menlo, Consolas, monospace; margin-top: 4px; color: #d8e6f5; }
+.hud3d .telemetry { font: 12px "B612 Mono", ui-monospace, Menlo, Consolas, monospace; margin-top: 4px; color: #d8e6f5; }
 .hud3d .score3d { font-size: 12px; color: #aebbd0; margin-top: 3px; }
 .messages {
   position: fixed; top: 26%; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none;

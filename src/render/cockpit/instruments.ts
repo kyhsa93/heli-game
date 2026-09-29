@@ -76,7 +76,7 @@ export class Instruments {
       const off = h.pitch * 180 / Math.PI * ppd;
       g.strokeStyle = GREEN; g.fillStyle = GREEN; g.lineWidth = 2.5;
       g.beginPath(); g.moveTo(-170, off); g.lineTo(-40, off); g.moveTo(40, off); g.lineTo(170, off); g.stroke();
-      g.font = 'bold 15px monospace'; g.textAlign = 'left'; g.lineWidth = 2;
+      g.font = 'bold 15px "B612 Mono", monospace'; g.textAlign = 'left'; g.lineWidth = 2;
       for (let d = -30; d <= 30; d += 10) {
         if (!d) continue;
         const y = off - d * ppd;
@@ -103,11 +103,11 @@ export class Instruments {
 
       const kt = airspeed(world.player, world.wind) * MS_TO_KT;
       box(g, 88, 250, `${Math.round(kt)}`);
-      g.font = '13px monospace'; g.fillStyle = DIM; g.textAlign = 'center'; g.fillText('KTS', 88, 282);
+      g.font = '13px "B612 Mono", monospace'; g.fillStyle = DIM; g.textAlign = 'center'; g.fillText('KTS', 88, 282);
       const agl = Math.max(0, aglOf(world.player, world.terrain)) * M_TO_FT;
       box(g, 424, 250, agl > 1428 ? '---' : `${Math.round(agl)}`);
-      g.font = '13px monospace'; g.fillStyle = DIM; g.fillText('R ALT', 424, 282);
-      g.fillStyle = GREEN; g.font = 'bold 16px monospace';
+      g.font = '13px "B612 Mono", monospace'; g.fillStyle = DIM; g.fillText('R ALT', 424, 282);
+      g.fillStyle = GREEN; g.font = 'bold 16px "B612 Mono", monospace';
       g.fillText(`${Math.round(h.pos.y * M_TO_FT)}`, 424, 215);
 
       g.strokeStyle = DIM; g.lineWidth = 2;
@@ -118,13 +118,13 @@ export class Instruments {
       const vsy = 250 - clamp(fpm / 1000, -1, 1) * 100;
       g.beginPath(); g.moveTo(462, vsy); g.lineTo(474, vsy - 7); g.lineTo(474, vsy + 7); g.fill();
 
-      g.textAlign = 'left'; g.font = 'bold 20px monospace'; g.fillStyle = GREEN;
+      g.textAlign = 'left'; g.font = 'bold 20px "B612 Mono", monospace'; g.fillStyle = GREEN;
       g.fillText(`${Math.round(h.collective * h.rpm * 100)}%`, 72, 400);
-      g.font = '13px monospace'; g.fillStyle = DIM; g.fillText('TQ', 72, 418);
-      g.textAlign = 'right'; g.font = 'bold 20px monospace'; g.fillStyle = h.rpm < 0.9 ? AMBER : GREEN;
+      g.font = '13px "B612 Mono", monospace'; g.fillStyle = DIM; g.fillText('TQ', 72, 418);
+      g.textAlign = 'right'; g.font = 'bold 20px "B612 Mono", monospace'; g.fillStyle = h.rpm < 0.9 ? AMBER : GREEN;
       g.fillText(`${Math.round(h.rpm * 101)}%`, 440, 400);
-      g.font = '13px monospace'; g.fillStyle = DIM; g.fillText('NR', 440, 418);
-      g.textAlign = 'center'; g.font = 'bold 16px monospace'; g.fillStyle = GREEN;
+      g.font = '13px "B612 Mono", monospace'; g.fillStyle = DIM; g.fillText('NR', 440, 418);
+      g.textAlign = 'center'; g.font = 'bold 16px "B612 Mono", monospace'; g.fillStyle = GREEN;
       g.fillText(`${Math.round(fpm / 10) * 10} FPM`, 256, 418);
     });
   }
@@ -152,9 +152,9 @@ export class Instruments {
         const target = !!tp && Math.hypot(p.x - tp.x, p.z - tp.z) < 1;
         g.save(); g.translate(x, y); g.rotate(-h.yaw);
         g.strokeStyle = target ? AMBER : GREEN; g.fillStyle = g.strokeStyle; g.lineWidth = 2.5;
-        if (p.base) { g.strokeRect(-9, -9, 18, 18); g.font = 'bold 13px monospace'; g.textAlign = 'center'; g.fillText('H', 0, 5); }
+        if (p.base) { g.strokeRect(-9, -9, 18, 18); g.font = 'bold 13px "B612 Mono", monospace'; g.textAlign = 'center'; g.fillText('H', 0, 5); }
         else { g.beginPath(); g.arc(0, 0, target && blink ? 11 : 8, 0, Math.PI * 2); g.stroke(); }
-        g.font = 'bold 15px monospace'; g.textAlign = 'left'; g.fillText(p.name, 13, -8);
+        g.font = 'bold 15px "B612 Mono", monospace'; g.textAlign = 'left'; g.fillText(p.name, 13, -8);
         g.restore();
       }
       g.restore();
@@ -165,7 +165,7 @@ export class Instruments {
       g.beginPath(); g.moveTo(cx, cy - 16); g.lineTo(cx - 10, cy + 12); g.lineTo(cx, cy + 6); g.lineTo(cx + 10, cy + 12); g.fill();
 
       tape(g, headingDeg(h.yaw), bearingDeg(world), 256, 86, 300);
-      g.font = 'bold 16px monospace'; g.textAlign = 'left'; g.fillStyle = AMBER;
+      g.font = 'bold 16px "B612 Mono", monospace'; g.textAlign = 'left'; g.fillStyle = AMBER;
       if (tp) {
         const d = Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z);
         const gs = Math.hypot(h.vel.x, h.vel.z);
@@ -174,9 +174,9 @@ export class Instruments {
         g.fillStyle = GREEN;
         g.fillText(`${(d / 1000).toFixed(2)} KM  ETE ${ete}`, 72, 152);
       } else g.fillText('NO WPT', 72, 130);
-      g.textAlign = 'right'; g.fillStyle = DIM; g.font = '13px monospace';
+      g.textAlign = 'right'; g.fillStyle = DIM; g.font = '13px "B612 Mono", monospace';
       g.fillText('2 KM', 440, 130);
-      g.textAlign = 'left'; g.font = 'bold 15px monospace'; g.fillStyle = h.fuel < 20 ? AMBER : GREEN;
+      g.textAlign = 'left'; g.font = 'bold 15px "B612 Mono", monospace'; g.fillStyle = h.fuel < 20 ? AMBER : GREEN;
       g.fillText(`FUEL ${Math.round(h.fuel / 100 * FUEL_LB)} LB`, 72, 424);
       g.textAlign = 'right'; g.fillStyle = GREEN;
       g.fillText(`WIND ${Math.round(world.wind.length() * MS_TO_KT)} KT`, 440, 424);
@@ -188,7 +188,7 @@ export class Instruments {
     g.fillStyle = '#050403'; g.fillRect(0, 0, W, H);
     g.strokeStyle = '#3a2a00'; g.lineWidth = 2;
     g.beginPath(); g.moveTo(250, 12); g.lineTo(250, H - 12); g.stroke();
-    g.font = 'bold 26px monospace'; g.textAlign = 'left';
+    g.font = 'bold 26px "B612 Mono", monospace'; g.textAlign = 'left';
     const warn: string[] = [];
     if (!h.engineOn && world.active && h.alive) warn.push('ENGINE OUT');
     if (h.rpm < 0.9 && !h.landed) warn.push('LOW ROTOR RPM');
@@ -250,7 +250,7 @@ function bezel(g: CanvasRenderingContext2D, labels: string[], selected: number) 
     }
   }
   g.fillStyle = '#010a03'; g.fillRect(44, 44, 424, 424);
-  g.font = 'bold 15px monospace';
+  g.font = 'bold 15px "B612 Mono", monospace';
   labels.forEach((l, i) => {
     const x = 86 + i * 68;
     g.fillStyle = i === selected ? '#010a03' : GREEN;
@@ -270,14 +270,14 @@ function screenClip(g: CanvasRenderingContext2D, draw: () => void) {
 function box(g: CanvasRenderingContext2D, x: number, y: number, text: string) {
   g.strokeStyle = GREEN; g.lineWidth = 2;
   g.strokeRect(x - 38, y - 18, 76, 34);
-  g.fillStyle = GREEN; g.font = 'bold 22px monospace'; g.textAlign = 'center';
+  g.fillStyle = GREEN; g.font = 'bold 22px "B612 Mono", monospace'; g.textAlign = 'center';
   g.fillText(text, x, y + 8);
 }
 
 function tape(g: CanvasRenderingContext2D, hdg: number, brg: number | null, cx: number, y: number, width: number) {
   const ppd = width / 60;
   g.strokeStyle = GREEN; g.fillStyle = GREEN; g.lineWidth = 2; g.textAlign = 'center';
-  g.font = 'bold 14px monospace';
+  g.font = 'bold 14px "B612 Mono", monospace';
   for (let d = Math.ceil((hdg - 30) / 5) * 5; d <= hdg + 30; d += 5) {
     const x = cx + (d - hdg) * ppd, n = ((d % 360) + 360) % 360;
     const big = n % 10 === 0;
@@ -285,7 +285,7 @@ function tape(g: CanvasRenderingContext2D, hdg: number, brg: number | null, cx: 
     if (n % 30 === 0) g.fillText(n % 90 === 0 ? 'NESW'[n / 90] : `${n / 10}`, x, y - 16);
   }
   g.strokeRect(cx - 26, y + 4, 52, 22);
-  g.font = 'bold 16px monospace'; g.fillText(String(Math.round(hdg) % 360).padStart(3, '0'), cx, y + 21);
+  g.font = 'bold 16px "B612 Mono", monospace'; g.fillText(String(Math.round(hdg) % 360).padStart(3, '0'), cx, y + 21);
   if (brg === null) return;
   let db = brg - hdg; while (db > 180) db -= 360; while (db < -180) db += 360;
   const bx = cx + clamp(db, -30, 30) * ppd;

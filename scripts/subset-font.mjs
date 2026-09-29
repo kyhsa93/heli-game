@@ -6,10 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { args, requireTool, run } from './lib/tools.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const a = args(process.argv.slice(2), { ascii: 'flag', strings: 'flag', extra: 'value' });
+const a = args(process.argv.slice(2), { ascii: 'flag', strings: 'flag', extra: 'value', rename: 'value' });
 const [input, output] = a._;
 if (!input || !output) {
-  console.error('usage: node scripts/subset-font.mjs <input.ttf|otf|woff2> <output.woff2> [--ascii] [--strings] [--extra "°±"]');
+  console.error('usage: node scripts/subset-font.mjs <input.ttf|otf|woff2> <output.woff2> [--ascii] [--strings] [--extra "°±"] [--rename "New Family"]');
   process.exit(1);
 }
 
@@ -35,4 +35,21 @@ const textFile = join(tmpdir(), `subset-${process.pid}.txt`);
 writeFileSync(textFile, [...chars].join(''));
 requireTool('pyftsubset', 'Install fonttools and brotli: pip install --user fonttools brotli');
 run('pyftsubset', [input, `--text-file=${textFile}`, '--flavor=woff2', `--output-file=${output}`, '--layout-features=*', '--no-hinting']);
+if (a.rename) {
+  const py = [
+    'import sys',
+    'from fontTools.ttLib import TTFont',
+    'f = TTFont(sys.argv[1])',
+    'fam = sys.argv[2]',
+    'sub = f["name"].getDebugName(2) or "Regular"',
+    'ps = fam.replace(" ", "") + "-" + sub.replace(" ", "")',
+    'for rec in f["name"].names:',
+    '    if rec.nameID in (1, 16): rec.string = fam',
+    '    elif rec.nameID == 4: rec.string = fam + " " + sub',
+    '    elif rec.nameID == 6: rec.string = ps',
+    '    elif rec.nameID == 3: rec.string = ps',
+    'f.save(sys.argv[1])',
+  ].join('\n');
+  run('python3', ['-c', py, output, a.rename]);
+}
 console.log(`${output}: ${chars.size} glyphs, ${(statSync(output).size / 1024).toFixed(1)} KB`);

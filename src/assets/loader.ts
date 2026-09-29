@@ -27,7 +27,7 @@ export const defaultFetchers: Fetchers = {
     return tex;
   },
   async font(url, def) {
-    const face = new FontFace(def.fontFamily ?? def.id, `url(${url})`);
+    const face = new FontFace(def.fontFamily ?? def.id, `url(${url})`, def.fontWeight ? { weight: def.fontWeight } : {});
     await face.load();
     document.fonts.add(face);
     return face;

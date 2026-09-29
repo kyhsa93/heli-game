@@ -1,7 +1,7 @@
 import * as THREE from 'three';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { CELL, HALF, N, PAD_R, SIZE, type Pad3, type Terrain } from '../sim/terrain';
 
-export const SKY_TOP = new THREE.Color(0x3d7bc4);
 export const SKY_HORIZON = new THREE.Color(0xbcd6ea);
 export const SUN_DIR = new THREE.Vector3(0.45, 0.8, 0.35).normalize();
 
@@ -62,30 +62,44 @@ function terrainMesh(t: Terrain) {
   return new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
 }
 
+export const SKY_SETTINGS = {
+  turbidity: 2.5,
+  rayleigh: 1.2,
+  mieCoefficient: 0.005,
+  mieDirectionalG: 0.8,
+  cloudCoverage: 0.35,
+  cloudDensity: 0.45,
+  cloudElevation: 0.5,
+};
+
+const SKY_EXPOSURE = 0.5;
+
+const SKY_TONEMAP = `
+vec3 skyRrt(vec3 v) {
+  vec3 a = v * (v + 0.0245786) - 0.000090537;
+  vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
+  return a / b;
+}
+vec3 skyAces(vec3 c) {
+  const mat3 i = mat3(vec3(0.59719, 0.07600, 0.02840), vec3(0.35458, 0.90834, 0.13383), vec3(0.04823, 0.01566, 0.83777));
+  const mat3 o = mat3(vec3(1.60475, -0.10208, -0.00327), vec3(-0.53108, 1.10813, -0.07276), vec3(-0.07367, -0.00605, 1.07602));
+  c = o * skyRrt(i * (c / 0.6));
+  return clamp(c, 0.0, 1.0);
+}`;
+
 function skyDome() {
-  const mat = new THREE.ShaderMaterial({
-    side: THREE.BackSide,
-    depthWrite: false,
-    fog: false,
-    uniforms: {
-      top: { value: SKY_TOP },
-      horizon: { value: SKY_HORIZON },
-      sun: { value: SUN_DIR },
-    },
-    vertexShader: `varying vec3 vDir;
-      void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: `uniform vec3 top; uniform vec3 horizon; uniform vec3 sun; varying vec3 vDir;
-      void main() {
-        float h = max(vDir.y, 0.0);
-        vec3 c = mix(horizon, top, pow(h, 0.55));
-        float s = max(dot(normalize(vDir), sun), 0.0);
-        c += vec3(1.0, 0.92, 0.75) * (pow(s, 600.0) * 1.5 + pow(s, 12.0) * 0.18);
-        gl_FragColor = vec4(c, 1.0);
-      }`,
-  });
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(5000, 32, 16), mat);
-  mesh.renderOrder = -1;
-  return mesh;
+  const sky = new Sky();
+  sky.scale.setScalar(4500);
+  const u = (sky.material as THREE.ShaderMaterial).uniforms;
+  for (const [k, v] of Object.entries(SKY_SETTINGS)) u[k].value = v;
+  u.sunPosition.value.copy(SUN_DIR);
+  (sky.material as THREE.ShaderMaterial).onBeforeCompile = shader => {
+    shader.fragmentShader = shader.fragmentShader
+      .replace('void main() {', `${SKY_TONEMAP}\nvoid main() {`)
+      .replace('#include <tonemapping_fragment>', `gl_FragColor.rgb = skyAces(gl_FragColor.rgb * ${SKY_EXPOSURE.toFixed(3)});`);
+  };
+  sky.renderOrder = -1;
+  return sky;
 }
 
 function padTexture(p: Pad3) {

@@ -14,27 +14,34 @@
 - 배포: `main` push → GitHub Actions(`.github/workflows/deploy.yml`)가 `npm ci && npm run check` 후 GitHub Pages에 배포. 경로 `base: '/heli-game/'`.
 - PWA: `public/sw.js`는 **아무것도 캐시하지 않고 모든 요청을 `cache: 'no-store'`로** 받는다(소유자 요구사항). 캐시 전략을 바꾸지 말 것. 그 결과 첫 로드 용량이 매번 발생하므로 **번들 크기를 의식**한다(8.7절 예산).
 
-## 8.2 현재 코드 지도
+## 8.2 현재 코드 지도 (M0 완료 시점)
 
-| 파일 | 줄 | 역할 | 전투 확장 시 문제 |
-| --- | --- | --- | --- |
-| `src/main.tsx` | 15 | React 마운트, 서비스 워커 등록 | — |
-| `src/App.tsx` | 14 | 터치 감지 후 `Flight3D` 렌더 | 화면 상태 기계로 교체 |
-| `src/components/Flight3D.tsx` | 352 | 렌더러 생성, 게임 루프(rAF + 고정 스텝), 카메라, 계기 갱신, HUD DOM 직접 갱신, 키 입력, 브리핑/추락 오버레이 | **너무 많은 책임.** 루프·렌더·입력·UI를 분리해야 함 |
-| `src/components/VirtualStick.tsx` | 44 | 터치 가상 스틱 | 재사용 |
-| `src/sim3d/sim.ts` | 361 | `Sim`: 비행 물리, 충돌·착륙 판정, 연료, 보급품 운송 임무, 메시지, 모드, 스냅샷 구독 | 비행 모델과 임무 규칙이 한 클래스에 섞여 있음 → 분리 |
-| `src/sim3d/terrain.ts` | 185 | 절차 지형, 패드·건물·나무 배치, `heightAt`/`normalAt`, 나무 공간 격자 | 12km·임무 데이터 기반으로 확장 |
-| `src/sim3d/scene.ts` | 237 | three 장면: 지형 메시, 하늘, 물, 나무 인스턴스, 건물, 패드, 목표 빔, 그림자 | 청크 LOD, 유닛 렌더러 추가 |
-| `src/sim3d/heliModel.ts` | 459 | 아파치 외형·조종석 모델 생성 | 로드아웃 반영, 피해 표현 |
-| `src/sim3d/instruments.ts` | 322 | MPD(FLT/TSD)·EUFD·예비계기 캔버스 텍스처 | 페이지 시스템으로 확장 |
-| `src/sim3d/ihadss.ts` | 105 | 헬멧 심볼 오버레이 | 무장·위협 심볼 추가 |
-| `src/sim3d/input.ts` | 59 | 키보드·게임패드·터치 → `Controls3` | 전투 입력 추가 |
-| `src/sim3d/audio.ts` | 105 | 로터·터빈·바람·경고음 합성 | 효과음 추가 |
-| `src/sim3d/math.ts` | 6 | `clamp`, `smooth`, `rng` | 유지 |
-| `src/sim3d/sim.test.ts` | 170 | 비행·착륙·임무 테스트 10개 | **회귀 기준. 계속 통과해야 함** |
-| `src/sw.test.ts` | 59 | 서비스 워커 무캐시 테스트 4개 | 유지 |
+M0에서 8.3절 목표 구조로 옮겼다. 아직 없는 디렉터리(`sim/weapons`, `sim/sensors`, `sim/ai`, `sim/mission`, `render/effects` 등)는 해당 마일스톤에서 생긴다.
 
-디버그 훅: URL에 `?debug`를 붙이면 `window.__flight = { sim, input, view, model }` 이 노출된다. 헤드리스 브라우저 검증에 쓴다(8.8절).
+| 경로 | 역할 |
+| --- | --- |
+| `src/core/` | `math.ts`(clamp·smooth·rng·각도), `units.ts`(kt·ft·fpm), `events.ts`(타입 있는 이벤트 버스, flush 때 전달), `grid.ts`(2D 공간 격자) |
+| `src/sim/world.ts` | `World`: 시간, 시드 RNG, 지형, 플레이어 기체, 바람, 항법 목표(`target`), 이벤트 버스, `step()`(끝에 flush). 기지 패드 재급유 |
+| `src/sim/heli/` | `airframe.ts`(`content/aircraft.json`에서 상수), `state.ts`(`HeliState`, `Controls`, 자세·좌표 도우미), `flight.ts`(비행 모델·충돌·착륙 판정), `systems.ts`(로터 회전수·연료·엔진) |
+| `src/sim/session.ts` | `FlightSession`: brief/play/crashed/over/done 흐름, 일시정지, 목표(Objective) 연결, React용 스냅샷 |
+| `src/sim/objective.ts`, `src/sim/training/t1.ts` | 목표 인터페이스와 훈련 T1(임시 코드 규칙 — M4-8에서 JSON 임무로) |
+| `src/sim/events.ts` | `SimEvent`: crash(사유 코드), landed, engine, refuel, boundary, objective, advice |
+| `src/sim/terrain.ts` | 절차 지형(4km), 패드·건물·나무 배치 |
+| `src/render/renderer.ts` | `FlightRenderer`: rAF 루프, 고정 스텝, 카메라(조종석/외부), 모델 애니메이션, 계기·IHADSS·오디오 갱신, `onFrame` 콜백 |
+| `src/render/scene.ts` | three 장면: 지형 메시, `Sky.js` 하늘(셰이더 안에서 ACES 톤매핑), 물, 나무, 건물, 패드, 목표 빔, 그림자 |
+| `src/render/heliModel.ts`, `cockpit/cockpitModel.ts`, `modelKit.ts` | 아파치 외형 / 탠덤 조종석 / 공용 도형 도구 |
+| `src/render/cockpit/instruments.ts`, `ihadss.ts` | MPD(FLT·TSD)·EUFD·예비 계기 캔버스 텍스처 / 헬멧 심볼 오버레이 (B612 Mono) |
+| `src/input/` | `bindings.ts`(07장 조작표 — 비행 키·명령 키·게임패드 버튼), `input.ts`(`FlightInput`) |
+| `src/audio/rotor.ts` | 로터·터빈·바람·경고음 합성 |
+| `src/assets/` | `manifest.ts`(그룹별 에셋 목록·예산), `loader.ts`(지연 로드, 실패 시 폴백) |
+| `src/content/` | `strings.ko.json` + `strings.ts`(`t`, `tList`, `tPairs`), `aircraft.json` |
+| `src/ui/` | `state.ts`(화면 상태 + 해시 라우팅), `screens/`(Loading·Title·Training·Flight), `flight/messages.ts`(이벤트 → 메시지, `MessageLog`), `components/VirtualStick.tsx` |
+| `public/assets/` | 채택 외부 에셋 + `CREDITS.md` (현재: B612 Mono, Karda Sans) |
+| `scripts/` | 에셋 가공(`encode-audio`, `process-glb`, `subset-font`) — 빌드 미포함 |
+
+테스트: `src/**/*.test.ts` (비행·세션·T1·입력·문자열·에셋 출처·폰트 이름·아키텍처 규칙·서비스 워커). Vite 빌드 산출 JS·CSS는 `dist/static/`.
+
+디버그 훅: URL에 `?debug`를 붙이면 `window.__flight = { session, world, input, renderer, model }` 이 노출된다(8.8절).
 
 ## 8.3 목표 구조
 
@@ -243,8 +250,8 @@ type SimEvent =
 - 헤드리스 크롬은 소프트웨어 렌더링(SwiftShader)이라 3~4fps다. 실시간 조작으로 검증하지 말고, `?debug` 훅으로 sim을 직접 스텝해 원하는 상황을 만든 뒤 찍는다:
   ```js
   // page.evaluate 안에서
-  const { sim } = window.__flight;           // M0 이후엔 world
-  for (let i = 0; i < 120 * 10; i++) sim.step(1 / 120);
+  const { session, world } = window.__flight;
+  for (let i = 0; i < 120 * 10; i++) session.step(1 / 120);
   ```
 - 크롬 실행 옵션: `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`.
 - 조종석 작업은 최소한 정면·아래·좌·우·뒤 5방향 + 외부 시점을 찍어서 확인한다(구멍·겹침·잘림 확인).

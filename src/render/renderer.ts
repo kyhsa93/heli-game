@@ -160,6 +160,7 @@ export class FlightRenderer {
 
     camera.getWorldPosition(this.tmp);
     scn.sky.position.copy(this.tmp);
+    (scn.sky.material as THREE.ShaderMaterial).uniforms.time.value = now * 0.001;
 
     this.instruments.draw(world, this.frame++ % 3);
     this.renderer.render(scn.scene, camera);

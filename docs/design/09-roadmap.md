@@ -29,7 +29,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 - [x] [#6](https://github.com/kyhsa93/heli-game/issues/6) **M0-6 화면 상태 기계 + 훈련 T1**: `ui/state.ts` + 타이틀 화면. 타이틀 → 훈련 T1(패드 A 이륙 → 패드 B 착륙, 02장 훈련 표)만 연결, 나머지 메뉴는 "준비 중" 비활성. T1은 M4 임무 시스템 전까지 임시 코드 규칙으로 두고 M4-8에서 JSON 임무로 옮긴다. *완료*: T1 완료 판정 테스트(착륙 하강률 500fpm 이하), 타이틀·T1 스크린샷, 해시 라우팅 동작.
 - [x] [#7](https://github.com/kyhsa93/heli-game/issues/7) **M0-7 아키텍처 테스트**: `src/arch.test.ts` (08장 8.3절 의존 규칙 검사).
 - [x] [#8](https://github.com/kyhsa93/heli-game/issues/8) **M0-8 🅰 에셋 파이프라인**: `public/assets/` + `CREDITS.md` 형식, `src/assets/manifest.ts`·`loader.ts`(진행률, 실패 시 폴백), `scripts/`의 가공 스크립트(GLB meshopt 압축, 오디오 모노 MP3 인코딩, 한글 폰트 서브셋 — 문자열 파일에서 글자 추출). *완료*: 로더 폴백 테스트(없는 파일 → 폴백 호출), 첫 로드 에셋 합계 ≤ 600KB 검사 테스트, CREDITS의 모든 항목에 URL·라이선스·확인 날짜가 있는지 검사하는 테스트.
-- [ ] [#9](https://github.com/kyhsa93/heli-game/issues/9) **M0-9 🅰 폰트·하늘**: B612 Mono(IHADSS·MPD·EUFD 캔버스 글꼴), Pretendard 서브셋(UI), `Sky.js`로 현재 하늘 셰이더 교체(낮 기준, 구름 켬). *완료*: 조종석·외부·메뉴 스크린샷, 폰트 로드 전후로 계기 글자 깨짐 없음(폰트 로드 완료 후 캔버스 다시 그림).
+- [x] [#9](https://github.com/kyhsa93/heli-game/issues/9) **M0-9 🅰 폰트·하늘**: B612 Mono(IHADSS·MPD·EUFD 캔버스 글꼴), Pretendard 서브셋(UI), `Sky.js`로 현재 하늘 셰이더 교체(낮 기준, 구름 켬). *완료*: 조종석·외부·메뉴 스크린샷, 폰트 로드 전후로 계기 글자 깨짐 없음(폰트 로드 완료 후 캔버스 다시 그림).
 
 ## M1. 전투 샌드박스 — 쏘고 부순다
 
