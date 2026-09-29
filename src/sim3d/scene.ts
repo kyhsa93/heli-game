@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CELL, HALF, N, PAD_R, SIZE, type Pad3, type Terrain } from './terrain';
+import { CELL, HALF, N, PAD_R, SIZE, type Pad3, type Terrain } from '../sim/terrain';
 
 export const SKY_TOP = new THREE.Color(0x3d7bc4);
 export const SKY_HORIZON = new THREE.Color(0xbcd6ea);

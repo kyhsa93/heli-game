@@ -2,23 +2,18 @@ import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as
 import * as THREE from 'three';
 import { RotorAudio } from '../sim3d/audio';
 import { buildHeli } from '../sim3d/heliModel';
+import { crashText, eventMessage, type Message } from './messages';
 import { clamp } from '../core/math';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { FlightInput } from '../sim3d/input';
 import { Instruments } from '../sim3d/instruments';
 import { buildWorld } from '../sim3d/scene';
 import { drawIhadss } from '../sim3d/ihadss';
-import { BLADES, EYE, ROTOR_HZ, STEP, Sim, type BestStore3 } from '../sim3d/sim';
+import { BLADES, EYE, ROTOR_HZ } from '../sim/heli/airframe';
+import { agl as aglOf, airspeed } from '../sim/heli/state';
+import { FlightSession } from '../sim/session';
+import { STEP } from '../sim/world';
 import { VirtualStick } from './VirtualStick';
-
-const bestStore: BestStore3 = {
-  load() {
-    try { return Number(localStorage.getItem('heli3d-best')) || 0; } catch { return 0; }
-  },
-  save(v) {
-    try { localStorage.setItem('heli3d-best', String(v)); } catch { /* storage unavailable */ }
-  },
-};
 
 type View = 'cockpit' | 'chase';
 
@@ -28,7 +23,9 @@ export function Flight3D({ touch }: { touch: boolean }) {
   const missionRef = useRef<HTMLDivElement>(null);
   const msgRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
-  const [sim] = useState(() => new Sim({ store: bestStore }));
+  const [session] = useState(() => new FlightSession((Math.random() * 1e9) | 0));
+  const sim = session.world;
+  const messagesRef = useRef<Message[]>([]);
   const [input] = useState(() => new FlightInput());
   const audioRef = useRef<RotorAudio | null>(null);
   const viewRef = useRef<View>('cockpit');
@@ -40,7 +37,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
   const ihadssRef = useRef<HTMLCanvasElement>(null);
   const [help, setHelp] = useState(false);
   const [muted, setMuted] = useState(false);
-  const snap = useSyncExternalStore(sim.subscribe, sim.getSnapshot);
+  const snap = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
   const toggleView = () => { viewRef.current = viewRef.current === 'cockpit' ? 'chase' : 'cockpit'; };
 
@@ -50,7 +47,8 @@ export function Flight3D({ touch }: { touch: boolean }) {
     }
     void audioRef.current?.resume();
     input.centerView();
-    sim.start();
+    messagesRef.current = [];
+    session.start();
   };
 
   useEffect(() => {
@@ -60,9 +58,9 @@ export function Flight3D({ touch }: { touch: boolean }) {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
 
-    const world = buildWorld(sim.terrain);
+    const scn = buildWorld(sim.terrain);
     const model = buildHeli();
-    world.scene.add(model.root);
+    scn.scene.add(model.root);
     const inst = new Instruments(sim);
     const tex = inst.textures();
     for (const key of Object.keys(tex) as (keyof typeof tex)[]) {
@@ -91,7 +89,15 @@ export function Flight3D({ touch }: { touch: boolean }) {
     resize();
     window.addEventListener('resize', resize);
 
-    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { sim, input, view: viewRef, model } });
+    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, view: viewRef, model } });
+    const offEvents = sim.events.onAny(e => {
+      const m = eventMessage(e);
+      if (!m) return;
+      const list = messagesRef.current;
+      if (list.some(x => x.text === m.text)) return;
+      list.push({ ...m, life: 3 });
+      if (list.length > 4) list.shift();
+    });
     input.onEngine = () => sim.toggleEngine();
     input.onView = toggleView;
 
@@ -102,12 +108,12 @@ export function Flight3D({ touch }: { touch: boolean }) {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       input.update(sim, dt);
       acc += dt;
-      while (acc >= STEP) { sim.step(STEP); acc -= STEP; }
-      const h = sim.heli, c = sim.controls;
+      while (acc >= STEP) { session.step(STEP); acc -= STEP; }
+      const h = sim.player, c = sim.controls;
 
       model.root.position.copy(h.pos);
       model.root.quaternion.copy(h.q);
-      model.root.visible = h.alive || sim.mode === 'brief';
+      model.root.visible = h.alive || session.mode === 'brief';
 
       rotorAngle += h.rpm * Math.PI * 2 * ROTOR_HZ * dt;
       tailAngle += h.rpm * Math.PI * 2 * 23 * dt;
@@ -126,7 +132,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
       model.shell.visible = !cockpit;
       if (cockpit) {
         if (camera.parent !== model.head) { model.head.add(camera); camera.position.set(0, 0, 0); }
-        const vib = h.rpm * (0.0012 + sim.airspeed() * 0.00003) * (h.landed ? 0.5 : 1);
+        const vib = h.rpm * (0.0012 + airspeed(h, sim.wind) * 0.00003) * (h.landed ? 0.5 : 1);
         model.head.position.set(
           EYE.x + (Math.random() - 0.5) * vib,
           EYE.y + Math.sin(now * 0.001 * Math.PI * 2 * ROTOR_HZ * BLADES * h.rpm) * vib + (Math.random() - 0.5) * vib,
@@ -135,7 +141,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
         camera.rotation.set(input.headPitch, input.headYaw, 0, 'YXZ');
         chaseInit = false;
       } else {
-        if (camera.parent !== world.scene) world.scene.add(camera);
+        if (camera.parent !== scn.scene) scn.scene.add(camera);
         const yawDir = tmp.set(-Math.sin(h.yaw), 0, -Math.cos(h.yaw));
         const want = tmp2.copy(h.pos).addScaledVector(yawDir, -30);
         want.y += 9;
@@ -146,57 +152,58 @@ export function Flight3D({ touch }: { touch: boolean }) {
         camera.lookAt(h.pos.x, h.pos.y + 1, h.pos.z);
       }
 
-      const tp = sim.targetPad();
-      world.beam.position.set(tp.x, tp.y + 250, tp.z);
-      (world.beam.material as THREE.MeshBasicMaterial).color.set(sim.mission.stage === 'pickup' ? 0xffd166 : 0x06d6a0);
+      const tp = sim.target;
+      scn.beam.visible = !!tp;
+      if (tp) scn.beam.position.set(tp.x, tp.y + 250, tp.z);
       const blink = Math.sin(now * 0.008) > 0;
       sim.pads.forEach((p, i) => {
-        const pv = world.pads[i];
-        const target = p === tp;
+        const pv = scn.pads[i];
+        const target = !!tp && Math.hypot(p.x - tp.x, p.z - tp.z) < 1;
         for (const l of pv.lights) {
           const m = l.material as THREE.MeshBasicMaterial;
-          m.color.set(target ? (blink ? (sim.mission.stage === 'pickup' ? 0xffd166 : 0x06d6a0) : 0x222222) : p.base ? 0x4cc9f0 : 0x886633);
+          m.color.set(target ? (blink ? 0x06d6a0 : 0x222222) : p.base ? 0x4cc9f0 : 0x886633);
         }
         const ws = sim.wind.length();
         pv.sock.rotation.set(0, Math.atan2(-sim.wind.z, sim.wind.x), -(1 - Math.min(1, ws / 8)) * 0.9);
       });
 
-      const agl = sim.agl();
+      const agl = aglOf(h, sim.terrain);
       const sy = sim.terrain.surfaceAt(h.pos.x, h.pos.z);
-      world.shadow.visible = h.alive && agl < 90;
-      world.shadow.position.set(h.pos.x, sy + 0.12, h.pos.z);
-      world.shadow.scale.setScalar(5.5 + Math.max(0, agl) * 0.03);
-      (world.shadow.material as THREE.MeshBasicMaterial).opacity = 0.4 * (1 - clamp(agl / 90, 0, 1));
+      scn.shadow.visible = h.alive && agl < 90;
+      scn.shadow.position.set(h.pos.x, sy + 0.12, h.pos.z);
+      scn.shadow.scale.setScalar(5.5 + Math.max(0, agl) * 0.03);
+      (scn.shadow.material as THREE.MeshBasicMaterial).opacity = 0.4 * (1 - clamp(agl / 90, 0, 1));
 
       camera.getWorldPosition(tmp);
-      world.sky.position.copy(tmp);
+      scn.sky.position.copy(tmp);
 
       inst.draw(sim, frame++ % 3);
-      renderer.render(world.scene, camera);
+      renderer.render(scn.scene, camera);
 
       og.clearRect(0, 0, overlay.width, overlay.height);
-      if (cockpit && hudOnRef.current && h.alive && sim.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, sim, camera);
+      if (cockpit && hudOnRef.current && h.alive && session.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, sim, camera);
 
       audioRef.current?.update({
-        rpm: h.alive ? h.rpm : 0, collective: h.collective, airspeed: sim.airspeed(),
-        warn: h.alive && sim.mode === 'play' && ((h.rpm < 0.85 && !h.landed) || h.fuel < 10),
+        rpm: h.alive ? h.rpm : 0, collective: h.collective, airspeed: airspeed(h, sim.wind),
+        warn: h.alive && session.mode === 'play' && ((h.rpm < 0.85 && !h.landed) || h.fuel < 10),
       });
 
       if (hudRef.current) {
         hudRef.current.style.display = !cockpit && hudOnRef.current ? '' : 'none';
         hudRef.current.textContent =
-          `RAD ALT ${Math.round(Math.max(0, agl) * M_TO_FT)} ft · VS ${Math.round(h.vel.y * MS_TO_FPM)} fpm · ${Math.round(sim.airspeed() * MS_TO_KT)} kt · COLL ${Math.round(h.collective * 100)}% · ROTOR ${Math.round(h.rpm * 100)}%`;
+          `RAD ALT ${Math.round(Math.max(0, agl) * M_TO_FT)} ft · VS ${Math.round(h.vel.y * MS_TO_FPM)} fpm · ${Math.round(airspeed(h, sim.wind) * MS_TO_KT)} kt · COLL ${Math.round(h.collective * 100)}% · ROTOR ${Math.round(h.rpm * 100)}%`;
       }
       if (missionRef.current) {
-        const m = sim.mission;
-        const d = Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z));
-        missionRef.current.textContent = m.stage === 'pickup'
-          ? `화물 픽업: ${tp.name} 패드 (${d} m)${m.timer > 0 ? ` — 적재 중 ${Math.ceil(3 - m.timer)}` : ''}`
-          : `화물 배달: ${tp.name} 패드 (${d} m)${m.timer > 0 ? ` — 하역 중 ${Math.ceil(2 - m.timer)}` : ''}`;
-        missionRef.current.style.color = m.stage === 'pickup' ? '#ffd166' : '#06d6a0';
+        missionRef.current.textContent = tp
+          ? `목표: ${tp.name} 패드 (${Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z))} m)`
+          : '비행 연습';
+        missionRef.current.style.color = '#06d6a0';
       }
       if (msgRef.current) {
-        msgRef.current.replaceChildren(...sim.messages.map(m => {
+        const list = messagesRef.current;
+        for (const m of list) m.life -= dt;
+        messagesRef.current = list.filter(m => m.life > 0);
+        msgRef.current.replaceChildren(...messagesRef.current.map(m => {
           const el = document.createElement('div');
           el.textContent = m.text; el.style.color = m.color; el.style.opacity = String(clamp(m.life, 0, 1));
           return el;
@@ -204,7 +211,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
       }
       if (hintRef.current) {
         let hint = '';
-        if (sim.mode === 'play' && h.alive) {
+        if (session.mode === 'play' && h.alive) {
           if (!h.engineOn && h.landed && h.fuel > 0) hint = touchRef.current ? '시동 버튼으로 엔진을 켜세요' : 'I 키로 엔진 시동';
           else if (h.engineOn && h.rpm < 0.95 && h.landed) hint = `로터 가속 중… ${Math.round(h.rpm * 100)}%`;
           else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = touchRef.current ? '왼쪽 스틱을 위로 — 콜렉티브를 올려 이륙' : 'W 키로 콜렉티브를 올려 이륙';
@@ -219,14 +226,15 @@ export function Flight3D({ touch }: { touch: boolean }) {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
-      world.dispose();
+      scn.dispose();
+      offEvents();
       inst.dispose();
       renderer.dispose();
       mount.removeChild(renderer.domElement);
       audioRef.current?.dispose();
       audioRef.current = null;
     };
-  }, [sim, input]);
+  }, [session, sim, input]);
 
   useEffect(() => {
     const prevent = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown']);
@@ -241,8 +249,8 @@ export function Flight3D({ touch }: { touch: boolean }) {
         case 'KeyU': setHud(v => !v); break;
         case 'KeyH': setHelp(v => !v); break;
         case 'KeyM': if (audioRef.current) setMuted(audioRef.current.toggleMute()); break;
-        case 'KeyR': if (sim.mode !== 'brief') begin(); break;
-        case 'Enter': if (sim.mode === 'brief' || sim.mode === 'over') begin(); break;
+        case 'KeyR': if (session.mode !== 'brief') begin(); break;
+        case 'Enter': if (session.mode === 'brief' || session.mode === 'over') begin(); break;
       }
     };
     const up = (e: KeyboardEvent) => { input.keys.delete(e.code); };
@@ -283,7 +291,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
         <div className="hud3d">
           <div className="mission" ref={missionRef} />
           <div className="telemetry" ref={hudRef} />
-          <div className="score3d">점수 {snap.score} · 배달 {snap.delivered}{muted ? ' · 음소거' : ''}</div>
+          {muted && <div className="score3d">음소거</div>}
         </div>
       )}
       <div className="messages" ref={msgRef} />
@@ -302,7 +310,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
         <div className="overlay">
           <div className="card wide">
             <h1>AH-64 조종석</h1>
-            <p className="sub">아파치 뒷좌석(조종사석)에 앉았습니다. 베이스(H)에서 시동을 걸고, 보급품을 실어 목적지 패드에 내려놓으세요.<br />
+            <p className="sub">아파치 뒷좌석(조종사석)에 앉았습니다. 베이스(H)에서 시동을 걸고 자유롭게 비행 연습을 하세요.<br />
               콜렉티브는 놓아도 그 자리에 머뭅니다 — 실제 헬기처럼요.</p>
             {touch ? (
               <div className="keys">
@@ -325,7 +333,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
             )}
             <ul className="rules">
               <li>착륙: 하강률 {Math.round(3 * MS_TO_FPM)} fpm 이하, 거의 멈춘 채로, 수평으로.</li>
-              <li>픽업 패드에 3초, 목적지 패드에 2초 머무르면 적재·하역됩니다.</li>
+              <li>H 패드에 착륙하면 연료가 채워집니다.</li>
               <li>헬멧 심볼의 방위 화살표·마름모와 오른쪽 MPD 지도(TSD)가 목표를 가리킵니다. 가운데 선은 기체가 흘러가는 방향(호버 벡터)입니다.</li>
               <li>엔진이 꺼지면 콜렉티브를 내려 로터를 살리고(오토로테이션), 지면 직전에 올리세요.</li>
               <li>게임패드: 왼쪽 스틱 콜렉티브·페달, 오른쪽 스틱 사이클릭, A 시동, Y 시점.</li>
@@ -341,9 +349,7 @@ export function Flight3D({ touch }: { touch: boolean }) {
         <div className="overlay">
           <div className="card">
             <h1>추락</h1>
-            <p className="sub">{snap.crashReason}</p>
-            <div className="big">{snap.score}</div>
-            <p className="sub">배달 {snap.delivered}건 · 최고 기록 {snap.best}</p>
+            <p className="sub">{snap.crash ? crashText(snap.crash.reason, snap.crash.value) : ''}</p>
             <button className="go" onClick={begin}>다시 비행</button>
           </div>
         </div>

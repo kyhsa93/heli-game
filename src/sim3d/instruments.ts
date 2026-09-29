@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { clamp } from '../core/math';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
-import type { Sim } from './sim';
-import { HALF, N, SIZE } from './terrain';
+import { agl as aglOf, airspeed } from '../sim/heli/state';
+import { HALF, N, SIZE } from '../sim/terrain';
+import type { World } from '../sim/world';
 
 const GREEN = '#46ff7a';
 const DIM = '#1f8a3e';
@@ -24,13 +25,14 @@ export function headingDeg(yaw: number) {
   return ((-yaw * 180 / Math.PI) % 360 + 360) % 360;
 }
 
-export function bearingDeg(sim: Sim) {
-  const tp = sim.targetPad(), h = sim.heli;
+export function bearingDeg(world: World): number | null {
+  const tp = world.target, h = world.player;
+  if (!tp) return null;
   return ((Math.atan2(tp.x - h.pos.x, -(tp.z - h.pos.z)) * 180 / Math.PI) + 360) % 360;
 }
 
-export function hoverVector(sim: Sim) {
-  const h = sim.heli;
+export function hoverVector(world: World) {
+  const h = world.player;
   const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), rx = Math.cos(h.yaw), rz = -Math.sin(h.yaw);
   return { fwd: h.vel.x * fx + h.vel.z * fz, right: h.vel.x * rx + h.vel.z * rz };
 }
@@ -42,8 +44,8 @@ export class Instruments {
   readonly standby = surface(384, 504);
   private relief: HTMLCanvasElement;
 
-  constructor(sim: Sim) {
-    this.relief = reliefMap(sim);
+  constructor(world: World) {
+    this.relief = reliefMap(world);
   }
 
   textures() {
@@ -54,17 +56,17 @@ export class Instruments {
     for (const s of [this.mpdL, this.mpdR, this.eufd, this.standby]) s.texture.dispose();
   }
 
-  draw(sim: Sim, part: number) {
-    if (part === 0) { this.flt(sim); this.mpdL.texture.needsUpdate = true; }
-    if (part === 1) { this.tsd(sim); this.mpdR.texture.needsUpdate = true; }
+  draw(world: World, part: number) {
+    if (part === 0) { this.flt(world); this.mpdL.texture.needsUpdate = true; }
+    if (part === 1) { this.tsd(world); this.mpdR.texture.needsUpdate = true; }
     if (part === 2) {
-      this.drawEufd(sim); this.eufd.texture.needsUpdate = true;
-      this.drawStandby(sim); this.standby.texture.needsUpdate = true;
+      this.drawEufd(world); this.eufd.texture.needsUpdate = true;
+      this.drawStandby(world); this.standby.texture.needsUpdate = true;
     }
   }
 
-  private flt(sim: Sim) {
-    const g = this.mpdL.ctx, h = sim.heli;
+  private flt(world: World) {
+    const g = this.mpdL.ctx, h = world.player;
     bezel(g, ['FLT', 'FUEL', 'ENG', 'WPN', 'TSD', 'COM'], 0);
     screenClip(g, () => {
       const cx = 256, cy = 250;
@@ -89,7 +91,7 @@ export class Instruments {
       g.strokeStyle = GREEN; g.lineWidth = 3;
       g.beginPath(); g.moveTo(cx - 34, cy); g.lineTo(cx - 12, cy); g.lineTo(cx, cy + 10); g.lineTo(cx + 12, cy); g.lineTo(cx + 34, cy); g.stroke();
 
-      const hv = hoverVector(sim);
+      const hv = hoverVector(world);
       const vs = 6;
       g.strokeStyle = GREEN; g.lineWidth = 3;
       g.beginPath(); g.arc(cx, cy, 60, 0, Math.PI * 2); g.globalAlpha = 0.35; g.stroke(); g.globalAlpha = 1;
@@ -97,12 +99,12 @@ export class Instruments {
       g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + vx, cy + vy); g.stroke();
       g.beginPath(); g.arc(cx + vx, cy + vy, 4, 0, Math.PI * 2); g.fill();
 
-      tape(g, headingDeg(h.yaw), bearingDeg(sim), 256, 86, 300);
+      tape(g, headingDeg(h.yaw), bearingDeg(world), 256, 86, 300);
 
-      const kt = sim.airspeed() * MS_TO_KT;
+      const kt = airspeed(world.player, world.wind) * MS_TO_KT;
       box(g, 88, 250, `${Math.round(kt)}`);
       g.font = '13px monospace'; g.fillStyle = DIM; g.textAlign = 'center'; g.fillText('KTS', 88, 282);
-      const agl = Math.max(0, sim.agl()) * M_TO_FT;
+      const agl = Math.max(0, aglOf(world.player, world.terrain)) * M_TO_FT;
       box(g, 424, 250, agl > 1428 ? '---' : `${Math.round(agl)}`);
       g.font = '13px monospace'; g.fillStyle = DIM; g.fillText('R ALT', 424, 282);
       g.fillStyle = GREEN; g.font = 'bold 16px monospace';
@@ -127,11 +129,11 @@ export class Instruments {
     });
   }
 
-  private tsd(sim: Sim) {
-    const g = this.mpdR.ctx, h = sim.heli;
+  private tsd(world: World) {
+    const g = this.mpdR.ctx, h = world.player;
     bezel(g, ['TSD', 'MAP', 'PAN', 'RTE', 'FLT', 'ENG'], 0);
     const range = 2000, scale = 380 / range;
-    const tp = sim.targetPad();
+    const tp = world.target;
     screenClip(g, () => {
       const cx = 256, cy = 330;
       g.save();
@@ -139,13 +141,15 @@ export class Instruments {
       g.globalAlpha = 0.55;
       g.drawImage(this.relief, (-HALF - h.pos.x) * scale, (-HALF - h.pos.z) * scale, SIZE * scale, SIZE * scale);
       g.globalAlpha = 1;
-      const blink = Math.sin(sim.time * 6) > 0;
-      g.setLineDash([10, 8]); g.strokeStyle = AMBER; g.lineWidth = 2;
-      g.beginPath(); g.moveTo(0, 0); g.lineTo((tp.x - h.pos.x) * scale, (tp.z - h.pos.z) * scale); g.stroke();
-      g.setLineDash([]);
-      for (const p of sim.pads) {
+      const blink = Math.sin(world.time * 6) > 0;
+      if (tp) {
+        g.setLineDash([10, 8]); g.strokeStyle = AMBER; g.lineWidth = 2;
+        g.beginPath(); g.moveTo(0, 0); g.lineTo((tp.x - h.pos.x) * scale, (tp.z - h.pos.z) * scale); g.stroke();
+        g.setLineDash([]);
+      }
+      for (const p of world.pads) {
         const x = (p.x - h.pos.x) * scale, y = (p.z - h.pos.z) * scale;
-        const target = p === tp;
+        const target = !!tp && Math.hypot(p.x - tp.x, p.z - tp.z) < 1;
         g.save(); g.translate(x, y); g.rotate(-h.yaw);
         g.strokeStyle = target ? AMBER : GREEN; g.fillStyle = g.strokeStyle; g.lineWidth = 2.5;
         if (p.base) { g.strokeRect(-9, -9, 18, 18); g.font = 'bold 13px monospace'; g.textAlign = 'center'; g.fillText('H', 0, 5); }
@@ -160,36 +164,36 @@ export class Instruments {
       g.fillStyle = GREEN;
       g.beginPath(); g.moveTo(cx, cy - 16); g.lineTo(cx - 10, cy + 12); g.lineTo(cx, cy + 6); g.lineTo(cx + 10, cy + 12); g.fill();
 
-      tape(g, headingDeg(h.yaw), bearingDeg(sim), 256, 86, 300);
-      const d = Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z);
-      const gs = Math.hypot(h.vel.x, h.vel.z);
-      const ete = gs > 2 ? `${Math.floor(d / gs / 60)}:${String(Math.round(d / gs % 60)).padStart(2, '0')}` : '--:--';
+      tape(g, headingDeg(h.yaw), bearingDeg(world), 256, 86, 300);
       g.font = 'bold 16px monospace'; g.textAlign = 'left'; g.fillStyle = AMBER;
-      g.fillText(`${sim.mission.stage === 'pickup' ? 'PICKUP' : 'DELIVER'} ${tp.name}`, 72, 130);
-      g.fillStyle = GREEN;
-      g.fillText(`${(d / 1000).toFixed(2)} KM  ETE ${ete}`, 72, 152);
+      if (tp) {
+        const d = Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z);
+        const gs = Math.hypot(h.vel.x, h.vel.z);
+        const ete = gs > 2 ? `${Math.floor(d / gs / 60)}:${String(Math.round(d / gs % 60)).padStart(2, '0')}` : '--:--';
+        g.fillText(`WPT ${tp.name}`, 72, 130);
+        g.fillStyle = GREEN;
+        g.fillText(`${(d / 1000).toFixed(2)} KM  ETE ${ete}`, 72, 152);
+      } else g.fillText('NO WPT', 72, 130);
       g.textAlign = 'right'; g.fillStyle = DIM; g.font = '13px monospace';
       g.fillText('2 KM', 440, 130);
       g.textAlign = 'left'; g.font = 'bold 15px monospace'; g.fillStyle = h.fuel < 20 ? AMBER : GREEN;
       g.fillText(`FUEL ${Math.round(h.fuel / 100 * FUEL_LB)} LB`, 72, 424);
       g.textAlign = 'right'; g.fillStyle = GREEN;
-      g.fillText(`WIND ${Math.round(sim.wind.length() * MS_TO_KT)} KT`, 440, 424);
+      g.fillText(`WIND ${Math.round(world.wind.length() * MS_TO_KT)} KT`, 440, 424);
     });
   }
 
-  private drawEufd(sim: Sim) {
-    const g = this.eufd.ctx, h = sim.heli, W = 512, H = 288;
+  private drawEufd(world: World) {
+    const g = this.eufd.ctx, h = world.player, W = 512, H = 288;
     g.fillStyle = '#050403'; g.fillRect(0, 0, W, H);
     g.strokeStyle = '#3a2a00'; g.lineWidth = 2;
     g.beginPath(); g.moveTo(250, 12); g.lineTo(250, H - 12); g.stroke();
     g.font = 'bold 26px monospace'; g.textAlign = 'left';
     const warn: string[] = [];
-    if (!h.engineOn && sim.mode === 'play' && h.alive) warn.push('ENGINE OUT');
+    if (!h.engineOn && world.active && h.alive) warn.push('ENGINE OUT');
     if (h.rpm < 0.9 && !h.landed) warn.push('LOW ROTOR RPM');
     if (h.fuel < 20) warn.push('FUEL LOW');
-    if (sim.mission.stage === 'deliver') warn.push('CARGO LOADED');
-    if (sim.mission.timer > 0) warn.push(sim.mission.stage === 'pickup' ? 'LOADING' : 'UNLOADING');
-    const blink = Math.sin(sim.time * 7) > 0;
+    const blink = Math.sin(world.time * 7) > 0;
     warn.slice(0, 6).forEach((w, i) => {
       const caution = w === 'ENGINE OUT' || w === 'LOW ROTOR RPM';
       g.fillStyle = caution && blink ? '#ff5a3a' : AMBER;
@@ -197,7 +201,7 @@ export class Instruments {
     });
     if (!warn.length) { g.fillStyle = '#6b4a00'; g.fillText('NO FAULTS', 16, 40); }
     g.fillStyle = AMBER;
-    const t = new Date(sim.time * 1000);
+    const t = new Date(world.time * 1000);
     g.fillText(`FUEL ${Math.round(h.fuel / 100 * FUEL_LB)}`, 266, 40);
     g.fillText(`NR   ${Math.round(h.rpm * 101)}%`, 266, 80);
     g.fillText(`TQ   ${Math.round(h.collective * h.rpm * 100)}%`, 266, 120);
@@ -205,11 +209,11 @@ export class Instruments {
     g.fillText(`T+ ${String(t.getUTCMinutes()).padStart(2, '0')}:${String(t.getUTCSeconds()).padStart(2, '0')}`, 266, 240);
   }
 
-  private drawStandby(sim: Sim) {
-    const g = this.standby.ctx, h = sim.heli;
+  private drawStandby(world: World) {
+    const g = this.standby.ctx, h = world.player;
     g.fillStyle = '#16181b'; g.fillRect(0, 0, 384, 504);
     const r = 70;
-    const kt = sim.airspeed() * MS_TO_KT;
+    const kt = airspeed(world.player, world.wind) * MS_TO_KT;
     smallDial(g, 96, 96, r, 'KTS', kt / 200 * Math.PI * 1.6 - Math.PI * 0.8, [0, 40, 80, 120, 160, 200]);
     smallDial(g, 288, 96, r, 'ALT', (h.pos.y * M_TO_FT / 1000) * Math.PI * 2, [0, 2, 4, 6, 8], true);
     const cx = 192, cy = 300, R = 110;
@@ -270,7 +274,7 @@ function box(g: CanvasRenderingContext2D, x: number, y: number, text: string) {
   g.fillText(text, x, y + 8);
 }
 
-function tape(g: CanvasRenderingContext2D, hdg: number, brg: number, cx: number, y: number, width: number) {
+function tape(g: CanvasRenderingContext2D, hdg: number, brg: number | null, cx: number, y: number, width: number) {
   const ppd = width / 60;
   g.strokeStyle = GREEN; g.fillStyle = GREEN; g.lineWidth = 2; g.textAlign = 'center';
   g.font = 'bold 14px monospace';
@@ -282,6 +286,7 @@ function tape(g: CanvasRenderingContext2D, hdg: number, brg: number, cx: number,
   }
   g.strokeRect(cx - 26, y + 4, 52, 22);
   g.font = 'bold 16px monospace'; g.fillText(String(Math.round(hdg) % 360).padStart(3, '0'), cx, y + 21);
+  if (brg === null) return;
   let db = brg - hdg; while (db > 180) db -= 360; while (db < -180) db += 360;
   const bx = cx + clamp(db, -30, 30) * ppd;
   g.fillStyle = AMBER;
@@ -302,12 +307,12 @@ function smallDial(g: CanvasRenderingContext2D, cx: number, cy: number, r: numbe
   g.restore();
 }
 
-function reliefMap(sim: Sim) {
+function reliefMap(world: World) {
   const cv = document.createElement('canvas');
   cv.width = cv.height = N;
   const g = cv.getContext('2d')!;
   const img = g.createImageData(N, N);
-  const t = sim.terrain;
+  const t = world.terrain;
   for (let j = 0; j < N; j++) {
     for (let i = 0; i < N; i++) {
       const hgt = t.heights[j * (N + 1) + i], k = (j * N + i) * 4;

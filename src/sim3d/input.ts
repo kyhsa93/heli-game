@@ -1,5 +1,5 @@
 import { clamp } from '../core/math';
-import type { Sim } from './sim';
+import type { World } from '../sim/world';
 
 export interface TouchSticks { lx: number; ly: number; rx: number; ry: number }
 
@@ -17,8 +17,8 @@ export class FlightInput {
   onEngine?: () => void;
   onView?: () => void;
 
-  update(sim: Sim, dt: number) {
-    const k = this.keys, c = sim.controls;
+  update(world: World, dt: number) {
+    const k = this.keys, c = world.controls;
     const tx = (k.has('ArrowRight') ? 1 : 0) - (k.has('ArrowLeft') ? 1 : 0);
     const ty = (k.has('ArrowUp') ? 1 : 0) - (k.has('ArrowDown') ? 1 : 0);
     const ramp = Math.min(1, dt * 4);

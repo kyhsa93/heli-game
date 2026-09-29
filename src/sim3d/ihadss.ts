@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { clamp } from '../core/math';
 import { bearingDeg, headingDeg, hoverVector } from './instruments';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
-import type { Sim } from './sim';
+import { agl as aglOf, airspeed } from '../sim/heli/state';
+import type { World } from '../sim/world';
 
 const GREEN = '#5dff6e';
 const tmp = new THREE.Vector3();
@@ -15,10 +16,10 @@ function project(camera: THREE.Camera, p: THREE.Vector3, w: number, h: number) {
   return { x: (tmp.x + 1) / 2 * w, y: (1 - tmp.y) / 2 * h };
 }
 
-export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, sim: Sim, camera: THREE.Camera) {
+export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, world: World, camera: THREE.Camera) {
   const u = clamp(Math.min(w, h) / 700, 0.6, 1.4);
   const cx = w / 2, cy = h / 2;
-  const heli = sim.heli;
+  const heli = world.player;
   g.save();
   g.strokeStyle = GREEN; g.fillStyle = GREEN; g.lineWidth = 2 * u;
   g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 3;
@@ -44,7 +45,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, si
   g.moveTo(cx, cy - 14 * u); g.lineTo(cx, cy - 5 * u); g.moveTo(cx, cy + 5 * u); g.lineTo(cx, cy + 14 * u);
   g.stroke();
 
-  const hv = hoverVector(sim);
+  const hv = hoverVector(world);
   const R = 70 * u, s = R / 5;
   g.globalAlpha = 0.45; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
   const vx = clamp(hv.right * s, -R, R), vy = clamp(-hv.fwd * s, -R, R);
@@ -53,7 +54,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, si
   g.lineWidth = 2 * u;
   g.beginPath(); g.arc(cx + vx, cy + vy, 4 * u, 0, Math.PI * 2); g.fill();
 
-  const hdg = headingDeg(heli.yaw), brg = bearingDeg(sim);
+  const hdg = headingDeg(heli.yaw), brg = bearingDeg(world);
   const tw = 260 * u, ty = 40 * u, ppd = tw / 60;
   for (let d = Math.ceil((hdg - 30) / 5) * 5; d <= hdg + 30; d += 5) {
     const x = cx + (d - hdg) * ppd, n = ((d % 360) + 360) % 360;
@@ -62,14 +63,16 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, si
   }
   g.strokeRect(cx - 24 * u, ty + 4 * u, 48 * u, 22 * u);
   g.fillText(String(Math.round(hdg) % 360).padStart(3, '0'), cx, ty + 21 * u);
-  let db = brg - hdg; while (db > 180) db -= 360; while (db < -180) db += 360;
-  const bx = cx + clamp(db, -30, 30) * ppd;
-  g.beginPath(); g.moveTo(bx, ty + 30 * u); g.lineTo(bx - 7 * u, ty + 42 * u); g.lineTo(bx + 7 * u, ty + 42 * u); g.closePath(); g.stroke();
+  if (brg !== null) {
+    let db = brg - hdg; while (db > 180) db -= 360; while (db < -180) db += 360;
+    const bx = cx + clamp(db, -30, 30) * ppd;
+    g.beginPath(); g.moveTo(bx, ty + 30 * u); g.lineTo(bx - 7 * u, ty + 42 * u); g.lineTo(bx + 7 * u, ty + 42 * u); g.closePath(); g.stroke();
+  }
 
-  const kt = sim.airspeed() * MS_TO_KT;
+  const kt = airspeed(world.player, world.wind) * MS_TO_KT;
   g.textAlign = 'right';
   g.fillText(`${Math.round(kt)}`, cx - 150 * u, cy + 6 * u);
-  const agl = Math.max(0, sim.agl()) * M_TO_FT;
+  const agl = Math.max(0, aglOf(world.player, world.terrain)) * M_TO_FT;
   g.textAlign = 'left';
   g.fillText(agl > 1428 ? '' : `${Math.round(agl)}`, cx + 150 * u, cy + 6 * u);
   g.fillText(`${Math.round(heli.pos.y * M_TO_FT)}`, cx + 150 * u, cy - 70 * u);
@@ -86,9 +89,9 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, si
   g.textAlign = 'right';
   if (heli.rpm < 0.95) g.fillText(`NR ${Math.round(heli.rpm * 101)}%`, cx + 190 * u, cy + 110 * u);
 
-  const tp = sim.targetPad();
-  const sp = project(camera, tmp.set(tp.x, tp.y + 1, tp.z), w, h);
-  if (sp && sp.x > 0 && sp.x < w && sp.y > 0 && sp.y < h) {
+  const tp = world.target;
+  const sp = tp && project(camera, tmp.set(tp.x, tp.y + 1, tp.z), w, h);
+  if (tp && sp && sp.x > 0 && sp.x < w && sp.y > 0 && sp.y < h) {
     const d = Math.hypot(tp.x - heli.pos.x, tp.z - heli.pos.z);
     const r = 10 * u;
     g.beginPath(); g.moveTo(sp.x, sp.y - r); g.lineTo(sp.x + r, sp.y); g.lineTo(sp.x, sp.y + r); g.lineTo(sp.x - r, sp.y); g.closePath(); g.stroke();
@@ -98,9 +101,9 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, si
 
   g.textAlign = 'center';
   const warns: string[] = [];
-  if (!heli.engineOn && heli.alive && sim.mode === 'play' && !heli.landed) warns.push('ENGINE OUT');
+  if (!heli.engineOn && heli.alive && world.active && !heli.landed) warns.push('ENGINE OUT');
   if (heli.rpm < 0.85 && !heli.landed) warns.push('LOW ROTOR RPM');
   if (heli.fuel < 10) warns.push('FUEL LOW');
-  if (warns.length && Math.sin(sim.time * 8) > 0) g.fillText(warns.join('  '), cx, cy + 150 * u);
+  if (warns.length && Math.sin(world.time * 8) > 0) g.fillText(warns.join('  '), cx, cy + 150 * u);
   g.restore();
 }

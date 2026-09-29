@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BLADES, EYE, GEAR_Y, ROTOR_R, ROTOR_Y } from './sim';
+import { BLADES, EYE, GEAR_Y, ROTOR_R, ROTOR_Y } from '../sim/heli/airframe';
 
 export interface Screens {
   mpdL: THREE.Mesh;
