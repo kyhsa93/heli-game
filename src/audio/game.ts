@@ -2,6 +2,24 @@ import type { Vector3 } from 'three';
 import type { SimEvent } from '../sim/events';
 import { RotorAudio, type AudioState } from './rotor';
 import { SfxPlayer, type SampleId } from './sfx';
+import { loadVoiceEnabled, saveVoiceEnabled, speechBackend, VoiceWarnings, type VoiceBackend, type VoiceLine } from './voice';
+
+export const BINGO = 10;
+export const ALTITUDE_FT = 50;
+export const ALTITUDE_SINK = 800;
+
+export function voiceFor(e: SimEvent): VoiceLine | null {
+  switch (e.t) {
+    case 'missileWarning': return e.kind === 'radar' ? 'missileLaunch' : 'missile';
+    case 'systemDamaged':
+      if (e.system === 'engine1' && e.level === 'damaged') return 'engine1Fire';
+      if (e.system === 'engine2' && e.level === 'damaged') return 'engine2Fire';
+      if (e.system === 'rotor' && e.level === 'destroyed') return 'landNow';
+      return null;
+    case 'engine': return !e.on && (e.cause === 'damage' || e.cause === 'fuel') ? 'engineOut' : null;
+    default: return null;
+  }
+}
 
 export const AUDIO_ASSETS: Record<string, string> = {
   'audio.rotor_loop': 'rotor_interior_loop',
@@ -13,16 +31,29 @@ export const AUDIO_ASSETS: Record<string, string> = {
   'audio.explosion_fire': 'explosion_fire',
   'audio.impact_metal': 'impact_metal',
   'audio.impact_ground': 'impact_ground',
+  'audio.hit_metal_0': 'hit_metal_0',
+  'audio.hit_metal_1': 'hit_metal_1',
+  'audio.hit_metal_2': 'hit_metal_2',
+  'audio.radio_squelch': 'radio_squelch',
 };
 
 export class GameAudio {
   readonly rotor: RotorAudio;
   readonly sfx: SfxPlayer;
+  readonly voice: VoiceWarnings;
+  private bingoSaid = false;
   private buffers: Record<string, AudioBuffer> = {};
 
-  constructor(ctx?: AudioContext) {
+  constructor(ctx?: AudioContext, voice?: VoiceBackend | null) {
     this.rotor = new RotorAudio(ctx);
     this.sfx = new SfxPlayer(this.rotor.context, this.rotor.output);
+    this.voice = new VoiceWarnings(voice === undefined ? speechBackend() : voice, () => this.rotor.beep(), () => this.rotor.context.currentTime);
+    this.voice.enabled = loadVoiceEnabled();
+  }
+
+  setVoice(on: boolean) {
+    this.voice.enabled = on;
+    saveVoiceEnabled(on);
   }
 
   async loadSamples(get: (id: string) => ArrayBuffer | undefined) {
@@ -34,7 +65,7 @@ export class GameAudio {
     }));
     if (this.buffers.rotor_interior_loop) this.rotor.setRotorLoop(this.buffers.rotor_interior_loop);
     const s: Partial<Record<SampleId, AudioBuffer>> = {};
-    for (const k of ['gun_shot', 'rocket_launch', 'hellfire_launch', 'impact_metal', 'impact_ground', 'explosion_near', 'explosion_fire'] as SampleId[]) if (this.buffers[k]) s[k] = this.buffers[k];
+    for (const k of ['gun_shot', 'rocket_launch', 'hellfire_launch', 'hit_metal_0', 'hit_metal_1', 'hit_metal_2', 'radio_squelch', 'impact_metal', 'impact_ground', 'explosion_near', 'explosion_fire'] as SampleId[]) if (this.buffers[k]) s[k] = this.buffers[k];
     this.sfx.setSamples(s);
   }
 
@@ -44,9 +75,18 @@ export class GameAudio {
       else this.rotor.stopEngineStart();
     }
     this.sfx.onEvent(e, listener);
+    const line = voiceFor(e);
+    if (line) this.voice.say(line);
   }
 
-  update(s: AudioState) { this.rotor.update(s); }
+  update(s: AudioState & { fuel?: number; aglFt?: number; vsFpm?: number; flying?: boolean }) {
+    this.rotor.update(s);
+    if (s.fuel !== undefined) {
+      if (s.fuel < BINGO && !this.bingoSaid) { this.bingoSaid = this.voice.say('bingoFuel'); }
+      if (s.fuel > BINGO + 5) this.bingoSaid = false;
+    }
+    if (s.flying && s.aglFt !== undefined && s.vsFpm !== undefined && s.aglFt < ALTITUDE_FT && s.vsFpm < -ALTITUDE_SINK) this.voice.say('altitude');
+  }
   resume() { return this.rotor.resume(); }
   toggleMute() { return this.rotor.toggleMute(); }
   dispose() { this.rotor.dispose(); }

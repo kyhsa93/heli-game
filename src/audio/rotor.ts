@@ -1,9 +1,11 @@
+import { RWR_PATTERN, rwrGateOn, type RwrLevel } from './rwr';
 export interface AudioState {
   rpm: number;
   collective: number;
   airspeed: number;
   warn: boolean;
   lock?: boolean;
+  rwr?: RwrLevel;
 }
 
 export class RotorAudio {
@@ -21,6 +23,8 @@ export class RotorAudio {
   private windFilter!: BiquadFilterNode;
   private warnGain!: GainNode;
   private lockGain!: GainNode;
+  private rwrOsc!: OscillatorNode;
+  private rwrGain!: GainNode;
   private muted = false;
   private synthBus: GainNode;
   private loop: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
@@ -120,6 +124,9 @@ export class RotorAudio {
     const tone = ctx.createOscillator(); tone.type = 'sine'; tone.frequency.value = 1150; tone.start();
     this.lockGain = ctx.createGain(); this.lockGain.gain.value = 0;
     tone.connect(this.lockGain).connect(this.master);
+    this.rwrOsc = ctx.createOscillator(); this.rwrOsc.type = 'square'; this.rwrOsc.frequency.value = 1000; this.rwrOsc.start();
+    this.rwrGain = ctx.createGain(); this.rwrGain.gain.value = 0;
+    this.rwrOsc.connect(this.rwrGain).connect(this.master);
   }
 
   resume() { return this.ctx.resume(); }
@@ -156,6 +163,15 @@ export class RotorAudio {
     this.warnGain.gain.setTargetAtTime(beepOn ? 0.05 : 0, t, 0.01);
     const lockOn = !!s.lock && (t * 8) % 1 < 0.5;
     this.lockGain.gain.setTargetAtTime(lockOn ? 0.035 : 0, t, 0.005);
+    const level = s.rwr ?? 'none', pat = RWR_PATTERN[level];
+    if (pat.freq) this.rwrOsc.frequency.setTargetAtTime(pat.freq, t, 0.01);
+    this.rwrGain.gain.setTargetAtTime(rwrGateOn(level, t) ? pat.gain : 0, t, 0.004);
+  }
+
+  beep() {
+    const t = this.ctx.currentTime;
+    this.warnGain.gain.setValueAtTime(0.06, t);
+    this.warnGain.gain.setValueAtTime(0, t + 0.25);
   }
 
   dispose() { void this.ctx.close(); }

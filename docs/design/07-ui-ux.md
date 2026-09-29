@@ -231,6 +231,8 @@ EUFD(가운데 주황 화면)는 현재처럼 경고 목록 + 연료·NR·TQ. 03
 | 음성 경고 | "MISSILE LAUNCH", "ENGINE ONE FIRE", "BINGO FUEL", "ALTITUDE" 등 8문장. **브라우저 `speechSynthesis`로 구현**(9장 9.3 결정, 영어·여성 음성 우선, iOS는 첫 사용자 조작 후부터). 지원 안 되면 비프. 나중에 녹음 파일이 생기면 밴드패스 필터로 인터콤처럼 재생하도록 교체 설정에서 끄기 | 신규 |
 | 무전 | 자막 표시 시 녹음 무전 잡음(squelch) | 신규 |
 
+구현(M3-8): 음성 경고는 `src/audio/voice.ts`의 8문장(Missile launch / Missile, missile / Engine one·two fire / Engine out / Land now / Bingo fuel / Altitude, altitude), 같은 문장은 5초 쿨다운, `speechSynthesis`가 없으면 비프. 연료 10% 미만에서 한 번, 50ft 아래 800fpm 넘는 하강이면 Altitude. 켜고 끄기는 일시정지 카드의 버튼(설정 화면은 M7-1)이며 `localStorage`에 저장. RWR은 합성 사각파: 탐색 2초마다 짧은 틱, 추적 초당 2회 비프, 발사·미사일 초당 8회 고음(`src/audio/rwr.ts`). 기체 피격은 Kenney 금속 충격 3종 중 무작위, 무전 잡음 샘플은 `SfxPlayer.radio()`로 준비(무전 큐는 M4-2).
+
 녹음 파일은 `public/assets/audio/`(모노 MP3, 합계 약 350~520KB, 10장 10.3절). 재생·믹싱은 `src/audio/`. 경고음·RWR·스위치 소리는 합성 유지. 녹음 파일 로드 실패 시 합성음으로 폴백.
 
 ## 7.8 설정

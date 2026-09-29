@@ -3,7 +3,7 @@ import type { SimEvent } from '../sim/events';
 
 export const SOUND_SPEED = 340;
 
-export type SampleId = 'gun_shot' | 'rocket_launch' | 'hellfire_launch' | 'impact_metal' | 'impact_ground' | 'explosion_near' | 'explosion_fire';
+export type SampleId = 'gun_shot' | 'rocket_launch' | 'hellfire_launch' | 'hit_metal_0' | 'hit_metal_1' | 'hit_metal_2' | 'radio_squelch' | 'impact_metal' | 'impact_ground' | 'explosion_near' | 'explosion_fire';
 
 export class SfxPlayer {
   private lastGun = -1;
@@ -53,9 +53,18 @@ export class SfxPlayer {
         this.play(id, Math.min(1.2, 0.4 + e.size / 20) / (1 + d / 250), e.size > 10 ? 0.85 : 1, d / SOUND_SPEED, 18000 / (1 + d / 400), 0.9);
         break;
       }
+      case 'playerHit': {
+        const id = (['hit_metal_0', 'hit_metal_1', 'hit_metal_2'] as const)[Math.floor(this.rnd() * 3) % 3];
+        this.play(id, Math.min(1, 0.35 + e.damage / 20), 0.9 + this.rnd() * 0.2, 0, 20000, 0.06);
+        break;
+      }
       case 'unitDestroyed': break;
       default: break;
     }
+  }
+
+  radio() {
+    this.play('radio_squelch', 0.5, 1, 0, 20000, 0.15);
   }
 
   private play(id: SampleId, gain: number, rate: number, delay: number, lowpass: number, synthLength: number) {

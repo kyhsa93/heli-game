@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
 import { assets } from '../../assets/loader';
 import { GameAudio } from '../../audio/game';
+import { loadVoiceEnabled, saveVoiceEnabled } from '../../audio/voice';
 import { t, tList, tPairs } from '../../content/strings';
 import { clamp } from '../../core/math';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../../core/units';
@@ -43,6 +44,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
   const ihadssRef = useRef<HTMLCanvasElement>(null);
   const [help, setHelp] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(() => loadVoiceEnabled());
+  const toggleVoice = () => { const on = !voiceOn; setVoiceOn(on); saveVoiceEnabled(on); if (audioRef.current) audioRef.current.voice.enabled = on; };
   const snap = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
   const toggleView = () => rendererRef.current?.toggleView();
@@ -264,7 +267,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
             </ul>
             {snap.mode === 'brief'
               ? <><button className="go" onClick={begin}>{t('brief.start')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button></>
-              : <><button className="go" onClick={() => setHelp(false)}>{t('brief.continue')}</button> <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button></>}
+              : <><button className="go" onClick={() => setHelp(false)}>{t('brief.continue')}</button> <button className="go secondary" onClick={toggleVoice}>{t(voiceOn ? 'brief.voiceOff' : 'brief.voiceOn')}</button> <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button></>}
           </div>
         </div>
       )}

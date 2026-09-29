@@ -16,6 +16,9 @@ import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
 import { drawIhadss } from './ihadss';
 import { hellfireSolution } from '../sim/weapons/hellfire';
+import { aseThreats } from '../sim/sensors/ase';
+import { rwrLevel } from '../audio/rwr';
+import { M_TO_FT, MS_TO_FPM } from '../core/units';
 import { TadsView } from './tadsView';
 import { bezelHitAt, type MpdSide } from './cockpit/mpd';
 
@@ -239,6 +242,8 @@ export class FlightRenderer {
       rpm: h.alive ? h.rpm : 0, collective: h.collective, airspeed: speed,
       warn: h.alive && session.mode === 'play' && ((h.rpm < 0.85 && !h.landed) || h.fuel < 10),
       lock: h.alive && world.arms.selected === 'agm114k' && hellfireSolution(world).status === 'lobl',
+      rwr: h.alive && session.mode === 'play' ? rwrLevel(aseThreats(world)) : 'none',
+      fuel: h.fuel, aglFt: agl * M_TO_FT, vsFpm: h.vel.y * MS_TO_FPM, flying: h.alive && !h.landed && session.mode === 'play',
     });
 
     this.opts.onFrame?.({ simDt: steps * STEP, cockpit, agl });

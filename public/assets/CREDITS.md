@@ -23,5 +23,9 @@
 | audio/hellfire_launch.mp3 | AGM-114 Hellfire Rocket Missile Launch | qubodup | https://freesound.org/people/qubodup/sounds/162368/ | CC0 | 첫 2.3초, 0.5초 페이드아웃, 모노 64kbps | 2026-09-29 |
 | audio/explosion_near.mp3 | EOD Explosion | qubodup | https://freesound.org/people/qubodup/sounds/855798/ | CC0 | 정규화·페이드, 모노 64kbps | 2026-09-29 |
 | audio/explosion_fire.mp3 | Fire Explosion | qubodup | https://freesound.org/people/qubodup/sounds/855898/ | CC0 | 정규화·페이드, 모노 64kbps | 2026-09-29 |
+| audio/hit_metal_0.mp3 | Impact Sounds — impactMetal_heavy_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 모노 48kbps (기체 피격음) | 2026-09-29 |
+| audio/hit_metal_1.mp3 | Impact Sounds — impactMetal_heavy_001 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 모노 48kbps (기체 피격음) | 2026-09-29 |
+| audio/hit_metal_2.mp3 | Impact Sounds — impactMetal_heavy_002 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 모노 48kbps (기체 피격음) | 2026-09-29 |
+| audio/radio_squelch.mp3 | Radio Sign Off / Squelch | JovianSounds | https://freesound.org/people/JovianSounds/sounds/524205/ | CC0 | 공개 HQ 미리듣기에서 모노 48kbps, 끝 0.1초 페이드 | 2026-09-29 |
 | audio/impact_metal.mp3 | Impact Sounds — impactMetal_medium_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 정규화, 모노 48kbps | 2026-09-29 |
 | audio/impact_ground.mp3 | Impact Sounds — impactSoft_heavy_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 정규화, 모노 48kbps | 2026-09-29 |
