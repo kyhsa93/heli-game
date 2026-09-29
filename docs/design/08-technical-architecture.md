@@ -90,7 +90,7 @@ src/
   audio/
     rotor.ts            # (sim3d/audio.ts 이동)
     sfx.ts              # 효과음 합성, 이벤트 버스 구독
-    voice.ts            # 음성 경고 (녹음 파일 재생, 없으면 speechSynthesis)
+    voice.ts            # 음성 경고 (speechSynthesis, 나중에 녹음 파일로 교체 가능한 인터페이스)
   input/
     input.ts            # 키보드·패드·터치 → 비행 입력 + 전투 명령
     bindings.ts         # 07장 조작표
