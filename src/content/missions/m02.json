@@ -1,0 +1,564 @@
+{
+  "groups": [
+    {
+      "id": "convoy",
+      "behavior": "convoy",
+      "route": [
+        [
+          -3800,
+          -2600
+        ],
+        [
+          3735,
+          2762
+        ]
+      ],
+      "startTrigger": "tr_go"
+    },
+    {
+      "id": "amba",
+      "behavior": "defend"
+    },
+    {
+      "id": "ambb",
+      "behavior": "defend"
+    },
+    {
+      "id": "ambd",
+      "behavior": "defend"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "tr_go",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 15
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "하운드 1, 호송대 출발한다. 앞을 살펴라."
+        }
+      ]
+    },
+    {
+      "id": "tr_a",
+      "once": true,
+      "when": {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "time",
+            "afterSec": 70
+          },
+          {
+            "kind": "playerInZone",
+            "center": [
+              -1600,
+              -900
+            ],
+            "radius": 900
+          }
+        ]
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "a1",
+            "a2",
+            "a3"
+          ]
+        },
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "도로 서쪽 구간, 매복 가능성."
+        }
+      ]
+    },
+    {
+      "id": "tr_b",
+      "once": true,
+      "when": {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "time",
+            "afterSec": 200
+          },
+          {
+            "kind": "playerInZone",
+            "center": [
+              300,
+              500
+            ],
+            "radius": 900
+          }
+        ]
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "b1",
+            "b2",
+            "b3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tr_d",
+      "once": true,
+      "when": {
+        "kind": "any",
+        "of": [
+          {
+            "kind": "time",
+            "afterSec": 330
+          },
+          {
+            "kind": "playerInZone",
+            "center": [
+              2000,
+              1800
+            ],
+            "radius": 900
+          }
+        ]
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "d1",
+            "d2",
+            "d3",
+            "d4"
+          ]
+        },
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "마을 입구, 대공 미사일 조 주의."
+        }
+      ]
+    },
+    {
+      "id": "tr_arrived",
+      "once": true,
+      "when": {
+        "kind": "groupArrived",
+        "group": "convoy",
+        "count": 4
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "호송대 도착. 수고했다. 귀환하라."
+        }
+      ]
+    },
+    {
+      "id": "tr_lost",
+      "once": true,
+      "when": {
+        "kind": "unitDestroyed",
+        "units": [
+          "c0",
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c5"
+        ],
+        "count": 3
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "트럭 세 대 잃었다. 더는 안 된다."
+        }
+      ]
+    }
+  ],
+  "wingman": false,
+  "waypoints": [
+    {
+      "id": "bp1",
+      "name": "BP1",
+      "position": [
+        -1216,
+        -2219
+      ]
+    },
+    {
+      "id": "bp2",
+      "name": "BP2",
+      "position": [
+        751,
+        -857
+      ]
+    },
+    {
+      "id": "dest",
+      "name": "마을",
+      "position": [
+        3735,
+        2762
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "c0",
+      "type": "c_truck",
+      "position": [
+        -3800,
+        -2600
+      ],
+      "headingDeg": 45,
+      "group": "convoy"
+    },
+    {
+      "id": "c1",
+      "type": "c_truck",
+      "position": [
+        -3828,
+        -2620
+      ],
+      "headingDeg": 45,
+      "group": "convoy"
+    },
+    {
+      "id": "c2",
+      "type": "c_truck",
+      "position": [
+        -3856,
+        -2640
+      ],
+      "headingDeg": 45,
+      "group": "convoy"
+    },
+    {
+      "id": "c3",
+      "type": "c_truck",
+      "position": [
+        -3874,
+        -2660
+      ],
+      "headingDeg": 45,
+      "group": "convoy"
+    },
+    {
+      "id": "c4",
+      "type": "c_truck",
+      "position": [
+        -3907,
+        -2672
+      ],
+      "headingDeg": 45,
+      "group": "convoy"
+    },
+    {
+      "id": "c5",
+      "type": "c_truck",
+      "position": [
+        -3940,
+        -2700
+      ],
+      "headingDeg": 45,
+      "group": "convoy"
+    },
+    {
+      "id": "a1",
+      "type": "inf",
+      "position": [
+        -1504,
+        -751
+      ],
+      "group": "amba",
+      "hidden": true
+    },
+    {
+      "id": "a2",
+      "type": "inf_mg",
+      "position": [
+        -1720,
+        -1000
+      ],
+      "group": "amba",
+      "hidden": true
+    },
+    {
+      "id": "a3",
+      "type": "technical",
+      "position": [
+        -1400,
+        -1050
+      ],
+      "group": "amba",
+      "hidden": true
+    },
+    {
+      "id": "b1",
+      "type": "inf",
+      "position": [
+        420,
+        640
+      ],
+      "group": "ambb",
+      "hidden": true
+    },
+    {
+      "id": "b2",
+      "type": "technical",
+      "position": [
+        170,
+        697
+      ],
+      "group": "ambb",
+      "hidden": true
+    },
+    {
+      "id": "b3",
+      "type": "inf_mg",
+      "position": [
+        520,
+        380
+      ],
+      "group": "ambb",
+      "hidden": true
+    },
+    {
+      "id": "d1",
+      "type": "technical",
+      "position": [
+        2150,
+        1950
+      ],
+      "group": "ambd",
+      "hidden": true
+    },
+    {
+      "id": "d2",
+      "type": "inf",
+      "position": [
+        1903,
+        1640
+      ],
+      "group": "ambd",
+      "hidden": true
+    },
+    {
+      "id": "d3",
+      "type": "inf_mg",
+      "position": [
+        2250,
+        1700
+      ],
+      "group": "ambd",
+      "hidden": true
+    },
+    {
+      "id": "d4",
+      "type": "manpads",
+      "position": [
+        2400,
+        2050
+      ],
+      "group": "ambd",
+      "hidden": true
+    },
+    {
+      "id": "v1",
+      "type": "civ_car",
+      "position": [
+        3700,
+        2830
+      ],
+      "headingDeg": 90
+    },
+    {
+      "id": "v2",
+      "type": "civ_car",
+      "position": [
+        -594,
+        -169
+      ],
+      "headingDeg": 200
+    }
+  ],
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -4575,
+        -3600
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    }
+  ],
+  "id": "m02",
+  "title": "호송대 엄호",
+  "act": 1,
+  "kind": "escort",
+  "briefing": {
+    "summary": "보급 트럭 여섯 대가 계곡 도로로 전방 마을까지 간다. 매복이 예상된다. 네 대 이상을 도착시켜라.",
+    "situation": [
+      "어젯밤 도로변에서 VPA 보병이 목격됐다. 호송대는 경무장이다.",
+      "하운드 1은 호송대 위를 엄호하며 매복을 먼저 찾아 제압한다. 민간 차량이 섞여 다닌다."
+    ],
+    "threats": [
+      "매복 보병",
+      "기관총 차량",
+      "휴대용 대공미사일(가능성)"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "hydra70",
+        "L1": "agm114k",
+        "R1": "agm114k",
+        "R2": "hydra70"
+      },
+      "stingers": false,
+      "gunRounds": 1200,
+      "fuel": 90
+    }
+  },
+  "environment": {
+    "seed": 1102,
+    "time": "day",
+    "fog": false,
+    "wind": {
+      "dirDeg": 200,
+      "speed": 3,
+      "gust": 2
+    }
+  },
+  "terrain": {
+    "size": 12000,
+    "features": [
+      {
+        "kind": "base",
+        "center": [
+          -4575,
+          -3600
+        ],
+        "radius": 120
+      },
+      {
+        "kind": "village",
+        "center": [
+          3761,
+          2752
+        ],
+        "radius": 200,
+        "houses": 8
+      }
+    ],
+    "roads": [
+      [
+        [
+          -4575,
+          -3600
+        ],
+        [
+          -3800,
+          -2600
+        ],
+        [
+          -2700,
+          -1900
+        ],
+        [
+          -1625,
+          -896
+        ],
+        [
+          -600,
+          -200
+        ],
+        [
+          300,
+          500
+        ],
+        [
+          1200,
+          1100
+        ],
+        [
+          2025,
+          1800
+        ],
+        [
+          3000,
+          2400
+        ],
+        [
+          3735,
+          2762
+        ]
+      ]
+    ]
+  },
+  "start": {
+    "kind": "farp_hot",
+    "position": [
+      -4575,
+      -3600
+    ],
+    "headingDeg": 40
+  },
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "protect",
+      "units": {
+        "group": "convoy"
+      },
+      "minSurvive": 4,
+      "untilTrigger": "tr_arrived",
+      "primary": true,
+      "label": "호송대 4대 이상 도착"
+    },
+    {
+      "id": "o2",
+      "kind": "destroy",
+      "units": [
+        "a1",
+        "a2",
+        "a3",
+        "b1",
+        "b2",
+        "b3",
+        "d1",
+        "d2",
+        "d3",
+        "d4"
+      ],
+      "count": 8,
+      "primary": false,
+      "label": "매복 제압"
+    },
+    {
+      "id": "o3",
+      "kind": "land",
+      "farp": "farp_a",
+      "primary": true,
+      "label": "FARP 귀환"
+    }
+  ],
+  "par": 2600,
+  "parTimeSec": 1000
+}

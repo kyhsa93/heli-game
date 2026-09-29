@@ -1,0 +1,166 @@
+{
+  "id": "t5",
+  "act": 1,
+  "kind": "training",
+  "environment": {
+    "seed": 105,
+    "time": "day",
+    "fog": false,
+    "wind": {
+      "dirDeg": 230,
+      "speed": 3,
+      "gust": 1
+    }
+  },
+  "terrain": {
+    "size": 4000,
+    "features": [],
+    "roads": []
+  },
+  "groups": [],
+  "triggers": [
+    {
+      "id": "h1",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 1
+      },
+      "then": [
+        {
+          "kind": "hint",
+          "text": "[ ] 키로 MPD를 ASE로 — 레이더 위협(S·Z)이 원 위에 방향으로 뜹니다"
+        }
+      ]
+    },
+    {
+      "id": "h2",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 10
+      },
+      "then": [
+        {
+          "kind": "hint",
+          "text": "능선 뒤를 따라 저고도로 — 추적(깜박임)이 뜨면 지형으로 가시선을 끊으세요. 미사일 경보엔 F(플레어)·X(채프)"
+        }
+      ]
+    },
+    {
+      "id": "fail",
+      "once": true,
+      "when": {
+        "kind": "playerHits",
+        "count": 3
+      },
+      "then": [
+        {
+          "kind": "missionEnd",
+          "result": "fail",
+          "reason": "피격이 너무 많았습니다. 지형 뒤로 숨고 위협 방향을 피해 다시 가 보세요."
+        }
+      ]
+    }
+  ],
+  "waypoints": [],
+  "units": [
+    {
+      "id": "z1",
+      "type": "spaag",
+      "position": [
+        150,
+        -678
+      ]
+    },
+    {
+      "id": "m1",
+      "type": "manpads",
+      "position": [
+        688,
+        -442
+      ]
+    },
+    {
+      "id": "g1",
+      "type": "technical",
+      "position": [
+        549,
+        -904
+      ]
+    },
+    {
+      "id": "s1",
+      "type": "sam_short",
+      "position": [
+        1117,
+        -654
+      ]
+    }
+  ],
+  "par": 800,
+  "parTimeSec": 300,
+  "wingman": false,
+  "title": "훈련 5 — 생존",
+  "briefing": {
+    "summary": "기지에서 J 패드까지 대공 위협 구역을 지나 착륙합니다. RWR(ASE 페이지·헬멧 가장자리)로 위협 방향을 읽고 저고도로 능선 뒤를 따라 가세요. 피격이 2회를 넘으면 실패입니다.",
+    "situation": [],
+    "threats": [
+      "자주대공포",
+      "휴대용 SAM",
+      "기관총 차량",
+      "단거리 SAM"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "empty",
+        "L1": "empty",
+        "R1": "empty",
+        "R2": "empty"
+      },
+      "stingers": false,
+      "gunRounds": 300,
+      "fuel": 70
+    }
+  },
+  "start": {
+    "kind": "air",
+    "position": [
+      -120,
+      -80
+    ],
+    "headingDeg": 135,
+    "altitudeAgl": 40
+  },
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -271,
+        79
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    },
+    {
+      "id": "pad_j",
+      "position": [
+        1219,
+        -1376
+      ],
+      "services": []
+    }
+  ],
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "land",
+      "farp": "pad_j",
+      "primary": true,
+      "label": "J 패드 착륙"
+    }
+  ]
+}

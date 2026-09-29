@@ -1,0 +1,540 @@
+{
+  "groups": [
+    {
+      "id": "w1",
+      "behavior": "convoy",
+      "route": [
+        [
+          5200,
+          -1300
+        ],
+        [
+          2220,
+          -750
+        ]
+      ],
+      "startTrigger": "tr_w1"
+    },
+    {
+      "id": "w2",
+      "behavior": "convoy",
+      "route": [
+        [
+          5200,
+          -1300
+        ],
+        [
+          2220,
+          -750
+        ]
+      ],
+      "startTrigger": "tr_w2"
+    },
+    {
+      "id": "w3",
+      "behavior": "convoy",
+      "route": [
+        [
+          5200,
+          -1300
+        ],
+        [
+          2220,
+          -750
+        ]
+      ],
+      "startTrigger": "tr_w3"
+    },
+    {
+      "id": "ad",
+      "behavior": "defend"
+    },
+    {
+      "id": "friends",
+      "behavior": "defend"
+    }
+  ],
+  "triggers": [
+    {
+      "id": "tr_w1",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 40
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "steel6",
+          "text": "하운드 1, 스틸 6. 적 기갑, 교량 동쪽 2킬로."
+        },
+        {
+          "kind": "smoke",
+          "position": [
+            3300,
+            -850
+          ],
+          "color": "red"
+        },
+        {
+          "kind": "remoteLaser",
+          "unit": "k3",
+          "seconds": 40
+        }
+      ]
+    },
+    {
+      "id": "tr_w2",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 220
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "k4",
+            "k5",
+            "k6"
+          ]
+        },
+        {
+          "kind": "radio",
+          "from": "steel6",
+          "text": "두 번째 무리 온다. 동쪽 도로."
+        },
+        {
+          "kind": "remoteLaser",
+          "unit": "k4",
+          "seconds": 40
+        }
+      ]
+    },
+    {
+      "id": "tr_w3",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 400
+      },
+      "then": [
+        {
+          "kind": "spawn",
+          "units": [
+            "k7",
+            "k8",
+            "k9"
+          ]
+        },
+        {
+          "kind": "radio",
+          "from": "steel6",
+          "text": "마지막 무리다. 전차 둘."
+        },
+        {
+          "kind": "remoteLaser",
+          "unit": "k7",
+          "seconds": 40
+        }
+      ]
+    },
+    {
+      "id": "tr_z",
+      "once": true,
+      "when": {
+        "kind": "playerDetected",
+        "byGroup": "ad"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "control",
+          "text": "레이더 경보. 동쪽 고지 대공포."
+        }
+      ]
+    },
+    {
+      "id": "tr_end",
+      "once": true,
+      "when": {
+        "kind": "objectiveDone",
+        "objective": "o1"
+      },
+      "then": [
+        {
+          "kind": "radio",
+          "from": "steel6",
+          "text": "버텼다. 고맙다, 하운드."
+        }
+      ]
+    }
+  ],
+  "wingman": false,
+  "waypoints": [
+    {
+      "id": "bridge",
+      "name": "교량",
+      "position": [
+        2350,
+        -750
+      ]
+    },
+    {
+      "id": "bp1",
+      "name": "BP1",
+      "position": [
+        1200,
+        -2000
+      ]
+    },
+    {
+      "id": "bp2",
+      "name": "BP2",
+      "position": [
+        1000,
+        800
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "k1",
+      "type": "apc",
+      "position": [
+        5200,
+        -1300
+      ],
+      "headingDeg": 280,
+      "group": "w1",
+      "hidden": false
+    },
+    {
+      "id": "k2",
+      "type": "apc",
+      "position": [
+        5231,
+        -1262
+      ],
+      "headingDeg": 280,
+      "group": "w1",
+      "hidden": false
+    },
+    {
+      "id": "k3",
+      "type": "tank",
+      "position": [
+        5248,
+        -1237
+      ],
+      "headingDeg": 280,
+      "group": "w1",
+      "hidden": false
+    },
+    {
+      "id": "k4",
+      "type": "tank",
+      "position": [
+        5304,
+        -1190
+      ],
+      "headingDeg": 280,
+      "group": "w2",
+      "hidden": true
+    },
+    {
+      "id": "k5",
+      "type": "apc",
+      "position": [
+        5323,
+        -1193
+      ],
+      "headingDeg": 280,
+      "group": "w2",
+      "hidden": true
+    },
+    {
+      "id": "k6",
+      "type": "tank",
+      "position": [
+        5410,
+        -1214
+      ],
+      "headingDeg": 280,
+      "group": "w2",
+      "hidden": true
+    },
+    {
+      "id": "k7",
+      "type": "tank",
+      "position": [
+        5246,
+        -1341
+      ],
+      "headingDeg": 280,
+      "group": "w3",
+      "hidden": true
+    },
+    {
+      "id": "k8",
+      "type": "tank",
+      "position": [
+        5240,
+        -1336
+      ],
+      "headingDeg": 280,
+      "group": "w3",
+      "hidden": true
+    },
+    {
+      "id": "k9",
+      "type": "apc",
+      "position": [
+        5243,
+        -1334
+      ],
+      "headingDeg": 280,
+      "group": "w3",
+      "hidden": true
+    },
+    {
+      "id": "z1",
+      "type": "spaag",
+      "position": [
+        3700,
+        -1500
+      ],
+      "group": "ad"
+    },
+    {
+      "id": "f1",
+      "type": "c_apc",
+      "position": [
+        2050,
+        -700
+      ],
+      "headingDeg": 90,
+      "group": "friends"
+    },
+    {
+      "id": "f2",
+      "type": "c_apc",
+      "position": [
+        2089,
+        -773
+      ],
+      "headingDeg": 90,
+      "group": "friends"
+    },
+    {
+      "id": "f3",
+      "type": "c_inf",
+      "position": [
+        2120,
+        -660
+      ],
+      "group": "friends"
+    },
+    {
+      "id": "f4",
+      "type": "c_inf",
+      "position": [
+        2120,
+        -770
+      ],
+      "group": "friends"
+    },
+    {
+      "id": "v1",
+      "type": "civ_car",
+      "position": [
+        1490,
+        -419
+      ],
+      "headingDeg": 80
+    },
+    {
+      "id": "h1",
+      "type": "civ_house",
+      "position": [
+        1650,
+        -250
+      ]
+    }
+  ],
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        -1800,
+        -800
+      ],
+      "services": [
+        "fuel",
+        "ammo",
+        "repair"
+      ]
+    }
+  ],
+  "id": "m03",
+  "title": "교량 사수",
+  "act": 1,
+  "kind": "cas",
+  "briefing": {
+    "summary": "강을 건너는 유일한 다리를 VPA 기갑이 노린다. 지상군과 함께 10분 버티며 기갑 8대를 잡아라.",
+    "situation": [
+      "스틸 6 중대가 다리 서쪽 끝을 지킨다. 적은 동쪽 도로로 세 차례 밀고 온다.",
+      "스틸 6이 붉은 연막과 레이저로 표적을 지시한다. 다리 근처엔 아군과 민간인이 있다 — 쏘기 전에 확인하라."
+    ],
+    "threats": [
+      "보병전투차",
+      "전차",
+      "자주대공포 1"
+    ],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "agm114k",
+        "L1": "agm114k",
+        "R1": "agm114k",
+        "R2": "agm114k"
+      },
+      "stingers": false,
+      "gunRounds": 1200,
+      "fuel": 90
+    }
+  },
+  "environment": {
+    "seed": 1103,
+    "time": "day",
+    "fog": false,
+    "wind": {
+      "dirDeg": 100,
+      "speed": 5,
+      "gust": 3
+    }
+  },
+  "terrain": {
+    "size": 12000,
+    "features": [
+      {
+        "kind": "base",
+        "center": [
+          -1800,
+          -800
+        ],
+        "radius": 120
+      },
+      {
+        "kind": "bridge",
+        "from": [
+          2220,
+          -750
+        ],
+        "to": [
+          2480,
+          -750
+        ]
+      },
+      {
+        "kind": "village",
+        "center": [
+          1600,
+          -250
+        ],
+        "radius": 150,
+        "houses": 5
+      }
+    ],
+    "roads": [
+      [
+        [
+          5200,
+          -1300
+        ],
+        [
+          4200,
+          -1000
+        ],
+        [
+          3300,
+          -850
+        ],
+        [
+          2480,
+          -750
+        ],
+        [
+          2220,
+          -750
+        ],
+        [
+          1300,
+          -500
+        ],
+        [
+          -200,
+          -400
+        ],
+        [
+          -1800,
+          -800
+        ]
+      ]
+    ]
+  },
+  "start": {
+    "kind": "farp_hot",
+    "position": [
+      -1800,
+      -800
+    ],
+    "headingDeg": 80
+  },
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "survive",
+      "seconds": 600,
+      "primary": true,
+      "label": "교량 10분 방어"
+    },
+    {
+      "id": "o2",
+      "kind": "destroy",
+      "units": [
+        "k1",
+        "k2",
+        "k3",
+        "k4",
+        "k5",
+        "k6",
+        "k7",
+        "k8",
+        "k9"
+      ],
+      "count": 8,
+      "primary": true,
+      "label": "적 기갑 8대 격파"
+    },
+    {
+      "id": "o3",
+      "kind": "protect",
+      "units": {
+        "group": "friends"
+      },
+      "minSurvive": 2,
+      "untilTrigger": "tr_end",
+      "primary": false,
+      "label": "스틸 6 보호"
+    },
+    {
+      "id": "o4",
+      "kind": "land",
+      "farp": "farp_a",
+      "primary": true,
+      "label": "FARP 귀환"
+    }
+  ],
+  "par": 3200,
+  "parTimeSec": 900
+}

@@ -55,6 +55,9 @@ export class MissionRuntime implements Objective {
   private triggerClock = 0;
   private failIn: number | null = null;
   private flown = false;
+  private lastHardLanding = -1;
+  private laserBroken = false;
+  step?: string;
   private world: World | null = null;
 
   stats: MissionStats = emptyStats();
@@ -79,6 +82,8 @@ export class MissionRuntime implements Objective {
     this.triggerClock = 0;
     this.failIn = null;
     this.flown = false;
+    this.laserBroken = false;
+    this.step = undefined;
     world.applyLoadout(this.loadout ?? m.briefing.recommendedLoadout);
     world.player.fuelBurnScale = AIRCRAFT.fuel.campaignBurnScale;
     this.stats = emptyStats();
@@ -123,7 +128,7 @@ export class MissionRuntime implements Objective {
     if (!w || this.unitIds.has(missionUnitId)) return null;
     const s = this.mission.units.find(u => u.id === missionUnitId);
     if (!s) return null;
-    const u = w.spawnUnit(s.type, s.position[0], s.position[1], -(s.headingDeg ?? 0) * Math.PI / 180, { missionId: s.id, group: s.group, skill: s.skill });
+    const u = w.spawnUnit(s.type, s.position[0], s.position[1], -(s.headingDeg ?? 0) * Math.PI / 180, { missionId: s.id, group: s.group, skill: s.skill, passive: s.passive });
     this.unitIds.set(s.id, u.id);
     if (s.group) w.groups.get(s.group)?.members.push({ unit: u.id, leg: 0, dir: 1, arrived: false });
     return u;
@@ -199,7 +204,11 @@ export class MissionRuntime implements Objective {
         if (this.elapsed - o.since + 1e-6 >= d.seconds) this.setObjective(o, 'done');
         break;
       case 'land':
-        if (this.flown && this.landedAtFarp(d.farp)) this.setObjective(o, 'done');
+        if (this.flown && this.landedAtFarp(d.farp)) {
+          const fpm = w.player.touchdownDescent * 196.85;
+          if (d.maxFpm !== undefined && fpm > d.maxFpm) { if (this.lastHardLanding !== w.time) { this.lastHardLanding = w.time; w.emit({ t: 'advice', code: 'landingTooHard', value: fpm }); } }
+          else this.setObjective(o, 'done');
+        }
         break;
       case 'identify':
         if (d.units.every(id => { const u = this.unit(id); return !!u && (u.identified || !u.alive); })) this.setObjective(o, 'done');
@@ -215,6 +224,11 @@ export class MissionRuntime implements Objective {
       case 'unitDestroyed': return c.units.filter(id => this.destroyed(id)).length >= (c.count ?? c.units.length);
       case 'objectiveDone': return this.objective(c.objective)?.state === 'done';
       case 'playerDetected': return w.units.some(u => u.alive && u.ai.detected && (!c.byGroup || u.group === c.byGroup));
+      case 'playerHits': return this.stats.hitsTaken >= c.count;
+      case 'laserBroken': return this.laserBroken;
+      case 'tadsActive': return w.tads.active;
+      case 'unitsIdentified': return c.units.filter(id => this.unit(id)?.identified).length >= (c.count ?? c.units.length);
+      case 'groupArrived': { const g = w.groups.get(c.group); return !!g && g.members.length > 0 && g.members.filter(m => m.arrived).length >= (c.count ?? g.members.length); }
       case 'all': return c.of.every(x => this.condition(x));
       case 'any': return c.of.some(x => this.condition(x));
     }
@@ -240,6 +254,7 @@ export class MissionRuntime implements Objective {
       }
       case 'objectiveAdd': { const o = this.objective(a.objective); if (o && o.state === 'pending') this.setObjective(o, 'active'); break; }
       case 'missionEnd': this.finish(a.result === 'success', a.reason); break;
+      case 'hint': this.step = a.text; break;
     }
   }
 
@@ -328,7 +343,7 @@ export class MissionRuntime implements Objective {
       return;
     }
     const primaries = this.objectives.filter(o => o.def.primary);
-    if (primaries.length && primaries.every(o => o.state === 'done') && (!this.mission.farps.length || this.landedAtFarp())) this.finish(true);
+    if (primaries.length && primaries.every(o => o.state === 'done') && (this.mission.kind === 'training' || !this.mission.farps.length || this.landedAtFarp())) this.finish(true);
   }
 
   private record(e: SimEvent, world: World) {
@@ -342,6 +357,7 @@ export class MissionRuntime implements Objective {
       else if (e.side === 'coalition') { st.friendly++; if (st.friendly >= FRIENDLY_FAIL) this.finish(false, undefined, 'friendlyFire'); }
       else st.civilian++;
     } else if (e.t === 'systemDamaged') st.damaged[e.system] = e.level;
+    else if (e.t === 'missileLost' && e.owner === 0 && e.reason === 'spotLost') this.laserBroken = true;
     else if (e.t === 'playerHit' || (e.t === 'missileEnd' && e.hit)) st.hitsTaken++;
   }
 
@@ -360,7 +376,7 @@ export function missionTerrain(m: MissionDef): TerrainOptions {
     size: m.terrain.size,
     features: m.terrain.features,
     roads: m.terrain.roads,
-    pads: m.farps.map(f => ({ x: f.position[0], z: f.position[1], name: f.id.replace(/^farp_/, '').toUpperCase(), base: true })),
+    pads: m.farps.map(f => ({ x: f.position[0], z: f.position[1], name: f.id.replace(/^(farp|pad)_/, '').toUpperCase(), base: f.services.includes('fuel') })),
   };
 }
 

@@ -65,7 +65,9 @@ export function App() {
       return <Loadout mission={MISSIONS[screen.missionId]} unlocked={new Set(MISSIONS[screen.missionId].unlocks ?? [])} onBack={() => ui.go({ name: 'briefing', missionId: screen.missionId })} onLaunch={def => ui.go({ name: 'flight', missionId: screen.missionId, loadout: def })} />;
     case 'debrief':
       if (!screen.report) return <Briefing mission={MISSIONS[screen.missionId]} onBack={() => ui.go({ name: 'title' })} onNext={() => ui.go({ name: 'loadout', missionId: screen.missionId })} />;
-      return <Debrief mission={MISSIONS[screen.missionId]} report={screen.report} onRetry={() => ui.go({ name: 'loadout', missionId: screen.missionId })} onDone={() => ui.go({ name: 'title' })} />;
+      return <Debrief mission={MISSIONS[screen.missionId]} report={screen.report}
+        onRetry={() => ui.go(isMission(screen.missionId) ? { name: 'loadout', missionId: screen.missionId } : { name: 'flight', missionId: screen.missionId })}
+        onDone={() => ui.go(isMission(screen.missionId) ? { name: 'title' } : { name: 'training' })} />;
     case 'credits':
       return <Credits onBack={() => ui.go({ name: 'title' })} />;
     case 'training':
@@ -74,6 +76,6 @@ export function App() {
       return <Flight key={screen.missionId} missionId={screen.missionId} touch={touch} loadout={screen.loadout}
         onExit={() => ui.go(isMission(screen.missionId) ? { name: 'briefing', missionId: screen.missionId } : { name: 'training' })}
         onComplete={complete}
-        onMissionEnd={report => ui.go({ name: 'debrief', missionId: screen.missionId, report })} />;
+        onMissionEnd={report => { if (report.success && !isMission(screen.missionId)) complete(screen.missionId); ui.go({ name: 'debrief', missionId: screen.missionId, report }); }} />;
   }
 }

@@ -5,7 +5,6 @@ import { CLEAN_LOADOUT, hoverCollective, hoverMargin, loadoutStats, STANDARD_LOA
 import { missionSession, type MissionRuntime } from '../../sim/mission/runtime';
 import { reportFrom } from '../report';
 import { FlightSession } from '../../sim/session';
-import { createObjective } from '../../sim/training';
 import { parseHash, toHash } from '../state';
 import { storeLocked } from './Loadout';
 
@@ -69,8 +68,9 @@ describe('mission screen flow (07 7.2)', () => {
     const m = missionSession(MISSIONS.m01);
     m.start();
     expect(m.world.player.fuelBurnScale).toBeCloseTo(AIRCRAFT.fuel.campaignBurnScale);
-    const t = new FlightSession(7, createObjective('t3'));
+    const t = new FlightSession(7);
     t.start();
+    t.world.active = true;
     expect(t.world.player.fuelBurnScale).toBe(1);
     const burn = (w: typeof m.world) => { w.player.engineOn = true; w.player.rpm = 1; w.player.landed = false; w.controls.collective = 0.6; w.player.pos.y += 300; const f0 = w.player.fuel; for (let i = 0; i < 120 * 5; i++) w.step(1 / 120); return f0 - w.player.fuel; };
     expect(burn(m.world) / burn(t.world)).toBeLessThan(0.5);

@@ -206,7 +206,7 @@ export class Terrain {
           const x = -HALF + i * CELL, z = -HALF + j * CELL;
           const t = len2 > 0 ? clamp(((x - a.x) * dx + (z - a.z) * dz) / len2, 0, 1) : 0;
           const d = Math.hypot(x - (a.x + dx * t), z - (a.z + dz * t));
-          if (d >= reach) continue;
+          if (d >= reach || this.onBridge(x, z, 14)) continue;
           const y = ya + (yb - ya) * t;
           const w = d <= ROAD_FLAT ? 1 : 1 - smooth((d - ROAD_FLAT) / (reach - ROAD_FLAT));
           const idx = j * (N + 1) + i;
@@ -304,6 +304,22 @@ export class Terrain {
       const list = this.treeGrid.get(key);
       if (list) list.push(t); else this.treeGrid.set(key, [t]);
     }
+  }
+
+  onBridge(x: number, z: number, halfWidth = 5): Bridge | null {
+    for (const b of this.bridges) {
+      const [ax, az] = b.from, [bx, bz] = b.to;
+      const dx = bx - ax, dz = bz - az, len2 = dx * dx + dz * dz;
+      const t = len2 > 0 ? ((x - ax) * dx + (z - az) * dz) / len2 : 0;
+      if (t < 0 || t > 1) continue;
+      if (Math.hypot(x - (ax + dx * t), z - (az + dz * t)) <= halfWidth) return b;
+    }
+    return null;
+  }
+
+  driveHeightAt(x: number, z: number) {
+    const b = this.onBridge(x, z);
+    return b ? b.y + 0.6 : this.surfaceAt(x, z);
   }
 
   nearRoad(x: number, z: number, dist: number) {

@@ -1,0 +1,97 @@
+{
+  "id": "t1",
+  "act": 1,
+  "kind": "training",
+  "environment": {
+    "seed": 101,
+    "time": "day",
+    "fog": false,
+    "wind": {
+      "dirDeg": 230,
+      "speed": 3,
+      "gust": 1
+    }
+  },
+  "terrain": {
+    "size": 4000,
+    "features": [],
+    "roads": []
+  },
+  "groups": [],
+  "triggers": [
+    {
+      "id": "h1",
+      "once": true,
+      "when": {
+        "kind": "time",
+        "afterSec": 1
+      },
+      "then": [
+        {
+          "kind": "hint",
+          "text": "B 패드로 — 헬멧 심볼의 마름모와 오른쪽 MPD 지도가 방향을 알려 줍니다"
+        }
+      ]
+    }
+  ],
+  "waypoints": [],
+  "units": [],
+  "par": 600,
+  "parTimeSec": 240,
+  "wingman": false,
+  "title": "훈련 1 — 기본 비행",
+  "briefing": {
+    "summary": "기지(A)에서 시동을 걸고 이륙해 B 패드에 착륙합니다. 하강률 500fpm 이하로 부드럽게 내리세요.",
+    "situation": [],
+    "threats": [],
+    "recommendedLoadout": {
+      "pylons": {
+        "L2": "empty",
+        "L1": "empty",
+        "R1": "empty",
+        "R2": "empty"
+      },
+      "stingers": false,
+      "gunRounds": 0,
+      "fuel": 60
+    }
+  },
+  "start": {
+    "kind": "farp_cold",
+    "position": [
+      388,
+      -116
+    ],
+    "headingDeg": 0
+  },
+  "farps": [
+    {
+      "id": "farp_a",
+      "position": [
+        388,
+        -116
+      ],
+      "services": [
+        "fuel"
+      ]
+    },
+    {
+      "id": "pad_b",
+      "position": [
+        -297,
+        536
+      ],
+      "services": []
+    }
+  ],
+  "objectives": [
+    {
+      "id": "o1",
+      "kind": "land",
+      "farp": "pad_b",
+      "maxFpm": 500,
+      "primary": true,
+      "label": "B 패드 착륙 (500fpm 이하)"
+    }
+  ]
+}

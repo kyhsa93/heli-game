@@ -213,10 +213,11 @@ describe('mission terrain', () => {
     s.start();
     const w = s.world;
     expect(w.terrain.size).toBe(12000);
-    expect(w.pads[0]).toMatchObject({ x: -4200, z: 3800, name: 'A', base: true });
+    const [fx, fz] = m.farps[0].position;
+    expect(w.pads[0]).toMatchObject({ x: fx, z: fz, name: 'A', base: true });
     expect(w.player.landed).toBe(true);
     expect(w.player.engineOn).toBe(true);
-    expect(Math.hypot(w.player.pos.x + 4200, w.player.pos.z - 3800)).toBeLessThan(1);
+    expect(Math.hypot(w.player.pos.x - fx, w.player.pos.z - fz)).toBeLessThan(1);
     expect(w.terrain.roads).toHaveLength(2);
     expect(w.units.length).toBe(m.units.length);
     for (let i = 0; i < 240; i++) s.step(STEP);

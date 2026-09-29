@@ -72,3 +72,12 @@ describe('terrain (06-missions-and-world.md 6.1)', () => {
     expect(performance.now() - t0).toBeLessThan(4000);
   });
 });
+
+describe('bridges', () => {
+  it('keeps the water under a bridge and lets vehicles drive on the deck', () => {
+    const t = new Terrain(1103, { size: MISSION_SIZE, features: [{ kind: 'bridge', from: [2220, -750], to: [2480, -750] }], roads: [[[3300, -850], [2480, -750], [2220, -750], [1300, -500]]] });
+    expect(t.heightAt(2350, -750)).toBeLessThan(0);
+    expect(t.driveHeightAt(2350, -750)).toBeGreaterThan(5);
+    expect(t.driveHeightAt(2350, -700)).toBe(t.surfaceAt(2350, -700));
+  });
+});

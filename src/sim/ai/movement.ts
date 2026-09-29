@@ -130,7 +130,7 @@ function stepToward(world: World, u: Unit, tx: number, tz: number, speed: number
     }
   }
   u.pos.x += hx * step; u.pos.z += hz * step;
-  const ground = t.surfaceAt(u.pos.x, u.pos.z);
+  const ground = air ? t.surfaceAt(u.pos.x, u.pos.z) : t.driveHeightAt(u.pos.x, u.pos.z);
   u.pos.y = air ? Math.max(u.pos.y + (ground + AIR_ALTITUDE - u.pos.y) * Math.min(1, dt * 0.8), ground + 10) : ground;
   u.vel.set(hx * speed, 0, hz * speed);
   u.yaw = Math.atan2(-hx, -hz);

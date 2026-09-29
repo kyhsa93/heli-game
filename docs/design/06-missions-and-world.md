@@ -131,6 +131,8 @@ type Action =
 - `unlocks` ID: `chaff`, `fcr`, `agm114l`, `night`, `stinger`, `wingmanMenu`, `liveries`(02장 2.5절).
 - 검증: 필드 타입·범위·열거값·모르는 필드를 경로(`mission.triggers[0].when.kind`)와 함께 오류로 내고, 통과하면 참조 무결성(유닛·그룹·목표·트리거·웨이포인트·FARP ID, `units.json` 유형, 지도 안 좌표, 중복 ID)을 본다. 파일 40KB 초과는 오류, 활성 유닛 150 초과는 경고. `loadMission`은 개발 모드에서 콘솔에 경로별 오류를 찍고 예외를 던진다. 테스트는 `src/content/missions/*.json`을 전부 검증한다.
 
+구현(M4-8): 임무 1~3(`m01`~`m03`)과 훈련(`t1`·`t3`·`t4`·`t5`)이 모두 이 형식이다(코드 훈련은 삭제). 훈련을 표현하려고 스키마를 넓혔다: `land.maxFpm`(착지 하강률 한계, 넘으면 조언만 하고 목표는 그대로), 조건 `playerHits {count}`·`laserBroken`(유도 중 레이저 점 상실)·`tadsActive`·`unitsIdentified {units, count?}`·`groupArrived {group, count?}`, 행동 `hint {text}`(화면 가운데 단계 지시 한 줄), 유닛 `passive`(인지·교전 안 함). `kind: 'training'`은 주 목표만 끝나면 착륙 없이 성공. FARP 중 `services`에 `fuel`이 있는 것만 재급유·FARP 메뉴가 되는 기지 패드이고, 없는 것은 착륙 패드(T1의 B). 교량(`bridge`) 아래는 도로 평탄화를 하지 않아 물이 남고, 지상 유닛은 상판 높이로 달린다(`terrain.driveHeightAt`). 콘텐츠 테스트: 모든 지상 유닛·FARP·BP가 물·급경사 위가 아닌지, 교전 임무는 BP 2곳·민간 요소·FARP가 적 무리에서 3~8km인지(임무 1 정찰은 경로가 길어 상한을 8km로), 임무마다 목표를 차례로 달성하는 스크립트 재생.
+
 ### 임무 런타임 규칙
 - 트리거는 **1Hz로 평가**한다(초당 1번이면 충분하고, 싸다).
 - 목표는 `pending → active → done | failed`. 주 목표가 모두 `done`이고 플레이어가 FARP·기지에 착륙하면 임무 성공(착륙 없이도 끝낼 수 있게 일시정지 메뉴에 "임무 종료" — 이때 착륙 보너스 없음).

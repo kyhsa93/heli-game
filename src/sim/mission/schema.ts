@@ -13,7 +13,7 @@ export type TerrainFeature =
   | { kind: 'forest'; center: Vec2; radius: number; density?: number }
   | { kind: 'bridge'; from: Vec2; to: Vec2 };
 
-export interface UnitSpawn { id: string; type: string; position: Vec2; headingDeg?: number; group?: string; hidden?: boolean; skill?: number }
+export interface UnitSpawn { id: string; type: string; position: Vec2; headingDeg?: number; group?: string; hidden?: boolean; skill?: number; passive?: boolean }
 export interface GroupDef { id: string; route?: Vec2[]; loop?: boolean; speedScale?: number; behavior: 'hold' | 'patrol' | 'advance' | 'convoy' | 'defend'; startTrigger?: string }
 export type UnitRef = string[] | { group: string };
 
@@ -22,7 +22,7 @@ export type ObjectiveDef =
   | { id: string; kind: 'protect'; units: UnitRef; minSurvive: number; untilTrigger: string; primary: boolean; label: string }
   | { id: string; kind: 'reach'; waypoint: string; radius: number; primary: boolean; label: string }
   | { id: string; kind: 'survive'; seconds: number; primary: boolean; label: string }
-  | { id: string; kind: 'land'; farp: string; primary: boolean; label: string }
+  | { id: string; kind: 'land'; farp: string; maxFpm?: number; primary: boolean; label: string }
   | { id: string; kind: 'identify'; units: string[]; primary: boolean; label: string };
 
 export type Condition =
@@ -31,6 +31,11 @@ export type Condition =
   | { kind: 'unitDestroyed'; units: string[]; count?: number }
   | { kind: 'objectiveDone'; objective: string }
   | { kind: 'playerDetected'; byGroup?: string }
+  | { kind: 'playerHits'; count: number }
+  | { kind: 'laserBroken' }
+  | { kind: 'tadsActive' }
+  | { kind: 'unitsIdentified'; units: string[]; count?: number }
+  | { kind: 'groupArrived'; group: string; count?: number }
   | { kind: 'all'; of: Condition[] }
   | { kind: 'any'; of: Condition[] };
 
@@ -41,7 +46,8 @@ export type Action =
   | { kind: 'remoteLaser'; unit: string; seconds: number }
   | { kind: 'smoke'; position: Vec2; color: 'red' | 'green' | 'white' }
   | { kind: 'objectiveAdd'; objective: string }
-  | { kind: 'missionEnd'; result: 'success' | 'fail'; reason: string };
+  | { kind: 'missionEnd'; result: 'success' | 'fail'; reason: string }
+  | { kind: 'hint'; text: string };
 
 export interface TriggerDef { id: string; once: boolean; when: Condition; then: Action[] }
 
@@ -126,6 +132,11 @@ const condition: Check = (v, p, o) => tagged({
   unitDestroyed: { units: arr(str, 1), count: opt(num(1)) },
   objectiveDone: { objective: str },
   playerDetected: { byGroup: opt(str) },
+  playerHits: { count: num(1) },
+  laserBroken: {},
+  tadsActive: {},
+  unitsIdentified: { units: arr(str, 1), count: opt(num(1)) },
+  groupArrived: { group: str, count: opt(num(1)) },
   all: { of: arr(condition, 1) },
   any: { of: arr(condition, 1) },
 })(v, p, o);
@@ -137,6 +148,7 @@ const action = tagged({
   smoke: { position: vec2, color: oneOf('red', 'green', 'white') },
   objectiveAdd: { objective: str },
   missionEnd: { result: oneOf('success', 'fail'), reason: str },
+  hint: { text: str },
 });
 const common = { id: str, primary: bool, label: str };
 
@@ -159,14 +171,14 @@ const mission = obj({
   start: obj({ kind: oneOf('farp_cold', 'farp_hot', 'air'), position: vec2, headingDeg: num(0, 360), altitudeAgl: opt(num(0, 3000)), speedKt: opt(num(0, 200)) }),
   farps: arr(obj({ id: str, position: vec2, services: arr(oneOf('fuel', 'ammo', 'repair')) })),
   waypoints: arr(obj({ id: str, name: str, position: vec2 })),
-  units: arr(obj({ id: str, type: str, position: vec2, headingDeg: opt(num(0, 360)), group: opt(str), hidden: opt(bool), skill: opt(num(0.5, 1.5)) })),
+  units: arr(obj({ id: str, type: str, position: vec2, headingDeg: opt(num(0, 360)), group: opt(str), hidden: opt(bool), skill: opt(num(0.5, 1.5)), passive: opt(bool) })),
   groups: arr(obj({ id: str, route: opt(arr(vec2, 2)), loop: opt(bool), speedScale: opt(num(0.1, 3)), behavior: oneOf('hold', 'patrol', 'advance', 'convoy', 'defend'), startTrigger: opt(str) })),
   objectives: arr(tagged({
     destroy: { ...common, units: unitRef, count: opt(num(1)) },
     protect: { ...common, units: unitRef, minSurvive: num(1), untilTrigger: str },
     reach: { ...common, waypoint: str, radius: num(10) },
     survive: { ...common, seconds: num(1) },
-    land: { ...common, farp: str },
+    land: { ...common, farp: str, maxFpm: opt(num(50, 3000)) },
     identify: { ...common, units: arr(str, 1) },
   }), 1),
   initialObjectives: opt(arr(str)),
@@ -211,6 +223,8 @@ function references(m: MissionDef, out: Issue[], warn: Issue[]) {
     else if (c.kind === 'objectiveDone') need(objectives, c.objective, `${p}.objective`, 'objective');
     else if (c.kind === 'playerDetected' && c.byGroup) need(groups, c.byGroup, `${p}.byGroup`, 'group');
     else if (c.kind === 'playerInZone') inMap(c.center, `${p}.center`);
+    else if (c.kind === 'unitsIdentified') c.units.forEach((id, k) => need(units, id, `${p}.units[${k}]`, 'unit'));
+    else if (c.kind === 'groupArrived') need(groups, c.group, `${p}.group`, 'group');
     else if (c.kind === 'all' || c.kind === 'any') c.of.forEach((x, k) => cond(x, `${p}.of[${k}]`));
   };
   m.triggers.forEach((t, i) => {
