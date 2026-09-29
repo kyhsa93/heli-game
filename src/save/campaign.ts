@@ -23,11 +23,12 @@ export interface CampaignSave {
   totalScore: number;
   instantBest: { score: number; grade: string } | null;
   settings: Settings;
+  tips: string[];
 }
 
 export function freshSave(): CampaignSave {
   return {
-    version: 1, missions: {}, training: {}, totalScore: 0, instantBest: null,
+    version: 1, missions: {}, training: {}, totalScore: 0, instantBest: null, tips: [],
     settings: { difficulty: 'normal', voiceWarnings: true, assists: { autoIdentify: false, autoCountermeasures: false } },
   };
 }
@@ -53,6 +54,7 @@ function sanitize(raw: unknown): CampaignSave | null {
   if (r.training && typeof r.training === 'object') for (const [id, v] of Object.entries(r.training as Record<string, unknown>)) if (v === true) save.training[id] = true;
   const ib = r.instantBest as CampaignSave['instantBest'];
   if (ib && typeof ib.score === 'number' && typeof ib.grade === 'string') save.instantBest = { score: ib.score, grade: ib.grade };
+  if (Array.isArray(r.tips)) save.tips = [...new Set(r.tips.filter((x): x is string => typeof x === 'string'))];
   const s = r.settings as Partial<Settings> | undefined;
   if (s) {
     if (isDifficulty(s.difficulty)) save.settings.difficulty = s.difficulty;
@@ -136,4 +138,8 @@ export function campaignProgress(save: CampaignSave, c: Campaign = CAMPAIGN) {
   const completed = c.missions.filter(m => save.missions[m.id]?.completed).length;
   const next = c.missions.find(m => !save.missions[m.id]?.completed) ?? c.missions[c.missions.length - 1];
   return { completed, total: c.missions.length, act: next.act, next: next.id, rank: rankFor(save.totalScore, c) };
+}
+
+export function recordTip(save: CampaignSave, tip: string): CampaignSave {
+  return save.tips.includes(tip) ? save : { ...save, tips: [...save.tips, tip] };
 }

@@ -30,6 +30,8 @@ export function eventMessage(e: SimEvent): Omit<Message, 'life'> | null {
     case 'systemDamaged':
       return { text: t(`msg.system.${e.level}`, { name: t(`systems.${e.system}`) }), color: e.level === 'destroyed' ? '#ef476f' : '#ffd166' };
     case 'detected': case 'radarTrack': case 'playerHit': case 'missileWarning': case 'missileEnd': case 'countermeasure': case 'radio': case 'smoke': return null;
+    case 'step': case 'coach': return null;
+    case 'ring': return { text: t('msg.ring', { n: e.index, total: e.total }), color: '#06d6a0' };
     case 'wingman':
       return e.state === 'down' ? { text: t('wingman.down'), color: '#ef476f' } : { text: t(`wingman.ack.${e.order}`), color: '#4cc9f0' };
     case 'fcr':

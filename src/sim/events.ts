@@ -22,6 +22,9 @@ export type SimEvent =
   | { t: 'identified'; id: number; defId: string; side: Side }
   | { t: 'detected'; id: number; by: 'visual' | 'radar' }
   | { t: 'radarTrack'; id: number; on: boolean }
+  | { t: 'step'; index: number; total: number }
+  | { t: 'coach'; tip: CoachTip }
+  | { t: 'ring'; index: number; total: number }
   | { t: 'wingman'; state: 'order' | 'down'; order?: 'formation' | 'attackMine' | 'free' | 'sead' | 'rtb' }
   | { t: 'fcr'; state: 'scan' | 'done' | 'mode'; mode: 'ground' | 'air'; count: number }
   | { t: 'playerHit'; by: number; weapon: string; damage: number }
@@ -34,6 +37,8 @@ export type SimEvent =
   | { t: 'missionObjective'; id: string; state: 'active' | 'done' | 'failed'; primary: boolean }
   | { t: 'farp'; state: 'started' | 'done' | 'cancelled'; repair: number; rearm: number };
 
-export type AdviceCode = 'landingTooHard' | 'wrongPad';
+export type CoachTip = 'rwr' | 'missile' | 'farp' | 'fcr' | 'airThreat' | 'night' | 'wingman' | 'wingmanMenu';
+
+export type AdviceCode = 'landingTooHard' | 'wrongPad' | 'tooHigh';
 
 export type Emit = (e: SimEvent) => void;

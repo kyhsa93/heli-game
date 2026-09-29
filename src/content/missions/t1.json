@@ -18,22 +18,7 @@
     "roads": []
   },
   "groups": [],
-  "triggers": [
-    {
-      "id": "h1",
-      "once": true,
-      "when": {
-        "kind": "time",
-        "afterSec": 1
-      },
-      "then": [
-        {
-          "kind": "hint",
-          "text": "B 패드로 — 헬멧 심볼의 마름모와 오른쪽 MPD 지도가 방향을 알려 줍니다"
-        }
-      ]
-    }
-  ],
+  "triggers": [],
   "waypoints": [],
   "units": [],
   "par": 600,
@@ -92,6 +77,49 @@
       "maxFpm": 500,
       "primary": true,
       "label": "B 패드 착륙 (500fpm 이하)"
+    }
+  ],
+  "steps": [
+    {
+      "text": "I 키로 시동 — 로터가 100%가 될 때까지 기다리세요",
+      "touch": "시동 버튼 — 로터가 100%가 될 때까지 기다리세요",
+      "done": {
+        "kind": "engineReady"
+      }
+    },
+    {
+      "text": "W 키로 콜렉티브를 올려 이륙하세요 (고도 10m)",
+      "touch": "왼쪽 스틱을 위로 — 콜렉티브를 올려 이륙하세요 (고도 10m)",
+      "done": {
+        "kind": "playerAgl",
+        "above": 8
+      }
+    },
+    {
+      "text": "제자리 호버 3초 — 헬멧 가운데 호버 벡터를 원 안에 두세요",
+      "touch": "제자리 호버 3초 — 오른쪽 스틱을 살짝만 움직여 멈추세요",
+      "done": {
+        "kind": "hover",
+        "seconds": 3
+      }
+    },
+    {
+      "text": "B 패드로 이동 — 헬멧 심볼의 마름모와 오른쪽 MPD 지도를 따라가세요",
+      "done": {
+        "kind": "playerInZone",
+        "center": [
+          -297,
+          536
+        ],
+        "radius": 150
+      }
+    },
+    {
+      "text": "B 패드 위에서 멈추고 천천히 내리세요 (500fpm 이하)",
+      "done": {
+        "kind": "objectiveDone",
+        "objective": "o1"
+      }
     }
   ]
 }

@@ -133,6 +133,8 @@ type Action =
 
 구현(M4-8): 임무 1~3(`m01`~`m03`)과 훈련(`t1`·`t3`·`t4`·`t5`)이 모두 이 형식이다(코드 훈련은 삭제). 훈련을 표현하려고 스키마를 넓혔다: `land.maxFpm`(착지 하강률 한계, 넘으면 조언만 하고 목표는 그대로), 조건 `playerHits {count}`·`laserBroken`(유도 중 레이저 점 상실)·`tadsActive`·`unitsIdentified {units, count?}`·`groupArrived {group, count?}`, 행동 `hint {text}`(화면 가운데 단계 지시 한 줄), 유닛 `passive`(인지·교전 안 함). `kind: 'training'`은 주 목표만 끝나면 착륙 없이 성공. FARP 중 `services`에 `fuel`이 있는 것만 재급유·FARP 메뉴가 되는 기지 패드이고, 없는 것은 착륙 패드(T1의 B). 교량(`bridge`) 아래는 도로 평탄화를 하지 않아 물이 남고, 지상 유닛은 상판 높이로 달린다(`terrain.driveHeightAt`). 콘텐츠 테스트: 모든 지상 유닛·FARP·BP가 물·급경사 위가 아닌지, 교전 임무는 BP 2곳·민간 요소·FARP가 적 무리에서 3~8km인지(임무 1 정찰은 경로가 길어 상한을 8km로), 임무마다 목표를 차례로 달성하는 스크립트 재생.
 
+구현(M5-5·M5-7): 최상위 `wingman: true`면 런타임이 윙맨을 임무 유닛 ID `hound2`로 스폰해 목표·조건에서 참조할 수 있다. `steps: [{ text, touch?, done }]`는 **단계형 지시** — 화면 가운데에 `n/전체 text`(터치면 `touch`가 있으면 그것)를 띄우고, 현재 단계의 `done` 조건만 10Hz로 검사해 참이면 `✓ text`를 1.2초 보여 준 뒤 다음 단계로(앞 단계를 건너뛰지 않는다). `steps`가 있으면 `hint` 행동은 표시하지 않는다. 임무가 성공으로 끝날 때 이미 참인 남은 단계는 한꺼번에 완료 처리. 조건 추가: `engineReady`(시동 + 로터 97%), `playerAgl {above?, below?}`(m), `hover {seconds}`(지면 속도 2m/s 미만·지상 1.5m 위로 연속), `ringsPassed {objective, count}`. 목표 추가: `rings {rings: [x,z][], radius, maxAgl}` — 순서대로, 수평 반경 안·지상 `maxAgl` 아래로 지나야 통과(물리 스텝마다 검사), 통과 시 `ring` 이벤트, 활성 동안 `maxAgl`을 넘으면 4초마다 `tooHigh` 조언, 항법 목표는 다음 링. 링은 지상 `maxAgl/2` 높이에 진행 방향을 향한 고리(다음=노랑, 지난=초록 흐림, 앞=흰색 흐림)로 그린다.
+
 ### 임무 런타임 규칙
 - 트리거는 **1Hz로 평가**한다(초당 1번이면 충분하고, 싸다).
 - 목표는 `pending → active → done | failed`. 주 목표가 모두 `done`이고 플레이어가 FARP·기지에 착륙하면 임무 성공(착륙 없이도 끝낼 수 있게 일시정지 메뉴에 "임무 종료" — 이때 착륙 보너스 없음).

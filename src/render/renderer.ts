@@ -15,6 +15,7 @@ import { FARP_GROUP, UNITS_GROUP } from '../assets/manifest';
 import { FarpProps } from './farp';
 import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
+import { RingGates } from './rings';
 import { drawIhadss } from './ihadss';
 import { hellfireSolution, longbowSolution } from '../sim/weapons/hellfire';
 import { aseThreats } from '../sim/sensors/ase';
@@ -64,6 +65,7 @@ export class FlightRenderer {
   private tmp2 = new THREE.Vector3();
   readonly effects: Effects;
   readonly units = new UnitRenderer();
+  private rings = new RingGates();
   readonly farp: FarpProps;
   readonly tads = new TadsView();
   private mpdTads = new TadsView();
@@ -101,6 +103,7 @@ export class FlightRenderer {
     this.scene.scene.add(this.effects.group);
     this.scene.scene.add(this.units.group);
     this.farp = new FarpProps(session.world.pads);
+    this.scene.scene.add(this.rings.group);
     this.scene.scene.add(this.farp.group);
     void assets.loadGroup(FARP_GROUP).then(report => {
       const models: Record<string, THREE.Object3D> = {};
@@ -233,6 +236,7 @@ export class FlightRenderer {
     const tads = world.tads.active && h.alive && !this.debugCamera;
     const flir = tads && world.tads.sensor === 'flir';
     this.units.update(world, flir);
+    this.rings.update(session.objective?.rings ?? []);
     this.effects.update(steps * STEP, world);
     if (!tads && this.mpdVideo && this.instruments.shows('TADS') && now - this.mpdVideoAt >= MPD_TADS_MS && h.alive) {
       this.mpdVideoAt = now;
@@ -319,6 +323,7 @@ export class FlightRenderer {
     this.offEvents();
     this.effects.dispose();
     this.units.dispose();
+    this.rings.dispose();
     window.removeEventListener('resize', this.resize);
     this.scene.dispose();
     this.instruments.dispose();

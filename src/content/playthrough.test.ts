@@ -32,6 +32,10 @@ function play(id: string, maxSec = 1500) {
           for (const id2 of ids) { const u = rt.unit(id2); if (u?.alive) w.damageUnit(u, 99999, true); }
         }
         if (d.kind === 'identify') for (const id2 of d.units) { const u = rt.unit(id2); if (u) u.identified = true; }
+        if (d.kind === 'rings') {
+          const next = rt.rings.find(r => r.state === 'next');
+          if (next) { hover = null; h.landed = false; h.engineOn = true; h.rpm = 1; h.pos.set(next.x, w.terrain.surfaceAt(next.x, next.z) + 15, next.z); h.vel.set(0, 0, 0); h.pitch = h.roll = 0; updateQ(h); w.controls.collective = 0.6; }
+        }
         if (d.kind === 'protect') for (const g of w.groups.values()) if (g.started && g.behavior === 'convoy' && g.path.length) {
           const end = g.path[g.path.length - 1];
           for (const mm of g.members) { const u = w.unit(mm.unit); if (u?.alive && u.side === 'coalition') { u.pos.set(end[0], w.terrain.surfaceAt(end[0], end[1]), end[1]); mm.leg = g.path.length - 1; } }
@@ -57,7 +61,7 @@ function play(id: string, maxSec = 1500) {
 }
 
 describe('mission playthroughs (scripted pilot)', () => {
-  for (const id of ['m01', 'm02', 'm03', 't1', 't3', 't4', 't5']) {
+  for (const id of ['m01', 'm02', 'm03', 't1', 't2', 't3', 't4', 't5']) {
     it(`${id} can be completed`, () => {
       const { s, rt } = play(id);
       expect(s.getSnapshot().mode, rt.objectives.map(o => `${o.def.id}:${o.state}`).join(' ')).toBe('done');

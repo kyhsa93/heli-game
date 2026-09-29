@@ -24,7 +24,8 @@ export type ObjectiveDef =
   | { id: string; kind: 'reach'; waypoint: string; radius: number; primary: boolean; label: string }
   | { id: string; kind: 'survive'; seconds: number; primary: boolean; label: string }
   | { id: string; kind: 'land'; farp: string; maxFpm?: number; primary: boolean; label: string }
-  | { id: string; kind: 'identify'; units: string[]; primary: boolean; label: string };
+  | { id: string; kind: 'identify'; units: string[]; primary: boolean; label: string }
+  | { id: string; kind: 'rings'; rings: Vec2[]; radius: number; maxAgl: number; primary: boolean; label: string };
 
 export type Condition =
   | { kind: 'time'; afterSec: number }
@@ -37,6 +38,10 @@ export type Condition =
   | { kind: 'tadsActive' }
   | { kind: 'unitsIdentified'; units: string[]; count?: number }
   | { kind: 'groupArrived'; group: string; count?: number }
+  | { kind: 'engineReady' }
+  | { kind: 'playerAgl'; above?: number; below?: number }
+  | { kind: 'hover'; seconds: number }
+  | { kind: 'ringsPassed'; objective: string; count: number }
   | { kind: 'all'; of: Condition[] }
   | { kind: 'any'; of: Condition[] };
 
@@ -49,6 +54,8 @@ export type Action =
   | { kind: 'objectiveAdd'; objective: string }
   | { kind: 'missionEnd'; result: 'success' | 'fail'; reason: string }
   | { kind: 'hint'; text: string };
+
+export interface StepDef { text: string; touch?: string; done: Condition }
 
 export interface TriggerDef { id: string; once: boolean; when: Condition; then: Action[] }
 
@@ -68,6 +75,7 @@ export interface MissionDef {
   objectives: ObjectiveDef[];
   initialObjectives?: string[];
   triggers: TriggerDef[];
+  steps?: StepDef[];
   par: number;
   parTimeSec: number;
   wingman: boolean;
@@ -138,6 +146,10 @@ const condition: Check = (v, p, o) => tagged({
   tadsActive: {},
   unitsIdentified: { units: arr(str, 1), count: opt(num(1)) },
   groupArrived: { group: str, count: opt(num(1)) },
+  engineReady: {},
+  playerAgl: { above: opt(num(0)), below: opt(num(0)) },
+  hover: { seconds: num(0.5, 60) },
+  ringsPassed: { objective: str, count: num(1) },
   all: { of: arr(condition, 1) },
   any: { of: arr(condition, 1) },
 })(v, p, o);
@@ -181,9 +193,11 @@ const mission = obj({
     survive: { ...common, seconds: num(1) },
     land: { ...common, farp: str, maxFpm: opt(num(50, 3000)) },
     identify: { ...common, units: arr(str, 1) },
+    rings: { ...common, rings: arr(vec2, 2), radius: num(10, 300), maxAgl: num(5, 500) },
   }), 1),
   initialObjectives: opt(arr(str)),
   triggers: arr(obj({ id: str, once: bool, when: condition, then: arr(action, 1) })),
+  steps: opt(arr(obj({ text: str, touch: opt(str), done: condition }), 1)),
   par: num(0), parTimeSec: num(1), wingman: bool,
   unlocks: opt(arr(oneOf('chaff', 'fcr', 'agm114l', 'night', 'stinger', 'wingmanMenu', 'liveries'))),
 });
@@ -218,6 +232,7 @@ function references(m: MissionDef, out: Issue[], warn: Issue[]) {
     if (o.kind === 'reach') need(waypoints, o.waypoint, `${p}.waypoint`, 'waypoint');
     if (o.kind === 'land') need(farps, o.farp, `${p}.farp`, 'farp');
     if (o.kind === 'identify') o.units.forEach((id, k) => need(units, id, `${p}.units[${k}]`, 'unit'));
+    if (o.kind === 'rings') o.rings.forEach((r, k) => inMap(r, `${p}.rings[${k}]`));
   });
   m.initialObjectives?.forEach((id, i) => need(objectives, id, `initialObjectives[${i}]`, 'objective'));
   const cond = (c: Condition, p: string) => {
@@ -227,6 +242,7 @@ function references(m: MissionDef, out: Issue[], warn: Issue[]) {
     else if (c.kind === 'playerInZone') inMap(c.center, `${p}.center`);
     else if (c.kind === 'unitsIdentified') c.units.forEach((id, k) => need(units, id, `${p}.units[${k}]`, 'unit'));
     else if (c.kind === 'groupArrived') need(groups, c.group, `${p}.group`, 'group');
+    else if (c.kind === 'ringsPassed') { const o = m.objectives.find(x => x.id === c.objective); if (o?.kind !== 'rings') fail(out, `${p}.objective`, `${c.objective} is not a rings objective`); }
     else if (c.kind === 'all' || c.kind === 'any') c.of.forEach((x, k) => cond(x, `${p}.of[${k}]`));
   };
   m.triggers.forEach((t, i) => {
@@ -240,6 +256,7 @@ function references(m: MissionDef, out: Issue[], warn: Issue[]) {
       else if (a.kind === 'smoke') inMap(a.position, `${p}.position`);
     });
   });
+  m.steps?.forEach((st, i) => cond(st.done, `steps[${i}].done`));
   const active = m.units.filter(u => !u.hidden).length;
   if (active > MISSION_MAX_UNITS) warn.push({ path: 'units', message: `${active} active units exceed the ${MISSION_MAX_UNITS} budget` });
   if (m.units.length > MISSION_MAX_UNITS * 1.5) warn.push({ path: 'units', message: `${m.units.length} units in total` });

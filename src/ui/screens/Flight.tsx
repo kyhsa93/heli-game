@@ -28,19 +28,24 @@ import { FlightInput } from '../../input/input';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
 import { VirtualStick } from '../components/VirtualStick';
 
-interface FlightProps { missionId: string; mission?: MissionDef; touch: boolean; loadout?: LoadoutDef; settings?: Settings; unlocked?: ReadonlySet<UnlockId>; onSettings?: (s: Settings) => void; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
+const COACH_SECONDS = 7;
 
-export function Flight({ missionId, mission: given, touch, loadout, settings = freshSave().settings, unlocked, onSettings, onExit, onComplete, onMissionEnd }: FlightProps) {
+interface FlightProps { missionId: string; mission?: MissionDef; touch: boolean; loadout?: LoadoutDef; settings?: Settings; unlocked?: ReadonlySet<UnlockId>; tips?: ReadonlySet<string> | null; onTip?: (tip: string) => void; onSettings?: (s: Settings) => void; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
+
+export function Flight({ missionId, mission: given, touch, loadout, settings = freshSave().settings, unlocked, tips = null, onTip, onSettings, onExit, onComplete, onMissionEnd }: FlightProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
   const msgRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
   const mission = given ?? MISSIONS[missionId];
-  const [session] = useState(() => mission ? missionSession(mission, loadout ?? null, unlocked) : new FlightSession((Math.random() * 1e9) | 0));
+  const [session] = useState(() => mission ? missionSession(mission, loadout ?? null, unlocked, tips) : new FlightSession((Math.random() * 1e9) | 0));
   const training = mission?.kind === 'training';
   const runtime = mission ? session.objective as MissionRuntime : null;
   const radioRef = useRef<HTMLDivElement>(null);
+  const coachRef = useRef<{ text: string; until: number } | null>(null);
+  const onTipRef = useRef(onTip);
+  onTipRef.current = onTip;
   const [showKeys, setShowKeys] = useState(false);
   const [portrait, setPortrait] = useState(false);
   const sim = session.world;
@@ -158,6 +163,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
     const offEvents = sim.events.onAny(e => {
       const m = eventMessage(e);
       if (m) log.push(m);
+      if (e.t === 'coach') { coachRef.current = { text: t(`coach.${e.tip}`), until: sim.time + COACH_SECONDS }; onTipRef.current?.(e.tip); }
     });
     const r = new FlightRenderer({
       mount: mountRef.current!,
@@ -173,8 +179,10 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
         }
         if (radioRef.current) {
           const line = runtime?.radioNow;
-          radioRef.current.style.display = line ? '' : 'none';
+          const coach = coachRef.current && coachRef.current.until > sim.time ? coachRef.current.text : null;
+          radioRef.current.style.display = line || coach ? '' : 'none';
           if (line) radioRef.current.textContent = `${t(`radio.${line.from}`)}: ${line.text}`;
+          else if (coach) radioRef.current.textContent = `${t('radio.control')}: ${coach}`;
         }
         if (missionRef.current && runtime) {
           const prim = runtime.objectives.filter(o => o.def.primary && o.state !== 'pending');
@@ -202,13 +210,20 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
         }
         if (hintRef.current) {
           let hint = '';
-          if (session.mode === 'play' && h.alive) {
+          const steps = runtime?.steps;
+          if (steps && runtime && session.mode === 'play' && h.alive) {
+            const i = runtime.stepIndex;
+            const shown = runtime.stepFlash > 0 ? steps[i - 1] : steps[i];
+            const text = shown ? (touchRef.current && shown.touch) || shown.text : '';
+            hint = !shown ? '' : runtime.stepFlash > 0 ? `✓ ${text}` : `${i + 1}/${steps.length}  ${text}`;
+            hintRef.current.classList.toggle('done', runtime.stepFlash > 0);
+          } else if (session.mode === 'play' && h.alive) {
             if (!h.engineOn && h.landed && h.fuel > 0) hint = t(touchRef.current ? 'hint.startEngineTouch' : 'hint.startEngineKey');
             else if (h.engineOn && h.rpm < 0.95 && h.landed) hint = t('hint.spooling', { pct: Math.round(h.rpm * 100) });
             else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = t(touchRef.current ? 'hint.liftTouch' : 'hint.liftKey');
           }
           const step = runtime?.step;
-          if (!hint && step && session.mode === 'play' && h.alive) hint = step;
+          if (!hint && !steps && step && session.mode === 'play' && h.alive) hint = step;
           hintRef.current.textContent = hint;
         }
       },

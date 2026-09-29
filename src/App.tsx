@@ -14,7 +14,7 @@ import { Debrief } from './ui/mission/Debrief';
 import { Loadout } from './ui/mission/Loadout';
 import { InstantSetup } from './ui/mission/InstantSetup';
 import { generateInstant } from './sim/mission/instant';
-import { campaignProgress, loadSave, missionAvailable, recordInstant, recordMission, recordTraining, storeSave, unlockedFor } from './save/campaign';
+import { campaignProgress, loadSave, missionAvailable, recordTip, recordInstant, recordMission, recordTraining, storeSave, unlockedFor } from './save/campaign';
 
 export function App() {
   const [ui] = useState(() => new UiState());
@@ -52,7 +52,7 @@ export function App() {
 
   switch (screen.name) {
     case 'title':
-      return <Title trainingDone={completed.has('t1')} progress={campaignProgress(save)} onInstant={() => ui.go({ name: 'instant' })} onCampaign={() => ui.go({ name: 'campaign' })} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} />;
+      return <Title trainingDone={completed.has('t1')} onFirstFlight={() => ui.go({ name: 'flight', missionId: 't1' })} progress={campaignProgress(save)} onInstant={() => ui.go({ name: 'instant' })} onCampaign={() => ui.go({ name: 'campaign' })} onTraining={() => ui.go({ name: 'training' })} onCredits={() => ui.go({ name: 'credits' })} />;
     case 'instant':
       return <InstantSetup best={save.instantBest} onBack={() => ui.go({ name: 'title' })} onGo={threat => ui.go({ name: 'flight', missionId: 'instant', mission: generateInstant({ seed: (Math.random() * 1e9) | 0, threat, time: 'day' }) })} />;
     case 'campaign':
@@ -77,6 +77,8 @@ export function App() {
         onComplete={complete}
         settings={save.settings}
         unlocked={isMission(screen.missionId) || screen.mission ? unlockedFor(save) : undefined}
+        tips={isMission(screen.missionId) && !screen.mission ? new Set(save.tips) : null}
+        onTip={tip => setSave(prev => recordTip(prev, tip))}
         onSettings={settings => setSave(prev => ({ ...prev, settings }))}
         onMissionEnd={report => {
           if (screen.mission) {

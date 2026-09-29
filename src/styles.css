@@ -87,7 +87,12 @@ button.go:disabled { opacity: .4; cursor: default; }
 }
 .game-title { font-size: 44px; letter-spacing: .08em; margin-bottom: 18px; }
 .game-title small { display: block; font-size: 18px; letter-spacing: .3em; color: #ffd166; margin-top: 4px; }
-.first-time { color: #ffd166; }
+.first-time { display: block; width: 100%; margin: 0 0 10px; font: inherit; text-align: left; cursor: pointer; color: #10151d; background: #ffd166;
+  border: 0; border-radius: 12px; padding: 12px 16px; animation: first-pulse 1.6s ease-in-out infinite; }
+.first-time b { display: block; font-size: 17px; }
+.first-time span { font-size: 13px; }
+@keyframes first-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 209, 102, .55); } 50% { box-shadow: 0 0 0 8px rgba(255, 209, 102, 0); } }
+@media (prefers-reduced-motion: reduce) { .first-time { animation: none; } }
 button.mode {
   display: block; width: 100%; margin: 0 0 10px; padding: 14px 18px; border-radius: 12px; cursor: pointer;
   text-align: left; font: inherit; color: #e8eef7; background: rgba(255, 255, 255, .06);
@@ -178,3 +183,4 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .radio-menu button { font: inherit; font-size: 15px; text-align: left; color: #e8eef7; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .2); border-radius: 8px; padding: 6px 10px; }
 .radio-menu button.on { border-color: #4cc9f0; color: #4cc9f0; }
 .radio-menu small { color: #8fa0b5; font-size: 12px; }
+.hint.done { color: #06d6a0; }

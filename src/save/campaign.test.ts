@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BACKUP_KEY, freshSave, LEGACY, loadSave, rankFor, recordInstant, recordMission, recordTraining, SAVE_KEY, storeSave, unlockedFor } from './campaign';
+import { BACKUP_KEY, freshSave, LEGACY, loadSave, rankFor, recordInstant, recordMission, recordTip, recordTraining, SAVE_KEY, storeSave, unlockedFor } from './campaign';
 import { memoryStorage, type KeyValue } from './storage';
 
 describe('campaign save (02 2.5)', () => {
@@ -80,5 +80,16 @@ describe('campaign save (02 2.5)', () => {
     expect(rankFor(0).id).toBe('secondLt');
     expect(rankFor(16000).id).toBe('captain');
     expect(rankFor(s.totalScore).id).toBe('major');
+  });
+});
+
+describe('tips seen', () => {
+  it('remembers each tip once and survives a reload', () => {
+    const store = memoryStorage();
+    let s = recordTip(freshSave(), 'rwr');
+    s = recordTip(s, 'rwr');
+    expect(s.tips).toEqual(['rwr']);
+    storeSave(s, store);
+    expect(loadSave(store).tips).toEqual(['rwr']);
   });
 });
