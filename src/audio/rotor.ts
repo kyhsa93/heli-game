@@ -3,6 +3,7 @@ export interface AudioState {
   collective: number;
   airspeed: number;
   warn: boolean;
+  lock?: boolean;
 }
 
 export class RotorAudio {
@@ -19,6 +20,7 @@ export class RotorAudio {
   private windGain!: GainNode;
   private windFilter!: BiquadFilterNode;
   private warnGain!: GainNode;
+  private lockGain!: GainNode;
   private muted = false;
   private synthBus: GainNode;
   private loop: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
@@ -115,6 +117,9 @@ export class RotorAudio {
     const beep = ctx.createOscillator(); beep.type = 'square'; beep.frequency.value = 760; beep.start();
     this.warnGain = ctx.createGain(); this.warnGain.gain.value = 0;
     beep.connect(this.warnGain).connect(this.master);
+    const tone = ctx.createOscillator(); tone.type = 'sine'; tone.frequency.value = 1150; tone.start();
+    this.lockGain = ctx.createGain(); this.lockGain.gain.value = 0;
+    tone.connect(this.lockGain).connect(this.master);
   }
 
   resume() { return this.ctx.resume(); }
@@ -149,6 +154,8 @@ export class RotorAudio {
     }
     const beepOn = s.warn && Math.floor(t * 3) % 2 === 0;
     this.warnGain.gain.setTargetAtTime(beepOn ? 0.05 : 0, t, 0.01);
+    const lockOn = !!s.lock && (t * 8) % 1 < 0.5;
+    this.lockGain.gain.setTargetAtTime(lockOn ? 0.035 : 0, t, 0.005);
   }
 
   dispose() { void this.ctx.close(); }

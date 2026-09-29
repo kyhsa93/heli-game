@@ -9,6 +9,8 @@ import { count } from '../sim/heli/loadout';
 import { EYE } from '../sim/heli/airframe';
 import { toWorld } from '../sim/heli/state';
 import { boresight, HYDRA, rocketSolution, rocketTarget } from '../sim/weapons/rockets';
+import { LAUNCH_CONSTRAINT } from '../sim/weapons/hellfire';
+import { tadsWeaponStatus } from './tadsHud';
 import type { World } from '../sim/world';
 
 const GREEN = '#5dff6e';
@@ -96,6 +98,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
   if (heli.rpm < 0.95) g.fillText(`NR ${Math.round(heli.rpm * 101)}%`, cx + 190 * u, cy + 110 * u);
 
   if (world.arms.selected === 'hydra70') drawRockets(g, w, h, u, world, camera);
+  else if (world.arms.selected === 'agm114k') drawHellfire(g, w, h, u, world, camera);
   else drawGun(g, w, h, u, world, camera);
 
   const tp = world.target;
@@ -197,5 +200,32 @@ function drawRockets(g: CanvasRenderingContext2D, w: number, h: number, u: numbe
   g.textAlign = 'right';
   const status = left <= 0 ? 'RKT EMPTY' : `RKT ${left} x${a.salvo}${note}`;
   g.fillText(status, w / 2 + 190 * u, h / 2 + 132 * u);
+  g.restore();
+}
+
+function drawHellfire(g: CanvasRenderingContext2D, w: number, h: number, u: number, world: World, camera: THREE.Camera) {
+  const heli = world.player;
+  toWorld(heli, EYE, eye);
+  g.save();
+  g.lineWidth = 2 * u;
+  const yaw = heli.yaw, c = LAUNCH_CONSTRAINT;
+  const corners = [-c, c].map(a => project(camera, dirTmp.set(-Math.sin(yaw + a), 0, -Math.cos(yaw + a)).multiplyScalar(3000).add(eye), w, h));
+  const [l, r] = corners;
+  if (l && r) {
+    const y = (l.y + r.y) / 2, hh = 26 * u;
+    g.setLineDash([6 * u, 6 * u]);
+    g.strokeRect(Math.min(l.x, r.x), y - hh, Math.abs(r.x - l.x), hh * 2);
+    g.setLineDash([]);
+  }
+  const spots = world.laserSpots();
+  for (const s of spots) {
+    const p = project(camera, s.pos, w, h);
+    if (!p) continue;
+    const r = 7 * u;
+    g.beginPath(); g.arc(p.x, p.y, r, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.moveTo(p.x - r * 1.6, p.y); g.lineTo(p.x + r * 1.6, p.y); g.moveTo(p.x, p.y - r * 1.6); g.lineTo(p.x, p.y + r * 1.6); g.stroke();
+  }
+  g.textAlign = 'right';
+  g.fillText(tadsWeaponStatus(world), w / 2 + 190 * u, h / 2 + 132 * u);
   g.restore();
 }

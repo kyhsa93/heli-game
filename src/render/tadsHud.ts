@@ -3,14 +3,33 @@ import { clamp } from '../core/math';
 import { count } from '../sim/heli/loadout';
 import { TADS_FOV_NAMES, tadsFovDeg, tadsLocal } from '../sim/sensors/tads';
 import { gunInLimits } from '../sim/weapons/arms';
+import { hellfireSolution, type HellfireStatus } from '../sim/weapons/hellfire';
 import type { World } from '../sim/world';
 import { headingDeg } from './cockpit/instruments';
 
 const WHITE = '#f4f4f4';
 const pad3 = (n: number) => `${n < 0 ? '-' : ''}${String(Math.abs(Math.round(n))).padStart(3, '0')}`;
 
+const HF_TEXT: Record<HellfireStatus, string> = { lobl: 'LOBL', loal: 'LOAL', range: 'RNG', align: 'ALN', empty: '', noTarget: '' };
+
+export function missileTof(world: World) {
+  let best: number | null = null;
+  for (const m of world.missiles) {
+    if (m.owner !== 0 || m.phase === 'lost') continue;
+    const tof = m.pos.distanceTo(m.aim) / Math.max(1, m.vel.length());
+    best = best === null ? tof : Math.min(best, tof);
+  }
+  return best;
+}
+
 export function tadsWeaponStatus(world: World) {
   const a = world.arms;
+  if (a.selected === 'agm114k') {
+    const n = count(world.loadout, 'agm114k');
+    if (n <= 0) return 'MSL EMPTY';
+    const tof = missileTof(world);
+    return `MSL K ${n} ${HF_TEXT[hellfireSolution(world).status]}${tof !== null ? `  TOF ${Math.ceil(tof)}` : ''}`.trimEnd();
+  }
   if (a.selected === 'hydra70') {
     const n = count(world.loadout, 'hydra70');
     return n > 0 ? `RKT ${n} x${a.salvo}` : 'RKT EMPTY';

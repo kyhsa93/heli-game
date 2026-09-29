@@ -9,13 +9,15 @@ import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout
 import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
-import { castRay, createLaser, crosshairUnit, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
+import { castRay, createLaser, crosshairUnit, unitCenter, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
 import { constrainTads, createTads, lookAngles, tadsDirection, tadsFovDeg, tadsLocal, tadsPosition, type Tads } from './sensors/tads';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
 import { UNIT_DEFS, type Unit } from './units';
 import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
 import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
 import { integrate, PLAYER_OWNER, segmentHitsTerrain, segmentHitsUnit, type Projectile } from './weapons/projectile';
+import { hellfireSolution, launchHellfire } from './weapons/hellfire';
+import { HELLFIRE, hellfireLaunchers, stepMissile, type LaserSpot, type Missile } from './weapons/missile';
 import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SALVO_INTERVAL } from './weapons/rockets';
 
 export const STEP = 1 / 120;
@@ -34,6 +36,8 @@ export class World {
   readonly events = new EventBus<SimEvent>();
   units: Unit[] = [];
   projectiles: Projectile[] = [];
+  missiles: Missile[] = [];
+  remoteLasers: { unitId: number; until: number }[] = [];
   arms: Arms = createArms();
   loadoutDef: LoadoutDef = STANDARD_LOADOUT;
   loadout: Loadout = createLoadout(STANDARD_LOADOUT);
@@ -45,6 +49,7 @@ export class World {
   hold: Hold | null = null;
   private nextUnitId = 1;
   private nextProjectileId = 1;
+  private nextMissileId = 1;
   private atBoundary = false;
   private refuelNoted = false;
 
@@ -115,6 +120,7 @@ export class World {
   availableWeapons(): WeaponId[] {
     const list: WeaponId[] = ['gun30'];
     if (rocketPods(this.loadout).length) list.push('hydra70');
+    if (hellfireLaunchers(this.loadout).length) list.push('agm114k');
     return list;
   }
 
@@ -124,7 +130,7 @@ export class World {
     else if (slot === 2 && this.availableWeapons().includes('hydra70')) {
       if (a.selected === 'hydra70') a.salvo = SALVOS[(SALVOS.indexOf(a.salvo) + 1) % SALVOS.length];
       else this.setWeapon('hydra70');
-    }
+    } else if (slot === 3 && this.availableWeapons().includes('agm114k')) this.setWeapon('agm114k');
   }
 
   nextWeapon() {
@@ -145,9 +151,26 @@ export class World {
     this.hold = this.tads.active ? createHold(this.player) : null;
   }
 
+  remoteLaser(unitId: number, seconds: number) {
+    this.remoteLasers = this.remoteLasers.filter(r => r.unitId !== unitId);
+    this.remoteLasers.push({ unitId, until: this.time + seconds });
+  }
+
+  laserSpots(): LaserSpot[] {
+    const spots: LaserSpot[] = [];
+    if (this.laser.on && this.laser.point) spots.push({ pos: this.laser.point, source: 'player' });
+    for (const r of this.remoteLasers) {
+      const u = this.unit(r.unitId);
+      if (u?.alive && this.time <= r.until) spots.push({ pos: unitCenter(u), source: 'remote' });
+    }
+    return spots;
+  }
+
   clearCombat() {
     this.units = [];
     this.projectiles = [];
+    this.missiles = [];
+    this.remoteLasers = [];
   }
 
   unit(id: number) {
@@ -199,11 +222,15 @@ export class World {
         const l = tadsLocal(h, this.tads);
         this.commands.aim.yaw = l.az; this.commands.aim.pitch = l.el;
       }
-      this.stepGun(dt);
-      this.stepRockets(dt);
       this.stepSensors(dt);
+      const pressed = this.commands.fire && !this.arms.trigger;
+      this.arms.trigger = this.commands.fire;
+      this.stepGun(dt);
+      this.stepRockets(dt, pressed);
+      this.stepHellfire(dt, pressed);
     }
     this.stepProjectiles(dt);
+    this.stepMissiles(dt);
     this.events.flush();
   }
 
@@ -274,10 +301,8 @@ export class World {
     return dir.addScaledVector(side, Math.cos(ang) * rad).addScaledVector(up, Math.sin(ang) * rad).normalize();
   }
 
-  private stepRockets(dt: number) {
+  private stepRockets(dt: number, pressed: boolean) {
     const a = this.arms, h = this.player;
-    const pressed = this.commands.fire && !a.trigger;
-    a.trigger = this.commands.fire;
     a.rocketTimer = Math.max(0, a.rocketTimer - dt);
     if (a.selected !== 'hydra70' || !h.alive) { a.salvoLeft = 0; return; }
     if (pressed && a.salvoLeft === 0) a.salvoLeft = a.salvo;
@@ -292,6 +317,53 @@ export class World {
       a.rocketsFired++;
       a.salvoLeft--;
       a.rocketTimer += SALVO_INTERVAL;
+    }
+  }
+
+  private stepHellfire(dt: number, pressed: boolean) {
+    const a = this.arms;
+    a.missileTimer = Math.max(0, a.missileTimer - dt);
+    if (!pressed || a.selected !== 'agm114k' || a.missileTimer > 1e-9 || !this.player.alive) return;
+    const sol = hellfireSolution(this);
+    if (!sol.mode) return;
+    const m = launchHellfire(this, sol, this.nextMissileId++);
+    if (!m) return;
+    this.missiles.push(m);
+    a.missilesFired++;
+    a.missileTimer = HELLFIRE.minInterval ?? 0.8;
+    this.emit({ t: 'fire', weapon: 'agm114k', pos: m.pos.clone(), dir: m.vel.clone().normalize(), owner: PLAYER_OWNER, tracer: false });
+  }
+
+  private stepMissiles(dt: number) {
+    const list = this.missiles, spots = this.laserSpots();
+    const maxFlight = HELLFIRE.maxFlight ?? 30;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const m = list[i];
+      const a = m.pos.clone();
+      stepMissile(m, this.terrain, spots, dt);
+      const b = m.pos;
+      let bestT = Infinity, bestUnit: Unit | null = null;
+      for (const u of this.units) {
+        if (!u.alive) continue;
+        const k = segmentHitsUnit(a, b, u);
+        if (k !== null && k < bestT) { bestT = k; bestUnit = u; }
+      }
+      const tg = segmentHitsTerrain(a, b, this.terrain);
+      const w = WEAPONS[m.kind], byPlayer = m.owner === PLAYER_OWNER;
+      let done = m.age > maxFlight;
+      if (bestUnit && (tg === null || bestT <= tg)) {
+        const at = a.clone().lerp(b, bestT);
+        hitUnit(this, bestUnit, w, byPlayer);
+        explodeWeapon(this, at, w, byPlayer, bestUnit);
+        this.emit({ t: 'impact', weapon: m.kind, pos: at, unit: bestUnit.id, ground: false });
+        done = true;
+      } else if (tg !== null) {
+        const at = a.clone().lerp(b, tg);
+        explodeWeapon(this, at, w, byPlayer);
+        this.emit({ t: 'impact', weapon: m.kind, pos: at, ground: true });
+        done = true;
+      }
+      if (done) { list[i] = list[list.length - 1]; list.pop(); }
     }
   }
 

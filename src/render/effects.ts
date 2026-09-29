@@ -149,6 +149,11 @@ export class Effects {
   private tracers: THREE.LineSegments;
   private tracerPos: Float32Array;
   private burning: Burning[] = [];
+  private missileMesh: THREE.InstancedMesh;
+  private mm = new THREE.Matrix4();
+  private mq = new THREE.Quaternion();
+  private mz = new THREE.Vector3(0, 1, 0);
+  private one = new THREE.Vector3(1, 1, 1);
   private rnd = Math.random;
 
   constructor(map: THREE.Texture, readonly maxTracers = 128) {
@@ -161,6 +166,11 @@ export class Effects {
     this.tracers = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0xffc070, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.tracers.frustumCulled = false;
     this.group.add(this.tracers);
+    const body = new THREE.CylinderGeometry(0.09, 0.09, 1.6, 8);
+    this.missileMesh = new THREE.InstancedMesh(body, new THREE.MeshLambertMaterial({ color: 0x5a5f55 }), 24);
+    this.missileMesh.count = 0;
+    this.missileMesh.frustumCulled = false;
+    this.group.add(this.missileMesh);
   }
 
   setScale(viewportHeight: number, fovDeg: number) {
@@ -177,6 +187,11 @@ export class Effects {
   onEvent(e: SimEvent, world: World) {
     switch (e.t) {
       case 'fire':
+        if (e.weapon === 'agm114k') {
+          this.glow.spawn(e.pos, new THREE.Vector3(), 0.15, 3, 4.5, 1, CELL.flash);
+          for (let i = 0; i < 5; i++) this.smoke.spawn(e.pos.clone().add(this.jitter(1.5)), e.dir.clone().multiplyScalar(-8).add(this.jitter(3)), 2.5, 2, 7, 0.55, CELL.dust[i % 4], 0.5, 1.2);
+          break;
+        }
         if (e.weapon === 'hydra70') {
           this.glow.spawn(e.pos, new THREE.Vector3(), 0.12, 2.5, 3.5, 1, CELL.flash);
           for (let i = 0; i < 3; i++) this.smoke.spawn(e.pos.clone().add(this.jitter(1)), e.dir.clone().multiplyScalar(-6).add(this.jitter(2)), 1.8, 1.5, 5, 0.5, CELL.smoke[i], 0.6, 1.5);
@@ -230,6 +245,22 @@ export class Effects {
         this.smoke.spawn(at, this.jitter(1.5), 1.6 + this.rnd(), 0.8, 3.5, 0.5, CELL.dust[(this.rnd() * 4) | 0], 0.4, 1);
       }
     }
+    let mi = 0;
+    for (const m of world.missiles) {
+      if (mi < 24) {
+        this.mq.setFromUnitVectors(this.mz, m.vel.clone().normalize());
+        this.missileMesh.setMatrixAt(mi++, this.mm.compose(m.pos, this.mq, this.one));
+      }
+      if (m.phase === 'lost') continue;
+      this.glow.spawn(m.pos, new THREE.Vector3(), 0.05, 1.4, 0.7, 1, CELL.fire);
+      const n = Math.min(8, Math.ceil(m.vel.length() * dt / 6));
+      for (let i = 0; i < n; i++) {
+        const at = m.pos.clone().addScaledVector(m.vel, -dt * (i + this.rnd()) / n);
+        this.smoke.spawn(at, this.jitter(1.2), 2.2 + this.rnd(), 1, 4.5, 0.55, CELL.dust[(this.rnd() * 4) | 0], 0.3, 1);
+      }
+    }
+    this.missileMesh.count = mi;
+    this.missileMesh.instanceMatrix.needsUpdate = true;
     this.glow.update(dt);
     this.smoke.update(dt);
 

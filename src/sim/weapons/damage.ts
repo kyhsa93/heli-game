@@ -25,6 +25,12 @@ export interface WeaponDef {
   launchSpeed?: number;
   burnTime?: number;
   thrust?: number;
+  accel?: number;
+  maxSpeed?: number;
+  turnRate?: number;
+  seekerHalfAngleDeg?: number;
+  loalWindow?: number;
+  maxFlight?: number;
 }
 
 export const WEAPONS = weaponsJson as unknown as Record<string, WeaponDef>;

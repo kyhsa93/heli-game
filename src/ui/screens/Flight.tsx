@@ -10,6 +10,7 @@ import { airspeed } from '../../sim/heli/state';
 import { FlightSession } from '../../sim/session';
 import { zoomTads } from '../../sim/sensors/tads';
 import { sightPoint } from '../../sim/weapons/ballistics';
+import { hellfireSolution } from '../../sim/weapons/hellfire';
 import { rocketSolution } from '../../sim/weapons/rockets';
 import { createObjective } from '../../sim/training';
 import { T1_MAX_FPM, TrainingT1 } from '../../sim/training/t1';
@@ -143,7 +144,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
     });
     rendererRef.current = r;
     input.onCommand = cmd => runCommandRef.current(cmd);
-    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, renderer: r, model: r.model, weapons: { rocketSolution, sightPoint } } });
+    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, renderer: r, model: r.model, weapons: { rocketSolution, sightPoint, hellfireSolution } } });
     return () => {
       offEvents();
       r.dispose();

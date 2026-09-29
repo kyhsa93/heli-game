@@ -25,6 +25,7 @@ export const ASSETS: AssetDef[] = [
   { id: 'audio.engine_start', kind: 'audio', path: 'audio/engine_start.mp3', group: BOOT_GROUP },
   { id: 'audio.gun_shot', kind: 'audio', path: 'audio/gun_shot.mp3', group: BOOT_GROUP },
   { id: 'audio.rocket_launch', kind: 'audio', path: 'audio/rocket_launch.mp3', group: BOOT_GROUP },
+  { id: 'audio.hellfire_launch', kind: 'audio', path: 'audio/hellfire_launch.mp3', group: BOOT_GROUP },
   { id: 'audio.explosion_near', kind: 'audio', path: 'audio/explosion_near.mp3', group: BOOT_GROUP },
   { id: 'audio.explosion_fire', kind: 'audio', path: 'audio/explosion_fire.mp3', group: BOOT_GROUP },
   { id: 'audio.impact_metal', kind: 'audio', path: 'audio/impact_metal.mp3', group: BOOT_GROUP },

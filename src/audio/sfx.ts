@@ -3,7 +3,7 @@ import type { SimEvent } from '../sim/events';
 
 export const SOUND_SPEED = 340;
 
-export type SampleId = 'gun_shot' | 'rocket_launch' | 'impact_metal' | 'impact_ground' | 'explosion_near' | 'explosion_fire';
+export type SampleId = 'gun_shot' | 'rocket_launch' | 'hellfire_launch' | 'impact_metal' | 'impact_ground' | 'explosion_near' | 'explosion_fire';
 
 export class SfxPlayer {
   private lastGun = -1;
@@ -31,7 +31,9 @@ export class SfxPlayer {
   onEvent(e: SimEvent, listener: Vector3) {
     switch (e.t) {
       case 'fire':
-        if (e.owner === 0 && e.weapon === 'hydra70') {
+        if (e.owner === 0 && e.weapon === 'agm114k') {
+          this.play('hellfire_launch', 0.75, 1, 0, 20000, 1.2);
+        } else if (e.owner === 0 && e.weapon === 'hydra70') {
           this.play('rocket_launch', 0.6, 1.25 + this.rnd() * 0.1, 0, 20000, 0.5);
         } else if (e.owner === 0) {
           if (this.ctx.currentTime - this.lastGun < 0.085) return;

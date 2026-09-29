@@ -41,7 +41,7 @@ M0에서 8.3절 목표 구조로 옮겼다. 아직 없는 디렉터리(`sim/weap
 
 테스트: `src/**/*.test.ts` (비행·세션·T1·입력·문자열·에셋 출처·폰트 이름·아키텍처 규칙·서비스 워커). Vite 빌드 산출 JS·CSS는 `dist/static/`.
 
-디버그 훅: URL에 `?debug`를 붙이면 `window.__flight = { session, world, input, renderer, model, weapons }` 이 노출된다(`weapons`는 `rocketSolution`·`sightPoint` 같은 조준 계산 함수)(8.8절).
+디버그 훅: URL에 `?debug`를 붙이면 `window.__flight = { session, world, input, renderer, model, weapons }` 이 노출된다(`weapons`는 `rocketSolution`·`sightPoint`·`hellfireSolution` 같은 조준 계산 함수)(8.8절).
 
 ## 8.3 목표 구조
 

@@ -13,6 +13,7 @@ import { UNITS_GROUP } from '../assets/manifest';
 import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
 import { drawIhadss } from './ihadss';
+import { hellfireSolution } from '../sim/weapons/hellfire';
 import { TadsView } from './tadsView';
 import { drawTads } from './tadsHud';
 import { buildWorld, type WorldScene } from './scene';
@@ -218,6 +219,7 @@ export class FlightRenderer {
     this.audio?.update({
       rpm: h.alive ? h.rpm : 0, collective: h.collective, airspeed: speed,
       warn: h.alive && session.mode === 'play' && ((h.rpm < 0.85 && !h.landed) || h.fuel < 10),
+      lock: h.alive && world.arms.selected === 'agm114k' && hellfireSolution(world).status === 'lobl',
     });
 
     this.opts.onFrame?.({ simDt: steps * STEP, cockpit, agl });
