@@ -1,5 +1,6 @@
 import { Euler, Quaternion, Vector3 } from 'three';
-import { clamp } from './math';
+import { clamp } from '../core/math';
+import { MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { HALF, PAD_R, Terrain, type Pad3 } from './terrain';
 
 export const STEP = 1 / 120;
@@ -17,9 +18,6 @@ export const SLOPE_MAX = 10 * Math.PI / 180;
 export const MAX_PITCH = 25 * Math.PI / 180;
 export const MAX_ROLL = 35 * Math.PI / 180;
 export const EYE = new Vector3(0, 1.02, -2.55);
-export const M_TO_FT = 3.281;
-export const MS_TO_KT = 1.944;
-export const MS_TO_FPM = 196.85;
 
 const GEAR = [
   new Vector3(-1.2, GEAR_Y, -2.35), new Vector3(1.2, GEAR_Y, -2.35), new Vector3(0, GEAR_Y, 7.9),

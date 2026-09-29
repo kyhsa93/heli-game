@@ -1,4 +1,4 @@
-import { clamp, rng, smooth } from './math';
+import { clamp, rng, smooth } from '../core/math';
 
 export const SIZE = 4000;
 export const N = 320;

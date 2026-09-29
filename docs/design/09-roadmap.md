@@ -21,7 +21,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 
 목표: 08장 목표 구조로 옮기고, 비행·착륙·계기가 **지금과 똑같이** 동작한다. 지금의 보급품 운송 게임은 **훈련 T1(기본 비행)** 으로 바뀐다(자유 비행 모드는 만들지 않음). 비행·착륙 테스트는 그대로 통과해야 한다.
 
-- [ ] [#1](https://github.com/kyhsa93/heli-game/issues/1) **M0-1 core 분리**: `sim3d/math.ts` → `core/math.ts`, 단위 상수 → `core/units.ts`, `core/events.ts`(타입 있는 이벤트 버스: `on/off/emit/flush`), `core/grid.ts`. *완료*: 이벤트 버스·격자 단위 테스트.
+- [x] [#1](https://github.com/kyhsa93/heli-game/issues/1) **M0-1 core 분리**: `sim3d/math.ts` → `core/math.ts`, 단위 상수 → `core/units.ts`, `core/events.ts`(타입 있는 이벤트 버스: `on/off/emit/flush`), `core/grid.ts`. *완료*: 이벤트 버스·격자 단위 테스트.
 - [ ] [#2](https://github.com/kyhsa93/heli-game/issues/2) **M0-2 World 도입**: `sim/world.ts`에 `World` 클래스. 현재 `Sim`의 비행 물리(`fly`, `collide`, `groundAttitude`, 로터·연료)를 `sim/heli/flight.ts`, `sim/heli/systems.ts`로 옮긴다. 보급품 임무 규칙(`newMission`, `onGround`의 적재·하역, 점수)은 **삭제**하고, 기지 패드 연료 보급만 남긴다(M4-5에서 FARP로 일반화). *완료*: `sim.test.ts`의 terrain·flight 테스트 8개가 (필요시 import만 바꿔서) 통과, refuel 테스트 유지, 화물 배달 테스트는 삭제.
 - [ ] [#3](https://github.com/kyhsa93/heli-game/issues/3) **M0-3 렌더 분리**: `Flight3D.tsx`의 rAF 루프·렌더·카메라·계기 갱신을 `render/renderer.ts`의 `FlightRenderer` 클래스로. React 컴포넌트는 마운트/언마운트만. `heliModel.ts`를 `render/heliModel.ts`(외형)와 `render/cockpit/cockpitModel.ts`(조종석)로 분리. *완료*: 스크린샷 비교(정면·아래·외부)가 변경 전과 같음.
 - [ ] [#4](https://github.com/kyhsa93/heli-game/issues/4) **M0-4 입력 분리**: 키 처리(`Flight3D`의 keydown switch)와 `FlightInput`을 `input/`으로. `bindings.ts`에 07장 조작표 반영(단, 전투 키는 아직 동작 없이 자리만). Q/E 페달 제거. *완료*: 입력 매핑 단위 테스트(키 코드 → 명령).

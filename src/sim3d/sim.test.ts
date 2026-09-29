@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rng } from './math';
+import { rng } from '../core/math';
 import { G3, GEAR_Y, MAX_THRUST, STEP, Sim } from './sim';
 
 function setup(seed = 7) {

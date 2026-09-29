@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { clamp } from './math';
-import { M_TO_FT, MS_TO_FPM, MS_TO_KT, type Sim } from './sim';
+import { clamp } from '../core/math';
+import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
+import type { Sim } from './sim';
 import { HALF, N, SIZE } from './terrain';
 
 const GREEN = '#46ff7a';

@@ -2,12 +2,13 @@ import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as
 import * as THREE from 'three';
 import { RotorAudio } from '../sim3d/audio';
 import { buildHeli } from '../sim3d/heliModel';
-import { clamp } from '../sim3d/math';
+import { clamp } from '../core/math';
+import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { FlightInput } from '../sim3d/input';
 import { Instruments } from '../sim3d/instruments';
 import { buildWorld } from '../sim3d/scene';
 import { drawIhadss } from '../sim3d/ihadss';
-import { BLADES, EYE, M_TO_FT, MS_TO_FPM, MS_TO_KT, ROTOR_HZ, STEP, Sim, type BestStore3 } from '../sim3d/sim';
+import { BLADES, EYE, ROTOR_HZ, STEP, Sim, type BestStore3 } from '../sim3d/sim';
 import { VirtualStick } from './VirtualStick';
 
 const bestStore: BestStore3 = {

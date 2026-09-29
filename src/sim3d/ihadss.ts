@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { clamp } from './math';
+import { clamp } from '../core/math';
 import { bearingDeg, headingDeg, hoverVector } from './instruments';
-import { M_TO_FT, MS_TO_FPM, MS_TO_KT, type Sim } from './sim';
+import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
+import type { Sim } from './sim';
 
 const GREEN = '#5dff6e';
 const tmp = new THREE.Vector3();

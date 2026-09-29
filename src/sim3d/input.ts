@@ -1,4 +1,4 @@
-import { clamp } from './math';
+import { clamp } from '../core/math';
 import type { Sim } from './sim';
 
 export interface TouchSticks { lx: number; ly: number; rx: number; ry: number }
