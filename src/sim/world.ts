@@ -217,7 +217,8 @@ export class World {
         collide(h, this.terrain, this.emit);
         if (h.landed && !wasLanded) this.refuelNoted = false;
       }
-      if (this.tads.active) {
+      if (!this.tads.active) lookAngles(aimDirection(h, this.commands.aim), this.tads);
+      else {
         constrainTads(h, this.tads);
         const l = tadsLocal(h, this.tads);
         this.commands.aim.yaw = l.az; this.commands.aim.pitch = l.el;

@@ -15,6 +15,10 @@ import { UnitRenderer } from './unitRenderer';
 import { drawIhadss } from './ihadss';
 import { hellfireSolution } from '../sim/weapons/hellfire';
 import { TadsView } from './tadsView';
+import { bezelHitAt, type MpdSide } from './cockpit/mpd';
+
+const MPD_TADS = 256;
+const MPD_TADS_MS = 200;
 import { drawTads } from './tadsHud';
 import { buildWorld, type WorldScene } from './scene';
 
@@ -55,6 +59,13 @@ export class FlightRenderer {
   readonly effects: Effects;
   readonly units = new UnitRenderer();
   readonly tads = new TadsView();
+  private mpdTads = new TadsView();
+  private mpdTarget = new THREE.WebGLRenderTarget(MPD_TADS, MPD_TADS);
+  private mpdPixels = new Uint8Array(MPD_TADS * MPD_TADS * 4);
+  private mpdCanvas: HTMLCanvasElement | null = null;
+  mpdVideo = true;
+  private mpdVideoAt = -Infinity;
+  private raycaster = new THREE.Raycaster();
   private flirFog = new THREE.Color(0x151515);
   private black = new THREE.Color(0x000000);
   private unitAssetsRequested = false;
@@ -87,6 +98,7 @@ export class FlightRenderer {
       if (this.audio) this.audio.onEvent(e, this.camera.getWorldPosition(this.listener));
     });
 
+    this.mpdTads.setSize(MPD_TADS * 2, MPD_TADS * 2);
     this.resize();
     window.addEventListener('resize', this.resize);
     this.raf = requestAnimationFrame(this.tick);
@@ -207,6 +219,10 @@ export class FlightRenderer {
     const flir = tads && world.tads.sensor === 'flir';
     this.units.update(world, flir);
     this.effects.update(steps * STEP, world);
+    if (!tads && this.mpdVideo && this.instruments.shows('TADS') && now - this.mpdVideoAt >= MPD_TADS_MS && h.alive) {
+      this.mpdVideoAt = now;
+      this.renderMpdTads(now, world.tads.sensor === 'flir');
+    }
     this.instruments.draw(world, this.frame++ % 3);
     if (tads) this.renderTads(now, flir);
     else this.renderer.render(scn.scene, camera);
@@ -226,7 +242,40 @@ export class FlightRenderer {
     this.raf = requestAnimationFrame(this.tick);
   };
 
+  get mpd() { return this.instruments.mpd; }
+
+  clickAt(clientX: number, clientY: number): boolean {
+    if (this.view !== 'cockpit' || this.debugCamera || this.opts.session.world.tads.active) return false;
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const ndc = new THREE.Vector2((clientX - rect.left) / rect.width * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    this.raycaster.setFromCamera(ndc, this.camera);
+    const screens = this.model.screens;
+    const hit = this.raycaster.intersectObjects([screens.mpdL, screens.mpdR], false)[0];
+    if (!hit?.uv) return false;
+    const side: MpdSide = hit.object === screens.mpdL ? 'left' : 'right';
+    return this.instruments.mpd.press(side, bezelHitAt(hit.uv.x, hit.uv.y));
+  }
+
+  private renderMpdTads(now: number, flir: boolean) {
+    const world = this.opts.session.world;
+    this.units.update(world, flir);
+    this.renderTadsInto(this.mpdTads, now, flir, this.mpdTarget);
+    this.units.update(world, false);
+    this.renderer.readRenderTargetPixels(this.mpdTarget, 0, 0, MPD_TADS, MPD_TADS, this.mpdPixels);
+    if (!this.mpdCanvas) { this.mpdCanvas = document.createElement('canvas'); this.mpdCanvas.width = this.mpdCanvas.height = MPD_TADS; }
+    const g = this.mpdCanvas.getContext('2d')!;
+    const img = g.createImageData(MPD_TADS, MPD_TADS);
+    const row = MPD_TADS * 4;
+    for (let y = 0; y < MPD_TADS; y++) img.data.set(this.mpdPixels.subarray((MPD_TADS - 1 - y) * row, (MPD_TADS - y) * row), y * row);
+    g.putImageData(img, 0, 0);
+    this.instruments.tadsImage = this.mpdCanvas;
+  }
+
   private renderTads(now: number, flir: boolean) {
+    this.renderTadsInto(this.tads, now, flir, null);
+  }
+
+  private renderTadsInto(view: TadsView, now: number, flir: boolean, output: THREE.WebGLRenderTarget | null) {
     const { scene, sky, beam } = this.scene, world = this.opts.session.world;
     const fog = scene.fog as THREE.Fog, bg = scene.background;
     const saved = { near: fog.near, far: fog.far, color: fog.color.clone(), root: this.model.root.visible, beam: beam.visible, sky: sky.visible, shadow: this.scene.shadow.visible };
@@ -235,9 +284,9 @@ export class FlightRenderer {
     this.scene.shadow.visible = false;
     fog.near = 2500; fog.far = 9000;
     if (flir) { sky.visible = false; scene.background = this.black; fog.color.copy(this.flirFog); }
-    this.tads.aim(world.player, world.tads);
-    sky.position.copy(this.tads.camera.position);
-    this.tads.render(this.renderer, scene, world.tads, now * 0.001);
+    view.aim(world.player, world.tads);
+    sky.position.copy(view.camera.position);
+    view.render(this.renderer, scene, world.tads, now * 0.001, output);
     fog.near = saved.near; fog.far = saved.far; fog.color.copy(saved.color);
     scene.background = bg;
     this.model.root.visible = saved.root; beam.visible = saved.beam; sky.visible = saved.sky; this.scene.shadow.visible = saved.shadow;
@@ -246,6 +295,8 @@ export class FlightRenderer {
   dispose() {
     cancelAnimationFrame(this.raf);
     this.tads.dispose();
+    this.mpdTads.dispose();
+    this.mpdTarget.dispose();
     this.offEvents();
     this.effects.dispose();
     this.units.dispose();

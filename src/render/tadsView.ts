@@ -68,14 +68,15 @@ export class TadsView {
     this.camera.updateProjectionMatrix();
   }
 
-  render(renderer: THREE.WebGLRenderer, scene: THREE.Scene, t: Tads, time: number) {
+  render(renderer: THREE.WebGLRenderer, scene: THREE.Scene, t: Tads, time: number, output: THREE.WebGLRenderTarget | null = null) {
     this.post.uniforms.flir.value = t.sensor === 'flir' ? 1 : 0;
     this.post.uniforms.time.value = time;
     renderer.setRenderTarget(this.target);
     renderer.clear();
     renderer.render(scene, this.camera);
-    renderer.setRenderTarget(null);
+    renderer.setRenderTarget(output);
     renderer.render(this.postScene, this.postCam);
+    renderer.setRenderTarget(null);
   }
 
   dispose() {

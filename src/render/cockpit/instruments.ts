@@ -1,14 +1,17 @@
 import * as THREE from 'three';
 import { clamp } from '../../core/math';
-import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../../core/units';
-import { agl as aglOf, airspeed } from '../../sim/heli/state';
-import { HALF, N, SIZE } from '../../sim/terrain';
+import { M_TO_FT, MS_TO_KT } from '../../core/units';
+import { airspeed } from '../../sim/heli/state';
+import { N } from '../../sim/terrain';
 import type { World } from '../../sim/world';
+import { AMBER, FUEL_LB } from './pages/common';
+import { MpdState, PAGE_LABELS, type MpdSide, type PageId } from './mpd';
+import { drawFlt } from './pages/flt';
+import { drawTsd } from './pages/tsd';
+import { drawWpn } from './pages/wpn';
+import { drawTadsPage } from './pages/tads';
 
-const GREEN = '#46ff7a';
-const DIM = '#1f8a3e';
-const AMBER = '#ffb000';
-const FUEL_LB = 2500;
+export { bearingDeg, headingDeg, hoverVector } from './pages/common';
 
 interface Surface { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; texture: THREE.CanvasTexture }
 
@@ -21,27 +24,13 @@ function surface(w: number, h: number): Surface {
   return { canvas, ctx: canvas.getContext('2d')!, texture };
 }
 
-export function headingDeg(yaw: number) {
-  return ((-yaw * 180 / Math.PI) % 360 + 360) % 360;
-}
-
-export function bearingDeg(world: World): number | null {
-  const tp = world.target, h = world.player;
-  if (!tp) return null;
-  return ((Math.atan2(tp.x - h.pos.x, -(tp.z - h.pos.z)) * 180 / Math.PI) + 360) % 360;
-}
-
-export function hoverVector(world: World) {
-  const h = world.player;
-  const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), rx = Math.cos(h.yaw), rz = -Math.sin(h.yaw);
-  return { fwd: h.vel.x * fx + h.vel.z * fz, right: h.vel.x * rx + h.vel.z * rz };
-}
-
 export class Instruments {
   readonly mpdL = surface(512, 512);
   readonly mpdR = surface(512, 512);
   readonly eufd = surface(512, 288);
   readonly standby = surface(384, 504);
+  readonly mpd = new MpdState();
+  tadsImage: CanvasImageSource | null = null;
   private relief: HTMLCanvasElement;
 
   constructor(world: World) {
@@ -56,131 +45,29 @@ export class Instruments {
     for (const s of [this.mpdL, this.mpdR, this.eufd, this.standby]) s.texture.dispose();
   }
 
+  shows(page: PageId) {
+    return this.mpd.left === page || this.mpd.right === page;
+  }
+
   draw(world: World, part: number) {
-    if (part === 0) { this.flt(world); this.mpdL.texture.needsUpdate = true; }
-    if (part === 1) { this.tsd(world); this.mpdR.texture.needsUpdate = true; }
+    if (part === 0) this.drawMpd('left', world);
+    if (part === 1) this.drawMpd('right', world);
     if (part === 2) {
       this.drawEufd(world); this.eufd.texture.needsUpdate = true;
       this.drawStandby(world); this.standby.texture.needsUpdate = true;
     }
   }
 
-  private flt(world: World) {
-    const g = this.mpdL.ctx, h = world.player;
-    bezel(g, ['FLT', 'FUEL', 'ENG', 'WPN', 'TSD', 'COM'], 0);
-    screenClip(g, () => {
-      const cx = 256, cy = 250;
-      g.save();
-      g.translate(cx, cy); g.rotate(-h.roll);
-      const ppd = 5;
-      const off = h.pitch * 180 / Math.PI * ppd;
-      g.strokeStyle = GREEN; g.fillStyle = GREEN; g.lineWidth = 2.5;
-      g.beginPath(); g.moveTo(-170, off); g.lineTo(-40, off); g.moveTo(40, off); g.lineTo(170, off); g.stroke();
-      g.font = 'bold 15px "B612 Mono", monospace'; g.textAlign = 'left'; g.lineWidth = 2;
-      for (let d = -30; d <= 30; d += 10) {
-        if (!d) continue;
-        const y = off - d * ppd;
-        if (Math.abs(y) > 140) continue;
-        g.setLineDash(d < 0 ? [8, 6] : []);
-        g.beginPath(); g.moveTo(-70, y); g.lineTo(-30, y); g.moveTo(30, y); g.lineTo(70, y); g.stroke();
-        g.setLineDash([]);
-        g.fillText(`${Math.abs(d)}`, 76, y + 5);
-      }
-      g.restore();
-
-      g.strokeStyle = GREEN; g.lineWidth = 3;
-      g.beginPath(); g.moveTo(cx - 34, cy); g.lineTo(cx - 12, cy); g.lineTo(cx, cy + 10); g.lineTo(cx + 12, cy); g.lineTo(cx + 34, cy); g.stroke();
-
-      const hv = hoverVector(world);
-      const vs = 6;
-      g.strokeStyle = GREEN; g.lineWidth = 3;
-      g.beginPath(); g.arc(cx, cy, 60, 0, Math.PI * 2); g.globalAlpha = 0.35; g.stroke(); g.globalAlpha = 1;
-      const vx = clamp(hv.right * vs, -60, 60), vy = clamp(-hv.fwd * vs, -60, 60);
-      g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + vx, cy + vy); g.stroke();
-      g.beginPath(); g.arc(cx + vx, cy + vy, 4, 0, Math.PI * 2); g.fill();
-
-      tape(g, headingDeg(h.yaw), bearingDeg(world), 256, 86, 300);
-
-      const kt = airspeed(world.player, world.wind) * MS_TO_KT;
-      box(g, 88, 250, `${Math.round(kt)}`);
-      g.font = '13px "B612 Mono", monospace'; g.fillStyle = DIM; g.textAlign = 'center'; g.fillText('KTS', 88, 282);
-      const agl = Math.max(0, aglOf(world.player, world.terrain)) * M_TO_FT;
-      box(g, 424, 250, agl > 1428 ? '---' : `${Math.round(agl)}`);
-      g.font = '13px "B612 Mono", monospace'; g.fillStyle = DIM; g.fillText('R ALT', 424, 282);
-      g.fillStyle = GREEN; g.font = 'bold 16px "B612 Mono", monospace';
-      g.fillText(`${Math.round(h.pos.y * M_TO_FT)}`, 424, 215);
-
-      g.strokeStyle = DIM; g.lineWidth = 2;
-      g.beginPath(); g.moveTo(452, 140); g.lineTo(452, 360); g.stroke();
-      const bar = clamp(agl / 200, 0, 1) * 220;
-      g.fillStyle = GREEN; g.fillRect(447, 360 - bar, 10, bar);
-      const fpm = h.vel.y * MS_TO_FPM;
-      const vsy = 250 - clamp(fpm / 1000, -1, 1) * 100;
-      g.beginPath(); g.moveTo(462, vsy); g.lineTo(474, vsy - 7); g.lineTo(474, vsy + 7); g.fill();
-
-      g.textAlign = 'left'; g.font = 'bold 20px "B612 Mono", monospace'; g.fillStyle = GREEN;
-      g.fillText(`${Math.round(h.collective * h.rpm * 100)}%`, 72, 400);
-      g.font = '13px "B612 Mono", monospace'; g.fillStyle = DIM; g.fillText('TQ', 72, 418);
-      g.textAlign = 'right'; g.font = 'bold 20px "B612 Mono", monospace'; g.fillStyle = h.rpm < 0.9 ? AMBER : GREEN;
-      g.fillText(`${Math.round(h.rpm * 101)}%`, 440, 400);
-      g.font = '13px "B612 Mono", monospace'; g.fillStyle = DIM; g.fillText('NR', 440, 418);
-      g.textAlign = 'center'; g.font = 'bold 16px "B612 Mono", monospace'; g.fillStyle = GREEN;
-      g.fillText(`${Math.round(fpm / 10) * 10} FPM`, 256, 418);
-    });
-  }
-
-  private tsd(world: World) {
-    const g = this.mpdR.ctx, h = world.player;
-    bezel(g, ['TSD', 'MAP', 'PAN', 'RTE', 'FLT', 'ENG'], 0);
-    const range = 2000, scale = 380 / range;
-    const tp = world.target;
-    screenClip(g, () => {
-      const cx = 256, cy = 330;
-      g.save();
-      g.translate(cx, cy); g.rotate(h.yaw);
-      g.globalAlpha = 0.55;
-      g.drawImage(this.relief, (-HALF - h.pos.x) * scale, (-HALF - h.pos.z) * scale, SIZE * scale, SIZE * scale);
-      g.globalAlpha = 1;
-      const blink = Math.sin(world.time * 6) > 0;
-      if (tp) {
-        g.setLineDash([10, 8]); g.strokeStyle = AMBER; g.lineWidth = 2;
-        g.beginPath(); g.moveTo(0, 0); g.lineTo((tp.x - h.pos.x) * scale, (tp.z - h.pos.z) * scale); g.stroke();
-        g.setLineDash([]);
-      }
-      for (const p of world.pads) {
-        const x = (p.x - h.pos.x) * scale, y = (p.z - h.pos.z) * scale;
-        const target = !!tp && Math.hypot(p.x - tp.x, p.z - tp.z) < 1;
-        g.save(); g.translate(x, y); g.rotate(-h.yaw);
-        g.strokeStyle = target ? AMBER : GREEN; g.fillStyle = g.strokeStyle; g.lineWidth = 2.5;
-        if (p.base) { g.strokeRect(-9, -9, 18, 18); g.font = 'bold 13px "B612 Mono", monospace'; g.textAlign = 'center'; g.fillText('H', 0, 5); }
-        else { g.beginPath(); g.arc(0, 0, target && blink ? 11 : 8, 0, Math.PI * 2); g.stroke(); }
-        g.font = 'bold 15px "B612 Mono", monospace'; g.textAlign = 'left'; g.fillText(p.name, 13, -8);
-        g.restore();
-      }
-      g.restore();
-
-      g.strokeStyle = DIM; g.lineWidth = 1.5; g.setLineDash([4, 6]);
-      g.beginPath(); g.arc(cx, cy, 1000 * scale, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
-      g.fillStyle = GREEN;
-      g.beginPath(); g.moveTo(cx, cy - 16); g.lineTo(cx - 10, cy + 12); g.lineTo(cx, cy + 6); g.lineTo(cx + 10, cy + 12); g.fill();
-
-      tape(g, headingDeg(h.yaw), bearingDeg(world), 256, 86, 300);
-      g.font = 'bold 16px "B612 Mono", monospace'; g.textAlign = 'left'; g.fillStyle = AMBER;
-      if (tp) {
-        const d = Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z);
-        const gs = Math.hypot(h.vel.x, h.vel.z);
-        const ete = gs > 2 ? `${Math.floor(d / gs / 60)}:${String(Math.round(d / gs % 60)).padStart(2, '0')}` : '--:--';
-        g.fillText(`WPT ${tp.name}`, 72, 130);
-        g.fillStyle = GREEN;
-        g.fillText(`${(d / 1000).toFixed(2)} KM  ETE ${ete}`, 72, 152);
-      } else g.fillText('NO WPT', 72, 130);
-      g.textAlign = 'right'; g.fillStyle = DIM; g.font = '13px "B612 Mono", monospace';
-      g.fillText('2 KM', 440, 130);
-      g.textAlign = 'left'; g.font = 'bold 15px "B612 Mono", monospace'; g.fillStyle = h.fuel < 20 ? AMBER : GREEN;
-      g.fillText(`FUEL ${Math.round(h.fuel / 100 * FUEL_LB)} LB`, 72, 424);
-      g.textAlign = 'right'; g.fillStyle = GREEN;
-      g.fillText(`WIND ${Math.round(world.wind.length() * MS_TO_KT)} KT`, 440, 424);
-    });
+  private drawMpd(side: MpdSide, world: World) {
+    const s = side === 'left' ? this.mpdL : this.mpdR, g = s.ctx;
+    const page = this.mpd[side], sel = PAGE_LABELS.indexOf(page);
+    switch (page) {
+      case 'FLT': drawFlt(g, world, PAGE_LABELS, sel); break;
+      case 'TSD': drawTsd(g, world, this.relief, PAGE_LABELS, sel); break;
+      case 'WPN': drawWpn(g, world, PAGE_LABELS, sel); break;
+      case 'TADS': drawTadsPage(g, world, this.tadsImage, PAGE_LABELS, sel); break;
+    }
+    s.texture.needsUpdate = true;
   }
 
   private drawEufd(world: World) {
@@ -232,65 +119,6 @@ export class Instruments {
     g.fillStyle = '#ffb000'; g.beginPath(); g.arc(cx, cy, 5, 0, Math.PI * 2); g.fill();
     g.fillStyle = '#8a9099'; g.font = 'bold 18px sans-serif'; g.textAlign = 'center'; g.fillText('STBY ATT', cx, 480);
   }
-}
-
-function bezel(g: CanvasRenderingContext2D, labels: string[], selected: number) {
-  g.fillStyle = '#1b1d20'; g.fillRect(0, 0, 512, 512);
-  g.fillStyle = '#26292d'; g.fillRect(6, 6, 500, 500);
-  g.font = 'bold 12px sans-serif'; g.textAlign = 'center';
-  for (let i = 0; i < 6; i++) {
-    const x = 86 + i * 68;
-    for (const y of [10, 480]) {
-      g.fillStyle = '#3a3e44'; g.fillRect(x - 22, y, 44, 22);
-      g.fillStyle = '#c9ced4'; g.fillText(y < 100 ? `T${i + 1}` : `B${i + 1}`, x, y + 16);
-    }
-    for (const x2 of [10, 480]) {
-      const y = 86 + i * 68;
-      g.fillStyle = '#3a3e44'; g.fillRect(x2, y - 22, 22, 44);
-    }
-  }
-  g.fillStyle = '#010a03'; g.fillRect(44, 44, 424, 424);
-  g.font = 'bold 15px "B612 Mono", monospace';
-  labels.forEach((l, i) => {
-    const x = 86 + i * 68;
-    g.fillStyle = i === selected ? '#010a03' : GREEN;
-    if (i === selected) { g.fillStyle = GREEN; g.fillRect(x - 24, 448, 48, 18); g.fillStyle = '#010a03'; }
-    g.fillText(l, x, 462);
-  });
-}
-
-function screenClip(g: CanvasRenderingContext2D, draw: () => void) {
-  g.save();
-  g.beginPath(); g.rect(44, 44, 424, 400); g.clip();
-  g.shadowColor = GREEN; g.shadowBlur = 4;
-  draw();
-  g.restore();
-}
-
-function box(g: CanvasRenderingContext2D, x: number, y: number, text: string) {
-  g.strokeStyle = GREEN; g.lineWidth = 2;
-  g.strokeRect(x - 38, y - 18, 76, 34);
-  g.fillStyle = GREEN; g.font = 'bold 22px "B612 Mono", monospace'; g.textAlign = 'center';
-  g.fillText(text, x, y + 8);
-}
-
-function tape(g: CanvasRenderingContext2D, hdg: number, brg: number | null, cx: number, y: number, width: number) {
-  const ppd = width / 60;
-  g.strokeStyle = GREEN; g.fillStyle = GREEN; g.lineWidth = 2; g.textAlign = 'center';
-  g.font = 'bold 14px "B612 Mono", monospace';
-  for (let d = Math.ceil((hdg - 30) / 5) * 5; d <= hdg + 30; d += 5) {
-    const x = cx + (d - hdg) * ppd, n = ((d % 360) + 360) % 360;
-    const big = n % 10 === 0;
-    g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - (big ? 12 : 6)); g.stroke();
-    if (n % 30 === 0) g.fillText(n % 90 === 0 ? 'NESW'[n / 90] : `${n / 10}`, x, y - 16);
-  }
-  g.strokeRect(cx - 26, y + 4, 52, 22);
-  g.font = 'bold 16px "B612 Mono", monospace'; g.fillText(String(Math.round(hdg) % 360).padStart(3, '0'), cx, y + 21);
-  if (brg === null) return;
-  let db = brg - hdg; while (db > 180) db -= 360; while (db < -180) db += 360;
-  const bx = cx + clamp(db, -30, 30) * ppd;
-  g.fillStyle = AMBER;
-  g.beginPath(); g.moveTo(bx, y + 2); g.lineTo(bx - 7, y + 14); g.lineTo(bx + 7, y + 14); g.fill();
 }
 
 function smallDial(g: CanvasRenderingContext2D, cx: number, cy: number, r: number, label: string, ang: number, marks: number[], full = false) {

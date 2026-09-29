@@ -58,6 +58,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
       case 'weaponNext': sim.nextWeapon(); break;
       case 'view': if (sim.tads.active) toggleSensor(); else toggleView(); break;
       case 'tads': sim.toggleTads(); break;
+      case 'mpdLeftNext': rendererRef.current?.mpd.next('left'); break;
+      case 'mpdRightNext': rendererRef.current?.mpd.next('right'); break;
       case 'zoomIn': zoomTads(sim.tads, 1); break;
       case 'zoomOut': zoomTads(sim.tads, -1); break;
       case 'centerView': input.centerView(); break;
@@ -175,15 +177,20 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
     };
   });
 
-  const drag = useRef<{ id: number; x: number; y: number } | null>(null);
-  const onPointerDown = (e: RPointerEvent) => { drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY }; };
+  const drag = useRef<{ id: number; x: number; y: number; sx: number; sy: number } | null>(null);
+  const onPointerDown = (e: RPointerEvent) => { drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY }; };
   const onPointerMove = (e: RPointerEvent) => {
     const d = drag.current;
     if (!d || d.id !== e.pointerId) return;
     input.look(e.clientX - d.x, e.clientY - d.y);
     d.x = e.clientX; d.y = e.clientY;
   };
-  const onPointerUp = (e: RPointerEvent) => { if (drag.current?.id === e.pointerId) drag.current = null; };
+  const onPointerUp = (e: RPointerEvent) => {
+    const d = drag.current;
+    if (d?.id !== e.pointerId) return;
+    drag.current = null;
+    if (Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 6) rendererRef.current?.clickAt(e.clientX, e.clientY);
+  };
 
   return (
     <div className="flight3d">
@@ -193,7 +200,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
+        onPointerCancel={() => { drag.current = null; }}
         onDoubleClick={() => input.centerView()}
         onWheel={e => { if (sim.tads.active) zoomTads(sim.tads, e.deltaY < 0 ? 1 : -1); }}
       />
