@@ -56,7 +56,7 @@ src/
   sim/                  # 게임 규칙. three의 수학 타입(Vector3, Quaternion)만 import 허용. 렌더·DOM·React 금지
     world.ts            # World: 시간, rng, 엔티티 목록, 지형, 이벤트, step()
     terrain.ts          # (sim3d/terrain.ts 이동·확장)
-    los.ts              # 가시선
+    los.ts              # 가시선: 지형 샘플링, 나무 차폐, 캐시
     heli/
       flight.ts         # 현재 Sim.fly()·collide()의 비행 모델 (순수 함수 + 상태)
       systems.ts        # 연료, 엔진, 로터 회전수, 피해 계통, 무게

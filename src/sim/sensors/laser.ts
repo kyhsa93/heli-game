@@ -2,6 +2,7 @@ import { Vector3 } from 'three';
 import { DEG } from '../../core/math';
 import type { Terrain } from '../terrain';
 import type { Unit } from '../units';
+import { visualSight } from '../los';
 import { segmentHitsTerrain, segmentHitsUnit } from '../weapons/projectile';
 
 export const LASER_MAX = 10000;
@@ -73,7 +74,7 @@ export function crosshairUnit(t: Terrain, units: readonly Unit[], origin: Vector
     const ang = Math.acos(Math.min(1, c.clone().sub(origin).divideScalar(dist).dot(dir)));
     const radius = Math.atan(Math.max(u.def.size[0], u.def.size[2]) / 2 / dist);
     if (ang > Math.max(tol, radius) || ang >= bestAng) continue;
-    if (!lineOfSight(t, origin, c)) continue;
+    if (!visualSight(t, origin, c).clear) continue;
     best = u; bestAng = ang;
   }
   return best;

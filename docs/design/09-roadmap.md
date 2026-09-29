@@ -57,7 +57,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 
 ## M3. 위협과 생존
 
-- [ ] [#26](https://github.com/kyhsa93/heli-game/issues/26) **M3-1 가시선**: `sim/los.ts`, 나무 차폐. *완료*: 능선 뒤 가려짐 / 나무 차폐율 테스트.
+- [x] [#26](https://github.com/kyhsa93/heli-game/issues/26) **M3-1 가시선**: `sim/los.ts`, 나무 차폐. *완료*: 능선 뒤 가려짐 / 나무 차폐율 테스트.
 - [ ] [#27](https://github.com/kyhsa93/heli-game/issues/27) **M3-2 인지 모델**: 05장 5.4절 공식 그대로. *완료*: 5장 5.6절 테스트 목록 중 탐지 관련 3개.
 - [ ] [#28](https://github.com/kyhsa93/heli-game/issues/28) **M3-3 AI 상태 기계**: 대기/경계/교전/수색/후퇴, 조준 지연, 확률 명중 + 연출 예광탄. *완료*: 상태 전이 테스트, "가시선 끊기면 3초 안에 사격 중지" 테스트.
 - [ ] [#29](https://github.com/kyhsa93/heli-game/issues/29) **M3-4 플레이어 피해 계통**: 03장 3.3절 표 전체, EUFD 경고, 증상. *완료*: 계통별 증상 테스트(엔진 1 정지 시 최대 추력 −50% 등).
