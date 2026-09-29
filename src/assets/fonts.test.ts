@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { brotliDecompressSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
@@ -109,6 +109,11 @@ function contentChars(dir: string): Set<number> {
 const NAMING_IDS = [1, 3, 4, 6, 16, 17, 18, 20, 21, 22];
 
 describe('shipped fonts', () => {
+  it('stays within the 160 KB font budget (#71)', () => {
+    const total = ['b612-mono.woff2', 'karda-sans-regular.woff2', 'karda-sans-bold.woff2'].reduce((sum, f) => sum + statSync(join(FONTS, f)).size, 0);
+    expect(total).toBeLessThanOrEqual(160 * 1024);
+  });
+
   it('renames the Pretendard subsets as its OFL Reserved Font Name requires (#64)', () => {
     for (const f of ['karda-sans-regular.woff2', 'karda-sans-bold.woff2']) {
       const n = names(join(FONTS, f));

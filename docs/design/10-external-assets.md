@@ -70,6 +70,8 @@
 | --- | --- | --- | --- | --- |
 | **B612 Mono** | github.com/polarsys/b612 | OFL 1.1 | ASCII + ° : **12.5KB** | IHADSS·MPD·EUFD 숫자·영문. 에어버스가 조종석 화면용으로 설계 |
 | **Pretendard** (예약 이름 있음 → "Karda Sans"로 이름 바꿔 배포) | github.com/orioncactus/pretendard | OFL 1.1 | 실제 쓰는 한글 약 400자: **42KB** / KS X 1001 전체 2,350자: 165KB | 메뉴·브리핑·자막 |
+
+글꼴 용량 목표(#71): 한국어 글꼴(Karda Sans regular + bold)과 B612 Mono를 합쳐 **160KB 이하**. 게임 문자열에 쓰인 글자만 서브셋하므로 문자열이 늘면 커지지만, 극단적으로 KS X 1001 전체를 담아도 약 165KB라 이 근처에서 수렴한다. 임무 12개가 들어간 지금 약 127KB. 넘으면 Bold를 빼고 합성 볼드를 쓰거나 임무 문자열을 별도 서브셋으로 지연 로드한다. `src/assets/fonts.test.ts`가 지킨다.
 | Share Tech Mono | Google Fonts | OFL 1.1 | 7.4KB | B612 대안 |
 | Noto Sans KR | Google Fonts | OFL 1.1 | 400자 72KB | Pretendard보다 큼 |
 
