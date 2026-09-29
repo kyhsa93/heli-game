@@ -33,7 +33,7 @@ function hover(w: World, seconds: number, each?: () => void) {
 describe('30mm gun (04-weapons-and-sensors.md 4.2, 4.3)', () => {
   it('drops within 5% of the drag-corrected formula at 1 km', () => {
     const g = WEAPONS.gun30, k = g.drag!;
-    const p: Projectile = { id: 1, weapon: 'gun30', pos: new Vector3(0, 3000, 0), vel: new Vector3(g.speed, 0, 0), owner: 0, life: 10, drag: k, tracer: false };
+    const p: Projectile = { id: 1, weapon: 'gun30', pos: new Vector3(0, 3000, 0), vel: new Vector3(g.speed, 0, 0), origin: new Vector3(), owner: 0, life: 10, drag: k, tracer: false };
     let t = 0;
     while (p.pos.x < 1000) { integrate(p, STEP); t += STEP; }
     const tExpected = (Math.exp(k * 1000) - 1) / (k * g.speed);

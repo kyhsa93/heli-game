@@ -22,6 +22,9 @@ export interface WeaponDef {
   salvo?: number[];
   salvoInterval?: number;
   minInterval?: number;
+  launchSpeed?: number;
+  burnTime?: number;
+  thrust?: number;
 }
 
 export const WEAPONS = weaponsJson as unknown as Record<string, WeaponDef>;

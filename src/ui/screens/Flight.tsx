@@ -8,6 +8,8 @@ import { FlightRenderer } from '../../render/renderer';
 import { LAND_DESCENT } from '../../sim/heli/airframe';
 import { airspeed } from '../../sim/heli/state';
 import { FlightSession } from '../../sim/session';
+import { sightPoint } from '../../sim/weapons/ballistics';
+import { rocketSolution } from '../../sim/weapons/rockets';
 import { createObjective } from '../../sim/training';
 import { T1_MAX_FPM, TrainingT1 } from '../../sim/training/t1';
 import { T3_NEED, T3_TARGETS } from '../../sim/training/t3';
@@ -45,6 +47,11 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
   const runCommand = (cmd: Command) => {
     switch (cmd) {
       case 'engine': sim.toggleEngine(); break;
+      case 'weapon1': sim.selectWeapon(1); break;
+      case 'weapon2': sim.selectWeapon(2); break;
+      case 'weapon3': sim.selectWeapon(3); break;
+      case 'weapon4': sim.selectWeapon(4); break;
+      case 'weaponNext': sim.nextWeapon(); break;
       case 'view': toggleView(); break;
       case 'centerView': input.centerView(); break;
       case 'toggleHud': setHud(v => !v); break;
@@ -129,7 +136,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
     });
     rendererRef.current = r;
     input.onCommand = cmd => runCommandRef.current(cmd);
-    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, renderer: r, model: r.model } });
+    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, renderer: r, model: r.model, weapons: { rocketSolution, sightPoint } } });
     return () => {
       offEvents();
       r.dispose();

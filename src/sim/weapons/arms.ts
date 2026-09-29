@@ -6,17 +6,26 @@ import { WEAPONS } from './damage';
 export const GUN_MUZZLE = new Vector3(0, -1.2, -5.0);
 export const GUN_LIMITS = { az: 86 * DEG, up: 11 * DEG, down: -60 * DEG };
 
+export type WeaponId = 'gun30' | 'hydra70';
+export type Salvo = 1 | 2 | 4;
+export const SALVOS: readonly Salvo[] = [1, 2, 4];
+
 export interface Arms {
-  selected: 'gun30';
+  selected: WeaponId;
   gunAmmo: number;
   gunTimer: number;
   shots: number;
+  salvo: Salvo;
+  salvoLeft: number;
+  rocketTimer: number;
+  rocketsFired: number;
+  trigger: boolean;
 }
 
 export interface Aim { yaw: number; pitch: number }
 
 export function createArms(gunAmmo = 1200): Arms {
-  return { selected: 'gun30', gunAmmo, gunTimer: 0, shots: 0 };
+  return { selected: 'gun30', gunAmmo, gunTimer: 0, shots: 0, salvo: 1, salvoLeft: 0, rocketTimer: 0, rocketsFired: 0, trigger: false };
 }
 
 export function gunInLimits(aim: Aim) {

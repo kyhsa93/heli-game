@@ -12,6 +12,9 @@ export interface Projectile {
   life: number;
   drag: number;
   tracer: boolean;
+  origin: Vector3;
+  burn?: number;
+  thrust?: number;
 }
 
 export const PLAYER_OWNER = 0;
@@ -21,6 +24,11 @@ const prev = new Vector3();
 export function integrate(p: Projectile, dt: number) {
   prev.copy(p.pos);
   const speed = p.vel.length();
+  if (p.burn && p.burn > 0 && p.thrust && speed > 0) {
+    const t = Math.min(dt, p.burn);
+    p.vel.addScaledVector(p.vel, p.thrust * t / speed);
+    p.burn -= dt;
+  }
   p.vel.addScaledVector(p.vel, -p.drag * speed * dt);
   p.vel.y -= G3 * dt;
   p.pos.addScaledVector(p.vel, dt);

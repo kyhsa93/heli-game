@@ -4,6 +4,7 @@ export type Store = 'empty' | 'agm114k' | 'agm114l' | 'hydra70';
 export type PylonId = 'L2' | 'L1' | 'R1' | 'R2';
 
 export const PYLONS: readonly PylonId[] = ['L2', 'L1', 'R1', 'R2'];
+export const PYLON_X: Record<PylonId, number> = { L2: -2.1, L1: -1.25, R1: 1.25, R2: 2.1 };
 export const GUN_ROUND_OPTIONS = [0, 300, 600, 1200] as const;
 
 export interface LoadoutDef {

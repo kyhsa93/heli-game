@@ -7,7 +7,8 @@
   "hydra70": {
     "guidance": "ballistic", "ammoPerPod": 19, "minRange": 300, "maxRange": 5000, "effectiveRange": 3000,
     "speed": 700, "drag": 0.0006, "damage": 60, "splashRadius": 12, "splashDamage": 25, "penetration": 2,
-    "salvo": [1, 2, 4], "salvoInterval": 0.1, "dispersionMrad": 8
+    "salvo": [1, 2, 4], "salvoInterval": 0.1, "dispersionMrad": 8,
+    "launchSpeed": 60, "burnTime": 1.1, "thrust": 700
   },
   "agm114k": {
     "guidance": "laser", "ammoPerLauncher": 4, "minRange": 500, "maxRange": 8000,

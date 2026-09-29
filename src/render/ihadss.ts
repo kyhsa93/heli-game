@@ -4,7 +4,11 @@ import { bearingDeg, headingDeg, hoverVector } from './cockpit/instruments';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
 import { agl as aglOf, airspeed } from '../sim/heli/state';
 import { gunInLimits } from '../sim/weapons/arms';
-import { predictGunImpact } from '../sim/weapons/ballistics';
+import { predictGunImpact, sightPoint } from '../sim/weapons/ballistics';
+import { count } from '../sim/heli/loadout';
+import { EYE } from '../sim/heli/airframe';
+import { toWorld } from '../sim/heli/state';
+import { boresight, HYDRA, rocketSolution } from '../sim/weapons/rockets';
 import type { World } from '../sim/world';
 
 const GREEN = '#5dff6e';
@@ -91,7 +95,8 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
   g.textAlign = 'right';
   if (heli.rpm < 0.95) g.fillText(`NR ${Math.round(heli.rpm * 101)}%`, cx + 190 * u, cy + 110 * u);
 
-  drawGun(g, w, h, u, world, camera);
+  if (world.arms.selected === 'hydra70') drawRockets(g, w, h, u, world, camera);
+  else drawGun(g, w, h, u, world, camera);
 
   const tp = world.target;
   const sp = tp && project(camera, tmp.set(tp.x, tp.y + 1, tp.z), w, h);
@@ -139,5 +144,56 @@ function drawGun(g: CanvasRenderingContext2D, w: number, h: number, u: number, w
   g.textAlign = 'right';
   const status = a.gunAmmo <= 0 ? 'GUN EMPTY' : `GUN ${a.gunAmmo}${inLimits ? '' : ' LIMIT'}`;
   g.fillText(status, cx + 190 * u, cy + 132 * u);
+  g.restore();
+}
+
+const eye = new THREE.Vector3();
+const dirTmp = new THREE.Vector3();
+
+function rangeText(m: number) {
+  return m > 999 ? `${(m / 1000).toFixed(1)}K` : `${Math.round(m)}`;
+}
+
+function drawRockets(g: CanvasRenderingContext2D, w: number, h: number, u: number, world: World, camera: THREE.Camera) {
+  const heli = world.player, a = world.arms;
+  const left = count(world.loadout, 'hydra70');
+  toWorld(heli, EYE, eye);
+  const bore = project(camera, dirTmp.copy(boresight(heli)).multiplyScalar(3000).add(eye), w, h);
+  g.save();
+  g.lineWidth = 2 * u;
+  const edge = 30 * u;
+  const bx = bore ? clamp(bore.x, edge, w - edge) : w / 2, by = bore ? clamp(bore.y, edge, h - edge) : h / 2;
+  g.beginPath(); g.arc(bx, by, 6 * u, 0, Math.PI * 2); g.stroke();
+
+  const target = sightPoint(world, world.commands.aim, HYDRA.maxRange);
+  const tp = target && project(camera, target, w, h);
+  if (tp) {
+    const r = 5 * u;
+    g.beginPath(); g.moveTo(tp.x - r, tp.y); g.lineTo(tp.x + r, tp.y); g.moveTo(tp.x, tp.y - r); g.lineTo(tp.x, tp.y + r); g.stroke();
+  }
+  const sol = target && left > 0 ? rocketSolution(world, target) : null;
+  const sp = sol && project(camera, dirTmp.copy(sol.dir).multiplyScalar(3000).add(eye), w, h);
+  let note = '';
+  if (target) {
+    const range = Math.hypot(target.x - heli.pos.x, target.z - heli.pos.z);
+    note = range < HYDRA.minRange ? ' MIN' : range > (HYDRA.effectiveRange ?? HYDRA.maxRange) ? ' MAX' : '';
+    g.textAlign = 'center';
+    g.fillText(rangeText(range), bx, by + 58 * u);
+  }
+  if (sol && sp) {
+    const ix = clamp(sp.x, edge, w - edge), ey = clamp(sp.y, edge, h - edge);
+    const ih = 22 * u, serif = 7 * u;
+    g.lineWidth = 3 * u;
+    g.beginPath();
+    g.moveTo(ix, by - ih); g.lineTo(ix, by + ih);
+    g.moveTo(ix - serif, by - ih); g.lineTo(ix + serif, by - ih);
+    g.moveTo(ix - serif, by + ih); g.lineTo(ix + serif, by + ih);
+    g.stroke();
+    g.lineWidth = 2 * u;
+    g.beginPath(); g.moveTo(bx - 26 * u, ey); g.lineTo(bx - 10 * u, ey); g.moveTo(bx + 10 * u, ey); g.lineTo(bx + 26 * u, ey); g.stroke();
+  }
+  g.textAlign = 'right';
+  const status = left <= 0 ? 'RKT EMPTY' : `RKT ${left} x${a.salvo}${note}`;
+  g.fillText(status, w / 2 + 190 * u, h / 2 + 132 * u);
   g.restore();
 }

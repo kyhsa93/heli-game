@@ -177,6 +177,11 @@ export class Effects {
   onEvent(e: SimEvent, world: World) {
     switch (e.t) {
       case 'fire':
+        if (e.weapon === 'hydra70') {
+          this.glow.spawn(e.pos, new THREE.Vector3(), 0.12, 2.5, 3.5, 1, CELL.flash);
+          for (let i = 0; i < 3; i++) this.smoke.spawn(e.pos.clone().add(this.jitter(1)), e.dir.clone().multiplyScalar(-6).add(this.jitter(2)), 1.8, 1.5, 5, 0.5, CELL.smoke[i], 0.6, 1.5);
+          break;
+        }
         this.glow.spawn(e.pos, new THREE.Vector3(), 0.05, 1.6, 2.2, 1, CELL.muzzle);
         if (this.rnd() < 0.3) this.smoke.spawn(e.pos, e.dir.clone().multiplyScalar(4), 0.8, 1, 3, 0.25, CELL.dust[0], 0.5, 2);
         break;
@@ -214,6 +219,15 @@ export class Effects {
         const fade = Math.min(1, b.time / 8);
         this.smoke.spawn(b.pos.clone().add(this.jitter(b.size)), new THREE.Vector3((this.rnd() - 0.5), 2 + this.rnd() * 2, (this.rnd() - 0.5)), 4, b.size, b.size * 4, 0.7 * fade, CELL.smoke[(this.rnd() * 4) | 0], 0.8, 0.3);
         if (this.rnd() < 0.6 * fade) this.glow.spawn(b.pos.clone().add(this.jitter(b.size * 0.6)), new THREE.Vector3(0, 1.5, 0), 0.6, b.size * 0.8, b.size * 0.4, 0.9, CELL.fire);
+      }
+    }
+    for (const p of world.projectiles) {
+      if (!p.burn || p.burn <= 0) continue;
+      this.glow.spawn(p.pos, new THREE.Vector3(), 0.04, 1.2, 0.6, 1, CELL.fire);
+      const n = Math.min(6, Math.ceil(p.vel.length() * dt / 8));
+      for (let i = 0; i < n; i++) {
+        const at = p.pos.clone().addScaledVector(p.vel, -dt * (i + this.rnd()) / n);
+        this.smoke.spawn(at, this.jitter(1.5), 1.6 + this.rnd(), 0.8, 3.5, 0.5, CELL.dust[(this.rnd() * 4) | 0], 0.4, 1);
       }
     }
     this.glow.update(dt);

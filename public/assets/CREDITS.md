@@ -19,6 +19,7 @@
 | audio/rotor_interior_loop.mp3 | G36-10-Helicopter Constant Interior | craigsmith | https://freesound.org/people/craigsmith/sounds/438593/ | CC0 | 7–11초 구간 4초를 잘라 0.25초 크로스페이드로 이음새 없는 루프 제작, 모노 96kbps | 2026-09-29 |
 | audio/engine_start.mp3 | Helicopter Start Airbus Helicopters H135 | Borgory | https://freesound.org/people/Borgory/sounds/522672/ | CC0 | 10–22초(터빈 점화·가속) 12초 구간, 페이드, 모노 64kbps | 2026-09-29 |
 | audio/gun_shot.mp3 | Autocannon Three Shot Burst | qubodup | https://freesound.org/people/qubodup/sounds/854186/ | CC0 | 첫 발(0.02–0.26초)만 잘라 단발로 사용, 모노 64kbps | 2026-09-29 |
+| audio/rocket_launch.mp3 | M142 HIMARS Rocket Launch 8 | qubodup | https://freesound.org/people/qubodup/sounds/854476/ | CC0 | 첫 1초만 잘라 0.45초 페이드아웃, 게임에서 1.25배 빠르게 재생해 70mm 로켓으로 사용, 모노 64kbps | 2026-09-29 |
 | audio/explosion_near.mp3 | EOD Explosion | qubodup | https://freesound.org/people/qubodup/sounds/855798/ | CC0 | 정규화·페이드, 모노 64kbps | 2026-09-29 |
 | audio/explosion_fire.mp3 | Fire Explosion | qubodup | https://freesound.org/people/qubodup/sounds/855898/ | CC0 | 정규화·페이드, 모노 64kbps | 2026-09-29 |
 | audio/impact_metal.mp3 | Impact Sounds — impactMetal_medium_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 정규화, 모노 48kbps | 2026-09-29 |

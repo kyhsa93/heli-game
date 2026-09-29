@@ -65,6 +65,17 @@ describe('SfxPlayer', () => {
     expect(c.started).toHaveLength(2);
   });
 
+  it('plays the rocket launch sample for each player rocket, without the gun throttle', () => {
+    const c = fakeCtx();
+    const rocket = c.createBuffer(1, 100, 22050);
+    const sfx = new SfxPlayer(asCtx(c), c.destination as unknown as AudioNode, { rocket_launch: rocket as unknown as AudioBuffer });
+    const fire = { t: 'fire' as const, weapon: 'hydra70', pos: new Vector3(), dir: new Vector3(0, 0, -1), owner: 0, tracer: true };
+    sfx.onEvent(fire, new Vector3());
+    sfx.onEvent(fire, new Vector3());
+    expect(c.started).toHaveLength(2);
+    expect(c.started.every(s => s.buffer === rocket)).toBe(true);
+  });
+
   it('delays distant explosions by the speed of sound', () => {
     const c = fakeCtx();
     const sfx = new SfxPlayer(asCtx(c), c.destination as unknown as AudioNode, {}, () => 0.1);

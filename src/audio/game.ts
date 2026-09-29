@@ -7,6 +7,7 @@ export const AUDIO_ASSETS: Record<string, string> = {
   'audio.rotor_loop': 'rotor_interior_loop',
   'audio.engine_start': 'engine_start',
   'audio.gun_shot': 'gun_shot',
+  'audio.rocket_launch': 'rocket_launch',
   'audio.explosion_near': 'explosion_near',
   'audio.explosion_fire': 'explosion_fire',
   'audio.impact_metal': 'impact_metal',
@@ -32,7 +33,7 @@ export class GameAudio {
     }));
     if (this.buffers.rotor_interior_loop) this.rotor.setRotorLoop(this.buffers.rotor_interior_loop);
     const s: Partial<Record<SampleId, AudioBuffer>> = {};
-    for (const k of ['gun_shot', 'impact_metal', 'impact_ground', 'explosion_near', 'explosion_fire'] as SampleId[]) if (this.buffers[k]) s[k] = this.buffers[k];
+    for (const k of ['gun_shot', 'rocket_launch', 'impact_metal', 'impact_ground', 'explosion_near', 'explosion_fire'] as SampleId[]) if (this.buffers[k]) s[k] = this.buffers[k];
     this.sfx.setSamples(s);
   }
 

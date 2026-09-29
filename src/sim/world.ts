@@ -9,9 +9,10 @@ import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
 import { UNIT_DEFS, type Unit } from './units';
-import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, type Aim, type Arms } from './weapons/arms';
+import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
 import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
 import { integrate, PLAYER_OWNER, segmentHitsTerrain, segmentHitsUnit, type Projectile } from './weapons/projectile';
+import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SALVO_INTERVAL } from './weapons/rockets';
 
 export const STEP = 1 / 120;
 
@@ -98,6 +99,32 @@ export class World {
     return u;
   }
 
+  availableWeapons(): WeaponId[] {
+    const list: WeaponId[] = ['gun30'];
+    if (rocketPods(this.loadout).length) list.push('hydra70');
+    return list;
+  }
+
+  selectWeapon(slot: 1 | 2 | 3 | 4) {
+    const a = this.arms;
+    if (slot === 1) this.setWeapon('gun30');
+    else if (slot === 2 && this.availableWeapons().includes('hydra70')) {
+      if (a.selected === 'hydra70') a.salvo = SALVOS[(SALVOS.indexOf(a.salvo) + 1) % SALVOS.length];
+      else this.setWeapon('hydra70');
+    }
+  }
+
+  nextWeapon() {
+    const list = this.availableWeapons();
+    this.setWeapon(list[(list.indexOf(this.arms.selected) + 1) % list.length]);
+  }
+
+  private setWeapon(id: WeaponId) {
+    if (this.arms.selected === id) return;
+    this.arms.selected = id;
+    this.arms.salvoLeft = 0;
+  }
+
   clearCombat() {
     this.units = [];
     this.projectiles = [];
@@ -146,6 +173,7 @@ export class World {
         if (h.landed && !wasLanded) this.refuelNoted = false;
       }
       this.stepGun(dt);
+      this.stepRockets(dt);
     }
     this.stepProjectiles(dt);
     this.events.flush();
@@ -159,21 +187,47 @@ export class World {
     const w = WEAPONS.gun30;
     while (a.gunTimer <= 0 && a.gunAmmo > 0) {
       const dir = aimDirection(h, this.commands.aim);
-      const spread = (w.dispersionMrad ?? 0) / 1000 * (Math.hypot(h.vel.x, h.vel.z) > 10.3 ? 1.5 : 1);
-      const ang = this.rng() * Math.PI * 2, rad = Math.sqrt(this.rng()) * spread;
-      const side = new Vector3(0, 1, 0).cross(dir).normalize();
-      const up = dir.clone().cross(side).normalize();
-      dir.addScaledVector(side, Math.cos(ang) * rad).addScaledVector(up, Math.sin(ang) * rad).normalize();
+      this.disperse(dir, w.dispersionMrad ?? 0);
       const pos = muzzlePosition(h);
       const tracer = a.shots % 5 === 0;
       this.projectiles.push({
-        id: this.nextProjectileId++, weapon: 'gun30', pos, vel: dir.clone().multiplyScalar(w.speed).add(h.vel),
+        id: this.nextProjectileId++, weapon: 'gun30', pos, origin: pos.clone(), vel: dir.clone().multiplyScalar(w.speed).add(h.vel),
         owner: PLAYER_OWNER, life: (w.maxRange / w.speed) * 3, drag: w.drag ?? 0, tracer,
       });
       this.emit({ t: 'fire', weapon: 'gun30', pos: pos.clone(), dir: dir.clone(), owner: PLAYER_OWNER, tracer });
       a.gunAmmo--;
       a.shots++;
       a.gunTimer += GUN_INTERVAL;
+    }
+  }
+
+  private disperse(dir: Vector3, mrad: number) {
+    const h = this.player;
+    const spread = mrad / 1000 * (Math.hypot(h.vel.x, h.vel.z) > 10.3 ? 1.5 : 1);
+    const ang = this.rng() * Math.PI * 2, rad = Math.sqrt(this.rng()) * spread;
+    const side = new Vector3(0, 1, 0).cross(dir).normalize();
+    const up = dir.clone().cross(side).normalize();
+    return dir.addScaledVector(side, Math.cos(ang) * rad).addScaledVector(up, Math.sin(ang) * rad).normalize();
+  }
+
+  private stepRockets(dt: number) {
+    const a = this.arms, h = this.player;
+    const pressed = this.commands.fire && !a.trigger;
+    a.trigger = this.commands.fire;
+    a.rocketTimer = Math.max(0, a.rocketTimer - dt);
+    if (a.selected !== 'hydra70' || !h.alive) { a.salvoLeft = 0; return; }
+    if (pressed && a.salvoLeft === 0) a.salvoLeft = a.salvo;
+    while (a.salvoLeft > 0 && a.rocketTimer <= 1e-9) {
+      const pod = nextPod(this.loadout, a.rocketsFired);
+      if (!pod) { a.salvoLeft = 0; break; }
+      const dir = this.disperse(boresight(h), HYDRA.dispersionMrad ?? 0);
+      const pos = podMuzzle(h, pod);
+      this.projectiles.push({ id: this.nextProjectileId++, owner: PLAYER_OWNER, ...rocketProjectile(h, pos, dir) });
+      this.emit({ t: 'fire', weapon: 'hydra70', pos: pos.clone(), dir: dir.clone(), owner: PLAYER_OWNER, tracer: true });
+      this.loadout.rounds[pod]--;
+      a.rocketsFired++;
+      a.salvoLeft--;
+      a.rocketTimer += SALVO_INTERVAL;
     }
   }
 
@@ -195,13 +249,16 @@ export class World {
         const at = a.clone().lerp(b, bestT);
         const w = WEAPONS[p.weapon];
         const byPlayer = p.owner === PLAYER_OWNER;
-        hitUnit(this, bestUnit, w, byPlayer);
-        explodeWeapon(this, at, w, byPlayer, bestUnit);
+        if (at.distanceTo(p.origin) >= w.minRange) {
+          hitUnit(this, bestUnit, w, byPlayer);
+          explodeWeapon(this, at, w, byPlayer, bestUnit);
+        }
         this.emit({ t: 'impact', weapon: p.weapon, pos: at, unit: bestUnit.id, ground: false });
         done = true;
       } else if (tg !== null) {
         const at = a.clone().lerp(b, tg);
-        explodeWeapon(this, at, WEAPONS[p.weapon], p.owner === PLAYER_OWNER);
+        const w = WEAPONS[p.weapon];
+        if (at.distanceTo(p.origin) >= w.minRange) explodeWeapon(this, at, w, p.owner === PLAYER_OWNER);
         this.emit({ t: 'impact', weapon: p.weapon, pos: at, ground: true });
         done = true;
       }

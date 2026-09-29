@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { BLADES, EYE, GEAR_Y, ROTOR_R, ROTOR_Y } from '../sim/heli/airframe';
-import { PYLONS, type Loadout, type PylonId } from '../sim/heli/loadout';
+import { PYLON_X, PYLONS, type Loadout, type PylonId } from '../sim/heli/loadout';
 import { buildCockpit, type Screens } from './cockpit/cockpitModel';
 import { add, bar, box, extrudeSide, lambert, MAT, taperBox, tube, v } from './modelKit';
 
@@ -63,7 +63,7 @@ function buildExterior(root: THREE.Group) {
 
   for (const s of [-1, 1]) box(ext, 1.95, 0.1, 1.1, olive, s * 1.6, 0.35, 0.15);
   const stores = {} as Record<PylonId, PylonStores>;
-  for (const [id, x] of PYLON_X) stores[id] = buildPylon(ext, x);
+  for (const id of PYLONS) stores[id] = buildPylon(ext, PYLON_X[id]);
   const stingers = [-1, 1].map(s => buildStingerLauncher(ext, s * 2.62));
 
   box(ext, 0.42, 0.26, 0.42, oliveDark, 0, -1.12, -3.25);
@@ -95,8 +95,6 @@ function buildExterior(root: THREE.Group) {
 
   return { tailRotor, stores, stingers };
 }
-
-export const PYLON_X: readonly [PylonId, number][] = [['L2', -2.1], ['L1', -1.25], ['R1', 1.25], ['R2', 2.1]];
 
 export interface PylonStores { hellfire: THREE.Group; missiles: THREE.Object3D[]; pod: THREE.Group }
 
