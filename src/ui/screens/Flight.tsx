@@ -1,24 +1,27 @@
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
-import { RotorAudio } from '../audio/rotor';
-import { t, tList, tPairs } from '../content/strings';
-import { clamp } from '../core/math';
-import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../core/units';
-import { FlightRenderer } from '../render/renderer';
-import { LAND_DESCENT } from '../sim/heli/airframe';
-import { airspeed } from '../sim/heli/state';
-import { FlightSession } from '../sim/session';
-import { commandForKey, PREVENT_DEFAULT, type Command } from '../input/bindings';
-import { FlightInput } from '../input/input';
-import { crashText, eventMessage, MessageLog } from './messages';
-import { VirtualStick } from './VirtualStick';
+import { RotorAudio } from '../../audio/rotor';
+import { t, tList, tPairs } from '../../content/strings';
+import { clamp } from '../../core/math';
+import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../../core/units';
+import { FlightRenderer } from '../../render/renderer';
+import { LAND_DESCENT } from '../../sim/heli/airframe';
+import { airspeed } from '../../sim/heli/state';
+import { FlightSession } from '../../sim/session';
+import { createObjective, T1_MAX_FPM, TrainingT1 } from '../../sim/training/t1';
+import { commandForKey, PREVENT_DEFAULT, type Command } from '../../input/bindings';
+import { FlightInput } from '../../input/input';
+import { crashText, eventMessage, MessageLog } from '../flight/messages';
+import { VirtualStick } from '../components/VirtualStick';
 
-export function Flight3D({ touch }: { touch: boolean }) {
+interface FlightProps { missionId: string; touch: boolean; onExit: () => void; onComplete: (id: string) => void }
+
+export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
   const msgRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
-  const [session] = useState(() => new FlightSession((Math.random() * 1e9) | 0));
+  const [session] = useState(() => new FlightSession((Math.random() * 1e9) | 0, createObjective(missionId)));
   const sim = session.world;
   const logRef = useRef(new MessageLog());
   const rendererRef = useRef<FlightRenderer | null>(null);
@@ -68,6 +71,12 @@ export function Flight3D({ touch }: { touch: boolean }) {
   useEffect(() => {
     session.paused = help && snap.mode === 'play';
   }, [session, help, snap.mode]);
+
+  useEffect(() => {
+    if (snap.mode === 'done') onComplete(missionId);
+  }, [snap.mode, missionId, onComplete]);
+
+  const t1Pad = sim.pads[TrainingT1.nearestPad(sim)];
 
   useEffect(() => {
     const log = logRef.current;
@@ -189,8 +198,8 @@ export function Flight3D({ touch }: { touch: boolean }) {
       {(help || snap.mode === 'brief') && (
         <div className="overlay">
           <div className="card wide">
-            <h1>{t('brief.title')}</h1>
-            <p className="sub">{t('brief.intro')}<br />{t('brief.introCollective')}</p>
+            <h1>{missionId === 't1' ? t('training.t1.name') : t('brief.title')}</h1>
+            <p className="sub">{missionId === 't1' ? t('training.t1.brief', { pad: t1Pad.name, max: T1_MAX_FPM }) : t('brief.intro')}<br />{t('brief.introCollective')}</p>
             <div className="keys">
               {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
             </div>
@@ -198,8 +207,8 @@ export function Flight3D({ touch }: { touch: boolean }) {
               {tList('brief.rules', { fpm: Math.round(LAND_DESCENT * MS_TO_FPM) }).map(r => <li key={r}>{r}</li>)}
             </ul>
             {snap.mode === 'brief'
-              ? <button className="go" onClick={begin}>{t('brief.start')}</button>
-              : <><button className="go" onClick={() => setHelp(false)}>{t('brief.continue')}</button> <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button></>}
+              ? <><button className="go" onClick={begin}>{t('brief.start')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button></>
+              : <><button className="go" onClick={() => setHelp(false)}>{t('brief.continue')}</button> <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button></>}
           </div>
         </div>
       )}
@@ -209,10 +218,27 @@ export function Flight3D({ touch }: { touch: boolean }) {
           <div className="card">
             <h1>{t('crash.title')}</h1>
             <p className="sub">{snap.crash ? crashText(snap.crash.reason, snap.crash.value) : ''}</p>
-            <button className="go" onClick={begin}>{t('crash.retry')}</button>
+            <button className="go" onClick={begin}>{t('crash.retry')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button>
+          </div>
+        </div>
+      )}
+      {snap.mode === 'done' && (
+        <div className="overlay">
+          <div className="card">
+            <h1>{t('result.title')}</h1>
+            <div className="result">
+              <b>{t('result.time')}</b><span>{formatTime(snap.result?.timeSec ?? 0)}</span>
+              <b>{t('result.touchdown')}</b><span>{Math.round(snap.result?.fpm ?? 0)} fpm</span>
+            </div>
+            <button className="go" onClick={begin}>{t('result.again')}</button> <button className="go secondary" onClick={onExit}>{t('result.toList')}</button>
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function formatTime(sec: number) {
+  const m = Math.floor(sec / 60), r = Math.round(sec % 60);
+  return `${m}:${String(r).padStart(2, '0')}`;
 }

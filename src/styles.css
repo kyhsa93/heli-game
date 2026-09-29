@@ -66,3 +66,24 @@ button.go {
 .tbtn.view { left: 50%; transform: translateX(10%); bottom: calc(40px + env(safe-area-inset-bottom)); }
 .ihadss { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
 button.go.secondary { background: transparent; color: #e8eef7; border: 1px solid rgba(255, 255, 255, .35); }
+
+.menu {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
+  box-sizing: border-box; text-align: center; overflow-y: auto;
+  background: radial-gradient(ellipse at 50% 30%, #25476b, #0b1320 70%);
+}
+.game-title { font-size: 44px; letter-spacing: .08em; margin-bottom: 18px; }
+.game-title small { display: block; font-size: 18px; letter-spacing: .3em; color: #ffd166; margin-top: 4px; }
+.first-time { color: #ffd166; }
+button.mode {
+  display: block; width: 100%; margin: 0 0 10px; padding: 14px 18px; border-radius: 12px; cursor: pointer;
+  text-align: left; font: inherit; color: #e8eef7; background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .18); min-height: 44px;
+}
+button.mode b { display: block; font-size: 18px; }
+button.mode span { font-size: 13px; color: #aebbd0; }
+button.mode.primary { background: rgba(255, 209, 102, .14); border-color: #ffd166; }
+button.mode.primary b { color: #ffd166; }
+button.mode:disabled { opacity: .45; cursor: default; }
+.result { display: grid; grid-template-columns: auto auto; gap: 6px 18px; justify-content: center; margin: 8px 0 20px; font-size: 16px; }
+.result b { color: #ffd166; }

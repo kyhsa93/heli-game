@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STEP } from '../sim/world';
+import { STEP } from '../../sim/world';
 import { eventMessage, MessageLog } from './messages';
 
 describe('MessageLog', () => {

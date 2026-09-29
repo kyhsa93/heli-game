@@ -1,6 +1,7 @@
-import { t } from '../content/strings';
-import { MS_TO_FPM, MS_TO_KT } from '../core/units';
-import type { CrashReason, SimEvent } from '../sim/events';
+import { t } from '../../content/strings';
+import { MS_TO_FPM, MS_TO_KT } from '../../core/units';
+import type { CrashReason, SimEvent } from '../../sim/events';
+import { T1_MAX_FPM } from '../../sim/training/t1';
 
 export interface Message { text: string; color: string; life: number }
 
@@ -19,6 +20,10 @@ export function eventMessage(e: SimEvent): Omit<Message, 'life'> | null {
       return { text: t('msg.landed'), color: '#ffd166' };
     case 'refuel': return { text: t('msg.refuel'), color: '#4cc9f0' };
     case 'boundary': return { text: t('msg.boundary'), color: '#ef476f' };
+    case 'advice':
+      return { text: t(`advice.${e.code}`, { fpm: Math.round(e.value ?? 0), max: T1_MAX_FPM }), color: '#ffd166' };
+    case 'objective':
+      return e.state === 'done' ? { text: t('msg.objectiveDone'), color: '#06d6a0' } : { text: t('msg.objectiveFailed'), color: '#ef476f' };
     case 'crash': return null;
   }
 }

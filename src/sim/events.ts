@@ -7,6 +7,10 @@ export type SimEvent =
   | { t: 'landed'; descent: number }
   | { t: 'engine'; on: boolean; cause?: 'fuel' }
   | { t: 'refuel' }
-  | { t: 'boundary' };
+  | { t: 'boundary' }
+  | { t: 'objective'; id: string; state: 'done' | 'failed' }
+  | { t: 'advice'; code: AdviceCode; value?: number };
+
+export type AdviceCode = 'landingTooHard' | 'wrongPad';
 
 export type Emit = (e: SimEvent) => void;
