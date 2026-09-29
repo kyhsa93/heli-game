@@ -1,10 +1,15 @@
 import { RWR_PATTERN, rwrGateOn, type RwrLevel } from './rwr';
+
+export const LOCK_HZ = 1150;
+export const IR_SEEK_HZ = 520;
+export const IR_LOCK_HZ = 1900;
 export interface AudioState {
   rpm: number;
   collective: number;
   airspeed: number;
   warn: boolean;
   lock?: boolean;
+  ir?: 'none' | 'seek' | 'lock';
   rwr?: RwrLevel;
 }
 
@@ -23,6 +28,7 @@ export class RotorAudio {
   private windFilter!: BiquadFilterNode;
   private warnGain!: GainNode;
   private lockGain!: GainNode;
+  private lockOsc!: OscillatorNode;
   private rwrOsc!: OscillatorNode;
   private rwrGain!: GainNode;
   private muted = false;
@@ -121,7 +127,8 @@ export class RotorAudio {
     const beep = ctx.createOscillator(); beep.type = 'square'; beep.frequency.value = 760; beep.start();
     this.warnGain = ctx.createGain(); this.warnGain.gain.value = 0;
     beep.connect(this.warnGain).connect(this.master);
-    const tone = ctx.createOscillator(); tone.type = 'sine'; tone.frequency.value = 1150; tone.start();
+    const tone = ctx.createOscillator(); tone.type = 'sine'; tone.frequency.value = LOCK_HZ; tone.start();
+    this.lockOsc = tone;
     this.lockGain = ctx.createGain(); this.lockGain.gain.value = 0;
     tone.connect(this.lockGain).connect(this.master);
     this.rwrOsc = ctx.createOscillator(); this.rwrOsc.type = 'square'; this.rwrOsc.frequency.value = 1000; this.rwrOsc.start();
@@ -161,8 +168,10 @@ export class RotorAudio {
     }
     const beepOn = s.warn && Math.floor(t * 3) % 2 === 0;
     this.warnGain.gain.setTargetAtTime(beepOn ? 0.05 : 0, t, 0.01);
-    const lockOn = !!s.lock && (t * 8) % 1 < 0.5;
-    this.lockGain.gain.setTargetAtTime(lockOn ? 0.035 : 0, t, 0.005);
+    const ir = s.ir ?? 'none';
+    const lockOn = ir !== 'none' || (!!s.lock && (t * 8) % 1 < 0.5);
+    this.lockOsc.frequency.setTargetAtTime(ir === 'lock' ? IR_LOCK_HZ : ir === 'seek' ? IR_SEEK_HZ : LOCK_HZ, t, 0.01);
+    this.lockGain.gain.setTargetAtTime(lockOn ? (ir === 'seek' ? 0.02 : 0.035) : 0, t, 0.005);
     const level = s.rwr ?? 'none', pat = RWR_PATTERN[level];
     if (pat.freq) this.rwrOsc.frequency.setTargetAtTime(pat.freq, t, 0.01);
     this.rwrGain.gain.setTargetAtTime(rwrGateOn(level, t) ? pat.gain : 0, t, 0.004);

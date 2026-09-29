@@ -7,6 +7,8 @@ import { stepBrains } from './ai/brain';
 import { GEAR_Y } from './heli/airframe';
 import { LosCache, terrainClear } from './los';
 import { STEP, World } from './world';
+import { AIR_ALTITUDE } from './ai/movement';
+import { ORBIT_RADIUS } from './ai/air';
 
 const DAY: Conditions = { night: false, fog: false, playerRadar: false };
 
@@ -125,4 +127,24 @@ export function popupPair(world: World, dist = 2500, low = 25, high = 300, shado
     return { unit: new Vector3(x, 0, z), low: lowP, high: highP };
   }
   throw new Error('no pop-up pair');
+}
+
+export function skyPair(world: World, dist: number, playerAgl = 400) {
+  const HALF = world.terrain.half, t = world.terrain;
+  for (let i = 0; i < 3000; i++) {
+    const x = ((i * 7919) % 173) / 173 * HALF * 1.2 - HALF * 0.6, z = ((i * 104729) % 181) / 181 * HALF * 1.2 - HALF * 0.6;
+    const ang = (i % 8) * Math.PI / 4;
+    const hx = x + Math.sin(ang) * dist, hz = z + Math.cos(ang) * dist;
+    if (Math.abs(hx) > HALF - 300 || Math.abs(hz) > HALF - 300) continue;
+    const player = new Vector3(x, t.surfaceAt(x, z) + playerAgl, z);
+    let clear = true;
+    for (let k = 0; k < 6 && clear; k++) {
+      const a = k * Math.PI / 3, r = ORBIT_RADIUS;
+      const px = x + Math.sin(a) * r, pz = z + Math.cos(a) * r;
+      clear = terrainClear(t, player, new Vector3(px, t.surfaceAt(px, pz) + AIR_ALTITUDE, pz));
+    }
+    const heli = new Vector3(hx, t.surfaceAt(hx, hz) + AIR_ALTITUDE, hz);
+    if (clear && terrainClear(t, player, heli)) return { player, heli };
+  }
+  throw new Error('no sky pair');
 }

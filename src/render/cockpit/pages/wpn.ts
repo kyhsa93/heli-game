@@ -1,6 +1,7 @@
 import { PYLON_X, PYLONS, type PylonId, type Store } from '../../../sim/heli/loadout';
 import { hellfireSolution, longbowSolution, type HellfireStatus } from '../../../sim/weapons/hellfire';
 import type { World } from '../../../sim/world';
+import { stingerStatus } from '../../tadsHud';
 import { AMBER, bezel, DIM, GREEN, MONO, screenClip } from './common';
 
 const STORE_TEXT: Record<Store, string> = { empty: '---', agm114k: 'K', agm114l: 'L', hydra70: 'RKT' };
@@ -22,6 +23,7 @@ export function wpnSelected(world: World) {
   if (a.selected === 'hydra70') return `RKT x${a.salvo}`;
   if (a.selected === 'agm114k') return `MSL ${MODE_TEXT[hellfireSolution(world).status]}`;
   if (a.selected === 'agm114l') return `MSL L ${MODE_TEXT[longbowSolution(world).status]}`;
+  if (a.selected === 'stinger') return `STG ${stingerStatus(world)}`;
   return 'GUN';
 }
 
@@ -54,7 +56,8 @@ export function drawWpn(g: CanvasRenderingContext2D, world: World, labels: reado
     }
     if (world.loadout.def.stingers) {
       g.font = `bold 14px ${MONO}`; g.fillStyle = GREEN;
-      for (const s of [-1, 1]) g.fillText(`STG ${world.loadout.stingerRounds / 2}`, cx + s * 160, wingY - 12);
+      const n = world.loadout.stingerRounds;
+      for (const s of [-1, 1]) g.fillText(`STG ${s < 0 ? (n >= 2 ? 1 : 0) : (n >= 1 ? 1 : 0)}`, cx + s * 160, wingY - 12);
     }
 
     g.textAlign = 'left'; g.font = `bold 17px ${MONO}`; g.fillStyle = GREEN;

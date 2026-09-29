@@ -13,7 +13,7 @@ export type TerrainFeature =
   | { kind: 'forest'; center: Vec2; radius: number; density?: number }
   | { kind: 'bridge'; from: Vec2; to: Vec2 };
 
-export interface UnitSpawn { id: string; type: string; position: Vec2; headingDeg?: number; group?: string; hidden?: boolean; skill?: number; passive?: boolean }
+export interface UnitSpawn { id: string; type: string; position: Vec2; headingDeg?: number; group?: string; hidden?: boolean; skill?: number; passive?: boolean; aam?: boolean }
 export interface GroupDef { id: string; route?: Vec2[]; loop?: boolean; speedScale?: number; behavior: 'hold' | 'patrol' | 'advance' | 'convoy' | 'defend'; startTrigger?: string }
 export type UnitRef = string[] | { group: string };
 
@@ -171,7 +171,7 @@ const mission = obj({
   start: obj({ kind: oneOf('farp_cold', 'farp_hot', 'air'), position: vec2, headingDeg: num(0, 360), altitudeAgl: opt(num(0, 3000)), speedKt: opt(num(0, 200)) }),
   farps: arr(obj({ id: str, position: vec2, services: arr(oneOf('fuel', 'ammo', 'repair')) })),
   waypoints: arr(obj({ id: str, name: str, position: vec2 })),
-  units: arr(obj({ id: str, type: str, position: vec2, headingDeg: opt(num(0, 360)), group: opt(str), hidden: opt(bool), skill: opt(num(0.5, 1.5)), passive: opt(bool) })),
+  units: arr(obj({ id: str, type: str, position: vec2, headingDeg: opt(num(0, 360)), group: opt(str), hidden: opt(bool), skill: opt(num(0.5, 1.5)), passive: opt(bool), aam: opt(bool) })),
   groups: arr(obj({ id: str, route: opt(arr(vec2, 2)), loop: opt(bool), speedScale: opt(num(0.1, 3)), behavior: oneOf('hold', 'patrol', 'advance', 'convoy', 'defend'), startTrigger: opt(str) })),
   objectives: arr(tagged({
     destroy: { ...common, units: unitRef, count: opt(num(1)) },

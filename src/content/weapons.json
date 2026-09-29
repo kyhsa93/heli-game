@@ -21,7 +21,8 @@
   },
   "stinger": {
     "guidance": "ir", "ammo": [2], "minRange": 300, "maxRange": 5000,
-    "speed": 750, "damage": 150, "splashRadius": 3, "splashDamage": 40, "penetration": 1, "minInterval": 1
+    "speed": 750, "damage": 260, "splashRadius": 3, "splashDamage": 40, "penetration": 2, "minInterval": 1,
+    "burnTime": 2, "drag": 0.0003, "maxFlight": 12, "fuse": 4, "maxG": 30, "navConstant": 3, "irLostSeconds": 1.5
   },
   "sa_ir": {
     "guidance": "ir", "minRange": 500, "maxRange": 4500,

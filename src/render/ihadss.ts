@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { isStale } from '../sim/sensors/fcr';
+import { unitCenter } from '../sim/sensors/laser';
+import { STINGER_LOCK_SECONDS } from '../sim/weapons/stinger';
 import { drawFcrSymbol, drawSelectBrackets } from './fcrSymbol';
 import { clamp } from '../core/math';
 import { bearingDeg, headingDeg, hoverVector } from './cockpit/instruments';
@@ -103,6 +105,7 @@ export function drawIhadss(g: CanvasRenderingContext2D, w: number, h: number, wo
 
   if (world.arms.selected === 'hydra70') drawRockets(g, w, h, u, world, camera);
   else if (world.arms.selected === 'agm114k' || world.arms.selected === 'agm114l') drawHellfire(g, w, h, u, world, camera);
+  else if (world.arms.selected === 'stinger') drawStinger(g, w, h, u, world, camera);
   else drawGun(g, w, h, u, world, camera);
 
   const tp = world.target;
@@ -236,6 +239,26 @@ function drawHellfire(g: CanvasRenderingContext2D, w: number, h: number, u: numb
   }
   g.textAlign = 'right';
   g.fillText(tadsWeaponStatus(world), w / 2 + 190 * u, h / 2 + 132 * u);
+  g.restore();
+}
+
+function drawStinger(g: CanvasRenderingContext2D, w: number, h: number, u: number, world: World, camera: THREE.Camera) {
+  const cx = w / 2, cy = h / 2, s = world.stinger;
+  g.save();
+  g.lineWidth = 2 * u;
+  const r = 22 * u;
+  g.setLineDash(s.unitId === null ? [5 * u, 5 * u] : []);
+  g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
+  g.setLineDash([]);
+  const target = s.unitId !== null ? world.unit(s.unitId) : undefined;
+  const p = target && project(camera, unitCenter(target), w, h);
+  if (p) {
+    const k = (s.locked ? 12 : 8 + 10 * (1 - Math.min(1, s.time / STINGER_LOCK_SECONDS))) * u;
+    g.beginPath(); g.moveTo(p.x, p.y - k); g.lineTo(p.x + k, p.y); g.lineTo(p.x, p.y + k); g.lineTo(p.x - k, p.y); g.closePath(); g.stroke();
+    if (s.locked && Math.sin(world.time * 16) > 0) { g.beginPath(); g.arc(p.x, p.y, k * 1.5, 0, Math.PI * 2); g.stroke(); }
+  }
+  g.textAlign = 'right';
+  g.fillText(tadsWeaponStatus(world), cx + 190 * u, cy + 132 * u);
   g.restore();
 }
 

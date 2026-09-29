@@ -189,7 +189,7 @@ export class Effects {
   onEvent(e: SimEvent, world: World) {
     switch (e.t) {
       case 'fire':
-        if (e.weapon === 'agm114k' || e.weapon === 'agm114l') {
+        if (e.weapon === 'agm114k' || e.weapon === 'agm114l' || e.weapon === 'stinger') {
           this.glow.spawn(e.pos, new THREE.Vector3(), 0.15, 3, 4.5, 1, CELL.flash);
           for (let i = 0; i < 5; i++) this.smoke.spawn(e.pos.clone().add(this.jitter(1.5)), e.dir.clone().multiplyScalar(-8).add(this.jitter(3)), 2.5, 2, 7, 0.55, CELL.dust[i % 4], 0.5, 1.2);
           break;
@@ -256,7 +256,7 @@ export class Effects {
       this.smoke.spawn(f.pos, this.jitter(1), 1.8, 0.8, 3, 0.5, CELL.dust[(this.rnd() * 4) | 0], 0.5, 1);
     }
     let mi = 0;
-    for (const m of world.enemyMissiles) {
+    for (const m of [...world.enemyMissiles, ...world.aams]) {
       if (mi < 24) {
         this.mq.setFromUnitVectors(this.mz, m.vel.clone().normalize());
         this.missileMesh.setMatrixAt(mi++, this.mm.compose(m.pos, this.mq, this.one));

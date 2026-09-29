@@ -104,6 +104,7 @@ function launchMissiles(world: World, u: Unit, dist: number, dt: number) {
   for (const w of missileWeapons(u)) {
     if (dist > w.range || dist < w.minRange) continue;
     if (w.kind === 'missileRadar' && u.ai.radar !== 'track') continue;
+    if (w.kind === 'missileIR' && u.def.move?.air && !u.aam) continue;
     if (u.def.move?.stationaryToFire && u.vel.lengthSq() > 0.01) continue;
     world.launchEnemyMissile(u, w.id);
     u.weaponCooldown = 1 / w.rate;

@@ -134,9 +134,25 @@ export function fallbackModel(def: UnitDef, category: Category): THREE.BufferGeo
     case 'infantry':
       parts = [coloredBox(0.5, 1.4, 0.35, olive), coloredBox(0.3, 0.3, 0.3, dark, 0, 1.45, 0)];
       break;
-    case 'air':
-      parts = [coloredBox(w * 0.35, h * 0.45, l * 0.6, olive, 0, h * 0.2), coloredBox(0.3, 0.3, l * 0.45, olive, 0, h * 0.4, l * 0.45), coloredBox(l * 0.9, 0.05, 0.4, dark, 0, h * 0.8, 0)];
+    case 'air': {
+      const glass = 0x9fb3c2, blade = l * 0.95;
+      parts = [
+        coloredBox(w * 0.34, h * 0.34, l * 0.5, olive, 0, h * 0.18, 0),
+        coloredBox(w * 0.24, h * 0.22, l * 0.14, olive, 0, h * 0.16, -l * 0.31),
+        coloredBox(w * 0.2, h * 0.16, l * 0.1, glass, 0, h * 0.36, -l * 0.29),
+        coloredBox(w * 0.24, h * 0.2, l * 0.12, glass, 0, h * 0.44, -l * 0.18),
+        coloredBox(w * 0.3, h * 0.14, l * 0.24, dark, 0, h * 0.52, l * 0.02),
+        coloredBox(w * 0.98, 0.14, l * 0.09, olive, 0, h * 0.34, l * 0.04),
+        coloredBox(0.5, 0.5, 1.7, dark, -w * 0.42, h * 0.24, l * 0.03),
+        coloredBox(0.5, 0.5, 1.7, dark, w * 0.42, h * 0.24, l * 0.03),
+        coloredBox(0.55, 0.55, l * 0.44, olive, 0, h * 0.4, l * 0.44),
+        coloredBox(0.16, h * 0.42, 1.5, olive, 0, h * 0.5, l * 0.63),
+        coloredBox(0.12, 0.12, 0.9, dark, 0, h * 0.66, 0),
+        coloredBox(blade, 0.06, 0.45, dark, 0, h * 0.78, 0),
+        coloredBox(0.45, 0.06, blade, dark, 0, h * 0.78, 0),
+      ];
       break;
+    }
     default:
       parts = [coloredBox(w, h, l, def.side === 'civilian' ? 0xd8cdb4 : grey)];
   }

@@ -68,6 +68,7 @@ export interface Unit {
   identified: boolean;
   passive?: boolean;
   skill?: number;
+  aam?: boolean;
 }
 
 export function squadMembers(u: Unit) {

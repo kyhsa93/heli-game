@@ -2,16 +2,17 @@ import { Vector3 } from 'three';
 import { EventBus } from '../core/events';
 import { rng } from '../core/math';
 import type { SimEvent } from './events';
-import { BASE_REFUEL_RATE, GEAR_Y } from './heli/airframe';
+import { BASE_REFUEL_RATE, EYE, GEAR_Y } from './heli/airframe';
 import { autoHover, createHold, type Hold } from './heli/autohover';
 import { clampToArea, collide, stepFlight } from './heli/flight';
 import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
-import { createHeli, type Controls, type HeliState } from './heli/state';
+import { createHeli, toWorld, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
 import { blastShares, DAMAGED, hitSystem, randomHitPoint, ROTOR_FAIL_SECONDS, systemAt, type SystemId } from './heli/damage';
 import type { CrashReason } from './events';
 import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
 import { stepBrains } from './ai/brain';
+import { stepAir } from './ai/air';
 import { stepService, type FarpService } from './farp';
 import { RoadGraph, stepGroups, type GroupState } from './ai/movement';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
@@ -29,6 +30,7 @@ import { hellfireSolution, launchHellfire, longbowSolution } from './weapons/hel
 import { createFcr, cycleTarget, FCR_SCAN_SECONDS, scanTargets, type Fcr, type FcrMode } from './sensors/fcr';
 import { stepEnemyMissile, threatDef, type EnemyMissile } from './weapons/enemyMissile';
 import { HELLFIRE, hellfireLaunchers, stepMissile, type LaserSpot, type Missile } from './weapons/missile';
+import { createSeeker, launchStinger, seekerTarget, STINGER, stepSeeker, type Aam, type StingerSeeker } from './weapons/stinger';
 import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SALVO_INTERVAL } from './weapons/rockets';
 
 export const STEP = 1 / 120;
@@ -52,6 +54,8 @@ export class World {
   farpService: FarpService | null = null;
   private graph: RoadGraph | null = null;
   enemyMissiles: EnemyMissile[] = [];
+  aams: Aam[] = [];
+  stinger: StingerSeeker = createSeeker();
   flares: Flare[] = [];
   cm: Countermeasures = createCountermeasures();
   fcr: Fcr = createFcr();
@@ -116,6 +120,7 @@ export class World {
     if (Object.values(def.pylons).includes('hydra70')) list.push('hydra70');
     if (Object.values(def.pylons).includes('agm114k')) list.push('agm114k');
     if (Object.values(def.pylons).includes('agm114l')) list.push('agm114l');
+    if (def.stingers) list.push('stinger');
     return list;
   }
 
@@ -148,14 +153,14 @@ export class World {
 
   padAt(i: number): Pad3 | undefined { return this.pads[i]; }
 
-  spawnUnit(defId: string, x: number, z: number, yaw = 0, opts: { missionId?: string; group?: string; passive?: boolean; skill?: number } = {}): Unit {
+  spawnUnit(defId: string, x: number, z: number, yaw = 0, opts: { missionId?: string; group?: string; passive?: boolean; skill?: number; aam?: boolean } = {}): Unit {
     const def = UNIT_DEFS[defId];
     if (!def) throw new Error(`unknown unit ${defId}`);
     const y = def.move?.air ? this.terrain.surfaceAt(x, z) + 60 : this.terrain.surfaceAt(x, z);
     const u: Unit = {
       id: this.nextUnitId++, defId, def, side: def.side, missionId: opts.missionId, group: opts.group,
       pos: new Vector3(x, y, z), yaw, vel: new Vector3(), hp: def.hp, alive: true,
-      ai: createAiState(), weaponCooldown: 0, identified: false, passive: opts.passive, skill: opts.skill,
+      ai: createAiState(), weaponCooldown: 0, identified: false, passive: opts.passive, skill: opts.skill, aam: opts.aam,
     };
     this.units.push(u);
     return u;
@@ -166,6 +171,7 @@ export class World {
     if (rocketPods(this.loadout).length) list.push('hydra70');
     if (hellfireLaunchers(this.loadout).length) list.push('agm114k');
     if (hellfireLaunchers(this.loadout, 'agm114l').length) list.push('agm114l');
+    if (this.loadout.def.stingers) list.push('stinger');
     return list;
   }
 
@@ -178,7 +184,7 @@ export class World {
     } else if (slot === 3) {
       const missiles = this.availableWeapons().filter(w => w === 'agm114k' || w === 'agm114l');
       if (missiles.length) this.setWeapon(missiles[(missiles.indexOf(a.selected as 'agm114k') + 1) % missiles.length]);
-    }
+    } else if (slot === 4 && this.availableWeapons().includes('stinger')) this.setWeapon('stinger');
   }
 
   fcrScan(): boolean {
@@ -225,6 +231,7 @@ export class World {
     if (this.arms.selected === id) return;
     this.arms.selected = id;
     this.arms.salvoLeft = 0;
+    this.stinger = createSeeker();
   }
 
   toggleTads() {
@@ -308,6 +315,7 @@ export class World {
     this.projectiles = [];
     this.missiles = [];
     this.enemyMissiles = [];
+    this.aams = [];
     this.flares = [];
     this.remoteLasers = [];
   }
@@ -321,7 +329,7 @@ export class World {
     u.hp = Math.max(0, u.hp - amount);
     if (u.hp === 0) {
       u.alive = false;
-      u.vel.set(0, 0, 0);
+      if (!u.def.move?.air) u.vel.set(0, 0, 0);
       this.emit({ t: 'unitDestroyed', id: u.id, defId: u.defId, side: u.side, byPlayer });
       const sec = u.def.secondaryExplosion;
       if (sec) {
@@ -371,11 +379,13 @@ export class World {
       this.stepGun(dt);
       this.stepRockets(dt, pressed);
       this.stepHellfire(dt, pressed);
+      this.stepStinger(dt, pressed);
     }
-    if (this.active) stepGroups(this, this.groups.values(), dt);
+    if (this.active) { stepGroups(this, this.groups.values(), dt); stepAir(this, dt); }
     this.stepProjectiles(dt);
     this.stepMissiles(dt);
     this.stepEnemyMissiles(dt);
+    this.stepAams(dt);
     this.stepCountermeasures(dt);
     if (this.active) {
       this.aiClock += dt;
@@ -482,6 +492,40 @@ export class World {
     a.missilesFired++;
     a.missileTimer = HELLFIRE.minInterval ?? 0.8;
     this.emit({ t: 'fire', weapon: m.kind, pos: m.pos.clone(), dir: m.vel.clone().normalize(), owner: PLAYER_OWNER, tracer: false });
+  }
+
+  private stepStinger(dt: number, pressed: boolean) {
+    const a = this.arms, h = this.player, lo = this.loadout;
+    if (a.selected !== 'stinger' || !h.alive || lo.stingerRounds <= 0) { stepSeeker(this.stinger, null, dt); return; }
+    const eye = toWorld(h, EYE, new Vector3());
+    stepSeeker(this.stinger, seekerTarget(this.terrain, eye, aimDirection(h, this.commands.aim), this.units), dt);
+    if (!pressed || !this.stinger.locked || a.missileTimer > 1e-9) return;
+    const target = this.unit(this.stinger.unitId!);
+    if (!target) return;
+    const m = launchStinger(h, target, a.stingersFired, this.nextMissileId++, PLAYER_OWNER);
+    this.aams.push(m);
+    lo.stingerRounds--;
+    a.stingersFired++;
+    a.missileTimer = STINGER.minInterval ?? 1;
+    this.stinger = createSeeker();
+    this.emit({ t: 'fire', weapon: 'stinger', pos: m.pos.clone(), dir: m.vel.clone().normalize(), owner: PLAYER_OWNER, tracer: false });
+  }
+
+  private stepAams(dt: number) {
+    const list = this.aams, c = new Vector3();
+    for (let i = list.length - 1; i >= 0; i--) {
+      const m = list[i];
+      const u = this.unit(m.targetUnit);
+      if (u?.alive) unitCenter(u, c); else c.copy(m.pos).addScaledVector(m.vel, 10);
+      const r = stepEnemyMissile(m, this.terrain, c, u?.alive ? u.vel : m.vel, dt);
+      if (r.detonate && u?.alive) {
+        const w = WEAPONS[m.weapon];
+        this.emit({ t: 'impact', weapon: m.weapon, pos: m.pos.clone(), unit: u.id, ground: false, missile: m.id });
+        hitUnit(this, u, w, true);
+        explodeWeapon(this, m.pos, w, true, u);
+      }
+      if (r.detonate || r.miss) { this.emit({ t: 'missileEnd', id: m.id, hit: r.detonate }); list[i] = list[list.length - 1]; list.pop(); }
+    }
   }
 
   private stepMissiles(dt: number) {

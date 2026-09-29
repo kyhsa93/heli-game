@@ -31,7 +31,7 @@ export class SfxPlayer {
   onEvent(e: SimEvent, listener: Vector3) {
     switch (e.t) {
       case 'fire':
-        if (e.owner === 0 && (e.weapon === 'agm114k' || e.weapon === 'agm114l')) {
+        if (e.owner === 0 && (e.weapon === 'agm114k' || e.weapon === 'agm114l' || e.weapon === 'stinger')) {
           this.play('hellfire_launch', 0.75, 1, 0, 20000, 1.2);
         } else if (e.owner === 0 && e.weapon === 'hydra70') {
           this.play('rocket_launch', 0.6, 1.25 + this.rnd() * 0.1, 0, 20000, 0.5);

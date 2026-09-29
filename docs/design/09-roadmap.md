@@ -85,7 +85,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 - [x] [#45](https://github.com/kyhsa93/heli-game/issues/45) **M5-1 저장**: `save/storage.ts`, `CampaignSave` v1, 이관 규칙. *완료*: 저장·로드·손상 데이터 복구 테스트.
 - [x] [#46](https://github.com/kyhsa93/heli-game/issues/46) **M5-2 캠페인 지도 화면·해금**: `content/campaign.json`, 02장 2.5절 표.
 - [x] [#47](https://github.com/kyhsa93/heli-game/issues/47) **M5-3 FCR + 헬파이어 레이더**: 04장 FCR 규칙, 표적 목록, 발사 후 망각. *완료*: 스캔 결과 가시선 필터 테스트, 발사 후 숨어도 명중 테스트.
-- [ ] [#48](https://github.com/kyhsa93/heli-game/issues/48) **M5-4 🅰 적 공격 헬기 + 스팅어**: Mi-24 모델(텍스처 재압축 ≤ 0.5MB), 윙맨 아파치는 채택 모델(TheOminousDuck) 사용 여부를 여기서 결정.
+- [x] [#48](https://github.com/kyhsa93/heli-game/issues/48) **M5-4 🅰 적 공격 헬기 + 스팅어**: Mi-24 모델(텍스처 재압축 ≤ 0.5MB), 윙맨 아파치는 채택 모델(TheOminousDuck) 사용 여부를 여기서 결정.
 - [ ] [#49](https://github.com/kyhsa93/heli-game/issues/49) **M5-5 윙맨**: 편대, 표적 분담, 무전 메뉴 지시(03장 3.4절).
 - [ ] [#50](https://github.com/kyhsa93/heli-game/issues/50) **M5-6 임무 4~12 작성**.
 - [ ] [#51](https://github.com/kyhsa93/heli-game/issues/51) **M5-7 훈련 T1·T2 단계형 지시**(07장 7.9절).

@@ -22,6 +22,11 @@ export function missileTof(world: World) {
   return best;
 }
 
+export function stingerStatus(world: World) {
+  if (world.loadout.stingerRounds <= 0) return 'EMPTY';
+  return world.stinger.locked ? 'LOCK' : world.stinger.unitId !== null ? 'SEEK' : 'SRCH';
+}
+
 export function tadsWeaponStatus(world: World) {
   const a = world.arms;
   if (a.selected === 'agm114k') {
@@ -35,6 +40,7 @@ export function tadsWeaponStatus(world: World) {
     if (n <= 0) return 'MSL L EMPTY';
     return `MSL L ${n} ${HF_TEXT[longbowSolution(world).status]}`.trimEnd();
   }
+  if (a.selected === 'stinger') return `STG ${world.loadout.stingerRounds} ${stingerStatus(world)}`;
   if (a.selected === 'hydra70') {
     const n = count(world.loadout, 'hydra70');
     return n > 0 ? `RKT ${n} x${a.salvo}` : 'RKT EMPTY';
