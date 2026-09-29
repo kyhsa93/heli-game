@@ -8,6 +8,8 @@ import { STEP } from '../sim/world';
 import type { FlightInput } from '../input/input';
 import { Instruments } from './cockpit/instruments';
 import { buildHeli, type HeliModel } from './heliModel';
+import { assets } from '../assets/loader';
+import { Effects, fallbackAtlas } from './effects';
 import { drawIhadss } from './ihadss';
 import { buildWorld, type WorldScene } from './scene';
 
@@ -43,6 +45,8 @@ export class FlightRenderer {
   private chaseInit = false;
   private tmp = new THREE.Vector3();
   private tmp2 = new THREE.Vector3();
+  readonly effects: Effects;
+  private offEvents: () => void;
 
   constructor(private opts: RendererOptions) {
     const { mount, overlay, session } = opts;
@@ -63,6 +67,9 @@ export class FlightRenderer {
     }
     this.overlayCtx = overlay.getContext('2d')!;
     this.model.head.add(this.camera);
+    this.effects = new Effects(assets.get<THREE.Texture>('tex.particles') ?? fallbackAtlas());
+    this.scene.scene.add(this.effects.group);
+    this.offEvents = session.world.events.onAny(e => this.effects.onEvent(e, session.world));
 
     this.resize();
     window.addEventListener('resize', this.resize);
@@ -83,6 +90,7 @@ export class FlightRenderer {
     this.camera.aspect = w / h;
     this.camera.fov = w >= h ? 72 : Math.min(100, 2 * Math.atan(Math.tan(37 * Math.PI / 180) * h / w) * 180 / Math.PI);
     this.camera.updateProjectionMatrix();
+    this.effects?.setScale(h, this.camera.fov);
   };
 
   private tick = (now: number) => {
@@ -162,6 +170,7 @@ export class FlightRenderer {
     scn.sky.position.copy(this.tmp);
     (scn.sky.material as THREE.ShaderMaterial).uniforms.time.value = now * 0.001;
 
+    this.effects.update(steps * STEP, world);
     this.instruments.draw(world, this.frame++ % 3);
     this.renderer.render(scn.scene, camera);
 
@@ -180,6 +189,8 @@ export class FlightRenderer {
 
   dispose() {
     cancelAnimationFrame(this.raf);
+    this.offEvents();
+    this.effects.dispose();
     window.removeEventListener('resize', this.resize);
     this.scene.dispose();
     this.instruments.dispose();

@@ -19,6 +19,7 @@ export const UI_FONT = 'Karda Sans';
 export const ASSETS: AssetDef[] = [
   { id: 'font.hud', kind: 'font', path: 'fonts/b612-mono.woff2', group: BOOT_GROUP, fontFamily: HUD_FONT },
   { id: 'font.ui', kind: 'font', path: 'fonts/karda-sans-regular.woff2', group: BOOT_GROUP, fontFamily: UI_FONT, fontWeight: '400' },
+  { id: 'tex.particles', kind: 'texture', path: 'textures/particles.png', group: BOOT_GROUP },
   { id: 'font.ui.bold', kind: 'font', path: 'fonts/karda-sans-bold.woff2', group: BOOT_GROUP, fontFamily: UI_FONT, fontWeight: '700' },
 ];
 
