@@ -6,7 +6,7 @@
 
 - 기획 전체: [docs/design/README.md](docs/design/README.md) — 읽는 순서와 문서 사용 규칙
 - 코드 작업 전 필수: [docs/design/08-technical-architecture.md](docs/design/08-technical-architecture.md) — 현재 코드 지도, 목표 구조, 의존 규칙, 테스트 방법
-- 할 일 고르기: [docs/design/09-roadmap.md](docs/design/09-roadmap.md) — 마일스톤 순서대로, 작업 ID 단위
+- 할 일 고르기: GitHub 이슈(마일스톤 M0~M7, 작업 ID `[M0-1]` 형식) 또는 [docs/design/09-roadmap.md](docs/design/09-roadmap.md). 마일스톤 순서대로, 이슈의 "선행 이슈"가 닫힌 것부터. 끝나면 커밋에 `Closes #번호`
 
 ## 명령
 
