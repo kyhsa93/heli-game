@@ -13,6 +13,7 @@ import type { CrashReason } from './events';
 import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
 import { stepBrains } from './ai/brain';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
+import { DIFFICULTIES, type Difficulty } from './difficulty';
 import { LosCache } from './los';
 import { castRay, createLaser, crosshairUnit, unitCenter, DESIGNATION_SECONDS, IDENTIFY_FOV_DEG, IDENTIFY_SECONDS, type Laser } from './sensors/laser';
 import { CHAFF_JAM, createCountermeasures, decoyChaff, decoyFlare, FLARE_LIFE, FLARE_PER_DROP, type Countermeasures, type Flare } from './sensors/ase';
@@ -56,7 +57,7 @@ export class World {
   identify: { unitId: number | null; time: number } = { unitId: null, time: 0 };
   assists: Assists = { ...DEFAULT_ASSISTS };
   conditions: Conditions = { night: false, fog: false, playerRadar: false };
-  difficulty = { enemyAccuracy: 1, enemyReaction: 1, damageTaken: 1, detection: 1 };
+  difficulty: Difficulty = DIFFICULTIES.normal;
   readonly los: LosCache;
   private aiClock = 0;
   tads: Tads = createTads();

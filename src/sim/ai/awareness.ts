@@ -60,7 +60,7 @@ export function visualRate(world: World, eye: Vector3, occlusion: number, cond: 
   if (skylined(world.terrain, eye, h.pos)) exposure *= SKYLINE;
   const noise = dist <= NOISE_RANGE ? NOISE : 1;
   const light = cond.fog ? FOG : 1;
-  return BASE_RATE * distF * exposure * noise * light * (1 - occlusion);
+  return BASE_RATE * distF * exposure * noise * light * (1 - occlusion) * world.difficulty.detection;
 }
 
 function detect(world: World, u: Unit, by: 'visual' | 'radar') {
@@ -113,7 +113,7 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
         continue;
       }
       if (u.ai.radar === 'search') {
-        const p = cond.playerRadar || cued ? 1 : agl(h, world.terrain) < RADAR_CLUTTER_AGL ? RADAR_P_LOW : RADAR_P;
+        const p = cond.playerRadar || cued ? 1 : Math.min(1, (agl(h, world.terrain) < RADAR_CLUTTER_AGL ? RADAR_P_LOW : RADAR_P) * world.difficulty.detection);
         if (world.rng() < p) { setRadar(world, u, 'acquire'); u.ai.radarTimer = 0; detect(world, u, 'radar'); }
         else forget(world, u, dt);
       } else {

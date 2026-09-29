@@ -9,6 +9,8 @@ import { FlightRenderer } from '../../render/renderer';
 import { LAND_DESCENT } from '../../sim/heli/airframe';
 import { airspeed } from '../../sim/heli/state';
 import { FlightSession } from '../../sim/session';
+import { DIFFICULTIES } from '../../sim/difficulty';
+import { loadDifficulty } from '../settings';
 import { zoomTads } from '../../sim/sensors/tads';
 import { sightPoint } from '../../sim/weapons/ballistics';
 import { hellfireSolution } from '../../sim/weapons/hellfire';
@@ -32,6 +34,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
   const hintRef = useRef<HTMLDivElement>(null);
   const [session] = useState(() => new FlightSession((Math.random() * 1e9) | 0, createObjective(missionId)));
   const sim = session.world;
+  sim.difficulty = DIFFICULTIES[loadDifficulty()];
   const logRef = useRef(new MessageLog());
   const rendererRef = useRef<FlightRenderer | null>(null);
   const [input] = useState(() => new FlightInput());
