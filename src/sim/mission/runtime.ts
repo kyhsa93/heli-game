@@ -61,6 +61,10 @@ export class MissionRuntime implements Objective {
     world.applyLoadout(m.briefing.recommendedLoadout);
     world.conditions = { ...world.conditions, night: m.environment.time === 'night', fog: m.environment.fog };
     world.cm.chaffUnlocked = !!m.unlocks?.includes('chaff') || world.cm.chaffUnlocked;
+    for (const g of m.groups) {
+      const route = g.route ? (world.terrain.roads.length ? world.roads.route(g.route) : g.route.map(p => [p[0], p[1]] as [number, number])) : [];
+      world.groups.set(g.id, { id: g.id, behavior: g.behavior, path: route, loop: !!g.loop, speedScale: g.speedScale ?? 1, started: !g.startTrigger, members: [] });
+    }
     for (const u of m.units) if (!u.hidden) this.spawn(u.id);
     const initial = m.initialObjectives ? new Set(m.initialObjectives) : null;
     this.objectives = m.objectives.map(def => ({ def, state: !initial || initial.has(def.id) ? 'active' : 'pending', since: 0 }));
@@ -97,6 +101,7 @@ export class MissionRuntime implements Objective {
     if (!s) return null;
     const u = w.spawnUnit(s.type, s.position[0], s.position[1], -(s.headingDeg ?? 0) * Math.PI / 180, { missionId: s.id, group: s.group, skill: s.skill });
     this.unitIds.set(s.id, u.id);
+    if (s.group) w.groups.get(s.group)?.members.push({ unit: u.id, leg: 0, dir: 1, arrived: false });
     return u;
   }
 
@@ -196,7 +201,12 @@ export class MissionRuntime implements Objective {
     switch (a.kind) {
       case 'radio': this.radioQueue.push({ from: a.from, text: a.text }); break;
       case 'spawn': for (const id of a.units) this.spawn(id); break;
-      case 'startGroup': this.startedGroups.add(a.group); break;
+      case 'startGroup': {
+        this.startedGroups.add(a.group);
+        const g = w.groups.get(a.group);
+        if (g) g.started = true;
+        break;
+      }
       case 'remoteLaser': { const u = this.unit(a.unit); if (u) w.remoteLaser(u.id, a.seconds); break; }
       case 'smoke': {
         const pos = new Vector3(a.position[0], w.terrain.surfaceAt(a.position[0], a.position[1]), a.position[1]);
@@ -246,6 +256,8 @@ export class MissionRuntime implements Objective {
       if (!this.condition(t.when)) continue;
       this.fired.add(t.id);
       for (const a of t.then) this.act(a);
+      for (const g of this.world!.groups.values()) if (!g.started && this.mission.groups.find(d => d.id === g.id)?.startTrigger === t.id) g.started = true;
+      for (const g of this.world!.groups.values()) if (!g.started && this.mission.groups.find(d => d.id === g.id)?.startTrigger === t.id) g.started = true;
     }
   }
 

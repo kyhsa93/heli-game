@@ -12,6 +12,7 @@ import { blastShares, DAMAGED, hitSystem, randomHitPoint, ROTOR_FAIL_SECONDS, sy
 import type { CrashReason } from './events';
 import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
 import { stepBrains } from './ai/brain';
+import { RoadGraph, stepGroups, type GroupState } from './ai/movement';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
 import { DIFFICULTIES, type Difficulty } from './difficulty';
 import { LosCache } from './los';
@@ -45,6 +46,8 @@ export class World {
   units: Unit[] = [];
   projectiles: Projectile[] = [];
   missiles: Missile[] = [];
+  groups = new Map<string, GroupState>();
+  private graph: RoadGraph | null = null;
   enemyMissiles: EnemyMissile[] = [];
   flares: Flare[] = [];
   cm: Countermeasures = createCountermeasures();
@@ -231,7 +234,13 @@ export class World {
     else { h.engineOn = false; h.rpm = 0; }
   }
 
+  get roads() {
+    this.graph ??= new RoadGraph(this.terrain.roads);
+    return this.graph;
+  }
+
   clearCombat() {
+    this.groups.clear();
     this.los.clear();
     this.aiClock = 0;
     this.units = [];
@@ -300,6 +309,7 @@ export class World {
       this.stepRockets(dt, pressed);
       this.stepHellfire(dt, pressed);
     }
+    if (this.active) stepGroups(this, this.groups.values(), dt);
     this.stepProjectiles(dt);
     this.stepMissiles(dt);
     this.stepEnemyMissiles(dt);
