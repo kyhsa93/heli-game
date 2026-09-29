@@ -1,4 +1,4 @@
-import { clamp, rng, smooth } from '../game/math';
+import { clamp, rng, smooth } from './math';
 
 export const SIZE = 4000;
 export const N = 320;

@@ -4,7 +4,6 @@ body {
   font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
-canvas { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; }
 
 .overlay {
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -27,41 +26,8 @@ button.go {
   border: 0; background: #ffd166; color: #1a1a1a; cursor: pointer;
 }
 
-.touch { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
-.btn {
-  position: absolute; width: 70px; height: 70px; border-radius: 50%;
-  background: rgba(255, 255, 255, .13); border: 2px solid rgba(255, 255, 255, .34);
-  pointer-events: auto; display: flex; align-items: center; justify-content: center;
-  font-size: 24px; color: #fff; box-sizing: border-box; touch-action: none;
-}
-.btn.on { background: rgba(255, 209, 102, .45); border-color: #ffd166; }
-#bl { left: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); }
-#br { left: 100px; bottom: calc(20px + env(safe-area-inset-bottom)); }
-#bu { right: 16px; bottom: calc(100px + env(safe-area-inset-bottom)); width: 84px; height: 84px; }
-#bd { right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); height: 62px; width: 84px; border-radius: 31px; }
-#bh { right: 112px; bottom: calc(28px + env(safe-area-inset-bottom)); width: 62px; height: 62px; font-size: 15px; font-weight: 600; }
-
-button.ghost {
-  font: inherit; font-size: 16px; padding: 12px 22px; border-radius: 12px; cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, .35); background: transparent; color: #e8eef7;
-}
 .card.wide { max-width: 560px; }
 .card.wide .keys { max-width: 480px; }
-
-.menu {
-  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
-  box-sizing: border-box; text-align: center;
-  background: radial-gradient(ellipse at 50% 30%, #25476b, #0b1320 70%);
-}
-button.mode {
-  display: block; width: 100%; margin: 0 0 12px; padding: 16px 18px; border-radius: 14px; cursor: pointer;
-  text-align: left; font: inherit; color: #e8eef7; background: rgba(255, 255, 255, .06);
-  border: 1px solid rgba(255, 255, 255, .18);
-}
-button.mode b { display: block; font-size: 19px; margin-bottom: 4px; }
-button.mode span { font-size: 14px; color: #aebbd0; }
-button.mode.primary { background: rgba(255, 209, 102, .14); border-color: #ffd166; }
-button.mode.primary b { color: #ffd166; }
 
 .flight3d, .viewport { position: fixed; inset: 0; }
 .viewport canvas { display: block; position: static; width: 100% !important; height: 100% !important; }

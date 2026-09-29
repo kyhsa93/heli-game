@@ -1,7 +1,8 @@
 import { Euler, Quaternion, Vector3 } from 'three';
-import { clamp } from '../game/math';
+import { clamp } from './math';
 import { HALF, PAD_R, Terrain, type Pad3 } from './terrain';
 
+export const STEP = 1 / 120;
 export const G3 = 9.81;
 export const MAX_THRUST = 1.7 * G3;
 export const GEAR_Y = -2.1;

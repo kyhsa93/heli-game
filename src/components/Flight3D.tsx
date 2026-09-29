@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
 import * as THREE from 'three';
-import { STEP } from '../game/constants';
-import { clamp } from '../game/math';
 import { RotorAudio } from '../sim3d/audio';
 import { buildHeli } from '../sim3d/heliModel';
+import { clamp } from '../sim3d/math';
 import { FlightInput } from '../sim3d/input';
 import { Instruments } from '../sim3d/instruments';
 import { buildWorld } from '../sim3d/scene';
 import { drawIhadss } from '../sim3d/ihadss';
-import { BLADES, EYE, M_TO_FT, MS_TO_FPM, MS_TO_KT, ROTOR_HZ, Sim, type BestStore3 } from '../sim3d/sim';
+import { BLADES, EYE, M_TO_FT, MS_TO_FPM, MS_TO_KT, ROTOR_HZ, STEP, Sim, type BestStore3 } from '../sim3d/sim';
 import { VirtualStick } from './VirtualStick';
 
 const bestStore: BestStore3 = {
@@ -22,7 +21,7 @@ const bestStore: BestStore3 = {
 
 type View = 'cockpit' | 'chase';
 
-export default function Flight3D({ onExit, touch }: { onExit: () => void; touch: boolean }) {
+export function Flight3D({ touch }: { touch: boolean }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
@@ -243,7 +242,6 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
         case 'KeyM': if (audioRef.current) setMuted(audioRef.current.toggleMute()); break;
         case 'KeyR': if (sim.mode !== 'brief') begin(); break;
         case 'Enter': if (sim.mode === 'brief' || sim.mode === 'over') begin(); break;
-        case 'Escape': onExit(); break;
       }
     };
     const up = (e: KeyboardEvent) => { input.keys.delete(e.code); };
@@ -321,7 +319,7 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
               <b>A / D</b><span>페달 — 기수 좌우 회전</span>
               <b>마우스 드래그</b><span>고개 돌리기 (C 또는 더블클릭: 정면)</span>
               <b>V · U · M</b><span>외부 시점 · 헬멧 심볼(IHADSS) · 소리</span>
-              <b>R · Esc</b><span>다시 시작 · 메뉴</span>
+              <b>R</b><span>다시 시작</span>
             </div>
             )}
             <ul className="rules">
@@ -332,7 +330,7 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
               <li>게임패드: 왼쪽 스틱 콜렉티브·페달, 오른쪽 스틱 사이클릭, A 시동, Y 시점.</li>
             </ul>
             {snap.mode === 'brief'
-              ? <><button className="go" onClick={begin}>비행 시작</button> <button className="ghost" onClick={onExit}>메뉴</button></>
+              ? <button className="go" onClick={begin}>비행 시작</button>
               : <button className="go" onClick={() => setHelp(false)}>닫기</button>}
           </div>
         </div>
@@ -345,7 +343,7 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
             <p className="sub">{snap.crashReason}</p>
             <div className="big">{snap.score}</div>
             <p className="sub">배달 {snap.delivered}건 · 최고 기록 {snap.best}</p>
-            <button className="go" onClick={begin}>다시 비행</button> <button className="ghost" onClick={onExit}>메뉴</button>
+            <button className="go" onClick={begin}>다시 비행</button>
           </div>
         </div>
       )}

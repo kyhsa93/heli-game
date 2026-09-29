@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { STEP } from '../game/constants';
-import { rng } from '../game/math';
-import { G3, MAX_THRUST, GEAR_Y, Sim } from './sim';
+import { rng } from './math';
+import { G3, GEAR_Y, MAX_THRUST, STEP, Sim } from './sim';
 
 function setup(seed = 7) {
   const sim = new Sim({ seed, random: rng(seed) });

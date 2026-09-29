@@ -1,7 +1,7 @@
 {
   "name": "헬기 조종",
   "short_name": "헬기 조종",
-  "description": "AH-64 아파치 조종석 시뮬레이터와 측면 아케이드 헬기 게임",
+  "description": "AH-64 아파치 1인칭 조종석 시뮬레이터",
   "lang": "ko",
   "id": "./",
   "start_url": "./",
