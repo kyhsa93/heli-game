@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { squadMembers, UNIT_DEFS, type Unit } from '../sim/units';
 import type { World } from '../sim/world';
+import { airDefenseModel, hasAirDefenseModel } from './airDefenseModels';
 import { bakeModel, fallbackModel, MODEL_FOR_UNIT } from './unitModels';
 
 const TINT = {
@@ -37,7 +38,8 @@ export class UnitRenderer {
     let v = this.visuals.get(key);
     if (!v) {
       const def = UNIT_DEFS[defId];
-      v = this.makeVisual(key, fallbackModel(def, key === 'soldier' ? 'infantry' : def.category), 16, false);
+      const geo = hasAirDefenseModel(defId) ? airDefenseModel(defId) : fallbackModel(def, key === 'soldier' ? 'infantry' : def.category);
+      v = this.makeVisual(key, geo, 16, false);
       this.visuals.set(key, v);
     }
     return v;

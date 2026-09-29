@@ -27,6 +27,12 @@ export const RADAR_CLUTTER_AGL = 50 * 0.3048;
 export const RADAR_P_LOW = 0.05;
 export const RADAR_P = 0.5;
 export const RADAR_ACQUIRE = 2;
+export const SAM_LINK_RANGE = 6000;
+export const RADAR_LOST_FACTOR = 0.5;
+
+export function linkedRadars(world: World, u: Unit) {
+  return world.units.filter(o => o.defId === 'sam_radar' && o.side === u.side && o.pos.distanceTo(u.pos) <= SAM_LINK_RANGE);
+}
 
 export interface Conditions { night: boolean; fog: boolean; playerRadar: boolean }
 
@@ -96,7 +102,10 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
     if (u.def.detect === 'radar' && u.def.radar) {
       const r = u.def.radar;
       if (u.ai.jammed > 0) { u.ai.jammed = Math.max(0, u.ai.jammed - dt); setRadar(world, u, 'search'); continue; }
-      const seen = dist <= r.search && los.radar(u.id, eye, h.pos, world.time);
+      const link = u.defId === 'sam_short' ? linkedRadars(world, u) : [];
+      const search = link.length && link.every(o => !o.alive) ? r.search * RADAR_LOST_FACTOR : r.search;
+      const cued = link.some(o => o.alive && o.ai.radar !== 'search');
+      const seen = dist <= search && los.radar(u.id, eye, h.pos, world.time);
       if (!seen) {
         setRadar(world, u, 'search');
         u.ai.radarTimer = 0;
@@ -104,7 +113,7 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
         continue;
       }
       if (u.ai.radar === 'search') {
-        const p = cond.playerRadar ? 1 : agl(h, world.terrain) < RADAR_CLUTTER_AGL ? RADAR_P_LOW : RADAR_P;
+        const p = cond.playerRadar || cued ? 1 : agl(h, world.terrain) < RADAR_CLUTTER_AGL ? RADAR_P_LOW : RADAR_P;
         if (world.rng() < p) { setRadar(world, u, 'acquire'); u.ai.radarTimer = 0; detect(world, u, 'radar'); }
         else forget(world, u, dt);
       } else {

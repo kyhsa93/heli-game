@@ -63,7 +63,7 @@ M0 기반 정리 ─→ M1 전투 샌드박스 ─→ M2 센서·유도무기 �
 - [x] [#29](https://github.com/kyhsa93/heli-game/issues/29) **M3-4 플레이어 피해 계통**: 03장 3.3절 표 전체, EUFD 경고, 증상. *완료*: 계통별 증상 테스트(엔진 1 정지 시 최대 추력 −50% 등).
 - [x] [#30](https://github.com/kyhsa93/heli-game/issues/30) **M3-5 적 미사일**: 비례항법, 적외선/레이더, 가시선 상실 시 유도 상실. *완료*: 정지 표적 명중 테스트, 지형 뒤로 숨으면 빗나감 테스트.
 - [x] [#31](https://github.com/kyhsa93/heli-game/issues/31) **M3-6 RWR·CMWS·대응책**: ASE 페이지, IHADSS 위협 표시, 플레어·채프 확률. *완료*: 기만 확률 통계 테스트(시드 고정 1,000회), 스크린샷.
-- [ ] [#32](https://github.com/kyhsa93/heli-game/issues/32) **M3-7 🅰 자주대공포·SAM·MANPADS·기관총차량 모델과 행동**: SAM은 채택 모델(Pantsir), 기관총차량은 UAZ 모델, 자주대공포·대공 진지는 코드 모델.
+- [x] [#32](https://github.com/kyhsa93/heli-game/issues/32) **M3-7 🅰 자주대공포·SAM·MANPADS·기관총차량 모델과 행동**: SAM은 채택 모델(Pantsir), 기관총차량은 UAZ 모델, 자주대공포·대공 진지는 코드 모델.
 - [ ] [#33](https://github.com/kyhsa93/heli-game/issues/33) **M3-8 🅰 음성 경고·RWR 소리·피격음**: 금속 피격 녹음, RWR·경고음은 합성, 음성 경고는 `speechSynthesis`(9.3 결정, 녹음 파일로 교체 가능한 인터페이스), 무전 잡음 녹음.
 - [ ] [#34](https://github.com/kyhsa93/heli-game/issues/34) **M3-9 난이도 배율**(05장 표). *완료*: 배율 적용 테스트.
 - [ ] [#35](https://github.com/kyhsa93/heli-game/issues/35) **M3-10 훈련 T5**.
