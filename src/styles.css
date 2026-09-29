@@ -63,6 +63,9 @@ button.go {
   background: rgba(8, 14, 24, .55); border: 1px solid rgba(255, 255, 255, .35); border-radius: 10px; padding: 8px 14px;
 }
 .tbtn.engine { left: 50%; transform: translateX(-110%); bottom: calc(40px + env(safe-area-inset-bottom)); }
+.tbtn.tads { right: 170px; bottom: calc(230px + env(safe-area-inset-bottom)); }
+.tads-row { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom)); display: flex; gap: 8px; pointer-events: auto; }
+.tads-row .tbtn { position: static; }
 .tbtn.view { left: 50%; transform: translateX(10%); bottom: calc(40px + env(safe-area-inset-bottom)); }
 .ihadss { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
 button.go.secondary { background: transparent; color: #e8eef7; border: 1px solid rgba(255, 255, 255, .35); }

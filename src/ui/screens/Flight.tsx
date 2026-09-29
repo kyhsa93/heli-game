@@ -8,6 +8,7 @@ import { FlightRenderer } from '../../render/renderer';
 import { LAND_DESCENT } from '../../sim/heli/airframe';
 import { airspeed } from '../../sim/heli/state';
 import { FlightSession } from '../../sim/session';
+import { zoomTads } from '../../sim/sensors/tads';
 import { sightPoint } from '../../sim/weapons/ballistics';
 import { rocketSolution } from '../../sim/weapons/rockets';
 import { createObjective } from '../../sim/training';
@@ -43,6 +44,8 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
   const snap = useSyncExternalStore(session.subscribe, session.getSnapshot);
 
   const toggleView = () => rendererRef.current?.toggleView();
+  const toggleSensor = () => { sim.tads.sensor = sim.tads.sensor === 'tv' ? 'flir' : 'tv'; };
+  const [tadsOn, setTadsOn] = useState(false);
 
   const runCommand = (cmd: Command) => {
     switch (cmd) {
@@ -52,7 +55,10 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
       case 'weapon3': sim.selectWeapon(3); break;
       case 'weapon4': sim.selectWeapon(4); break;
       case 'weaponNext': sim.nextWeapon(); break;
-      case 'view': toggleView(); break;
+      case 'view': if (sim.tads.active) toggleSensor(); else toggleView(); break;
+      case 'tads': sim.toggleTads(); break;
+      case 'zoomIn': zoomTads(sim.tads, 1); break;
+      case 'zoomOut': zoomTads(sim.tads, -1); break;
       case 'centerView': input.centerView(); break;
       case 'toggleHud': setHud(v => !v); break;
       case 'help': case 'pause': if (session.mode === 'play') setHelp(v => !v); break;
@@ -116,6 +122,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
           missionRef.current.style.color = '#06d6a0';
         }
         log.tick(simDt);
+        setTadsOn(sim.tads.active);
         if (msgRef.current) {
           msgRef.current.replaceChildren(...log.items.map(m => {
             const el = document.createElement('div');
@@ -187,6 +194,7 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onDoubleClick={() => input.centerView()}
+        onWheel={e => { if (sim.tads.active) zoomTads(sim.tads, e.deltaY < 0 ? 1 : -1); }}
       />
       <canvas className="ihadss" ref={ihadssRef} />
       {snap.mode !== 'brief' && (
@@ -205,6 +213,14 @@ export function Flight({ missionId, touch, onExit, onComplete }: FlightProps) {
           <VirtualStick className="stick right" label={t('touch.rightStick')} onMove={(x, y) => { input.touch.rx = x; input.touch.ry = y; }} />
           <button className="tbtn engine" onPointerDown={e => { e.preventDefault(); sim.toggleEngine(); }}>{t('touch.engine')}</button>
           <button className="tbtn view" onPointerDown={e => { e.preventDefault(); toggleView(); }}>{t('touch.view')}</button>
+          <button className="tbtn tads" onPointerDown={e => { e.preventDefault(); sim.toggleTads(); }}>{t('touch.tads')}</button>
+          {tadsOn && (
+            <div className="tads-row">
+              <button className="tbtn" onPointerDown={e => { e.preventDefault(); zoomTads(sim.tads, -1); }}>{t('touch.zoomOut')}</button>
+              <button className="tbtn" onPointerDown={e => { e.preventDefault(); zoomTads(sim.tads, 1); }}>{t('touch.zoomIn')}</button>
+              <button className="tbtn" onPointerDown={e => { e.preventDefault(); toggleSensor(); }}>{t('touch.sensor')}</button>
+            </div>
+          )}
           <button
             className="tbtn fire"
             onPointerDown={e => { e.preventDefault(); input.touchFire = true; }}

@@ -1,4 +1,5 @@
 import { clamp } from '../core/math';
+import { slewTads, type Tads } from '../sim/sensors/tads';
 import type { World } from '../sim/world';
 import { FLIGHT_KEYS, GAMEPAD_BUTTONS, KEY_COMMANDS, type Command } from './bindings';
 
@@ -16,6 +17,7 @@ export class FlightInput {
   private cy = 0;
   private padButtons: boolean[] = [];
   touchFire = false;
+  private tads: Tads | null = null;
 
   held(cmd: Command) {
     for (const k of this.keys) if (KEY_COMMANDS[k] === cmd) return true;
@@ -63,11 +65,14 @@ export class FlightInput {
     c.pedal = clamp(pedal, -1, 1);
     c.collective = clamp(c.collective + collRate * dt, 0, 1);
     world.commands.fire = this.held('fire') || this.touchFire || padFire;
-    world.commands.aim.yaw = this.headYaw;
-    world.commands.aim.pitch = this.headPitch;
+    this.tads = world.tads;
+    const aim = world.tads.active ? world.tads : { az: this.headYaw, el: this.headPitch };
+    world.commands.aim.yaw = aim.az;
+    world.commands.aim.pitch = aim.el;
   }
 
   look(dx: number, dy: number) {
+    if (this.tads?.active) { slewTads(this.tads, -dx * 0.004, -dy * 0.004); return; }
     this.headYaw = clamp(this.headYaw - dx * 0.005, -2.2, 2.2);
     this.headPitch = clamp(this.headPitch - dy * 0.005, -1.1, 0.7);
   }

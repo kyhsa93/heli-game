@@ -13,6 +13,8 @@ import { UNITS_GROUP } from '../assets/manifest';
 import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
 import { drawIhadss } from './ihadss';
+import { TadsView } from './tadsView';
+import { drawTads } from './tadsHud';
 import { buildWorld, type WorldScene } from './scene';
 
 export type View = 'cockpit' | 'chase';
@@ -51,6 +53,9 @@ export class FlightRenderer {
   private tmp2 = new THREE.Vector3();
   readonly effects: Effects;
   readonly units = new UnitRenderer();
+  readonly tads = new TadsView();
+  private flirFog = new THREE.Color(0x151515);
+  private black = new THREE.Color(0x000000);
   private unitAssetsRequested = false;
   private offEvents: () => void;
 
@@ -111,6 +116,7 @@ export class FlightRenderer {
     this.camera.fov = w >= h ? 72 : Math.min(100, 2 * Math.atan(Math.tan(37 * Math.PI / 180) * h / w) * 180 / Math.PI);
     this.camera.updateProjectionMatrix();
     this.effects?.setScale(h, this.camera.fov);
+    this.tads.setSize(w * dpr, h * dpr);
   };
 
   private tick = (now: number) => {
@@ -196,14 +202,18 @@ export class FlightRenderer {
     (scn.sky.material as THREE.ShaderMaterial).uniforms.time.value = now * 0.001;
 
     if (world.units.length && !this.unitAssetsRequested) this.loadUnitModels();
-    this.units.update(world);
+    const tads = world.tads.active && h.alive && !this.debugCamera;
+    const flir = tads && world.tads.sensor === 'flir';
+    this.units.update(world, flir);
     this.effects.update(steps * STEP, world);
     this.instruments.draw(world, this.frame++ % 3);
-    this.renderer.render(scn.scene, camera);
+    if (tads) this.renderTads(now, flir);
+    else this.renderer.render(scn.scene, camera);
 
     const og = this.overlayCtx;
     og.clearRect(0, 0, overlay.width, overlay.height);
-    if (cockpit && this.hud && h.alive && session.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, world, camera);
+    if (tads) drawTads(og, mount.clientWidth, mount.clientHeight, world);
+    else if (cockpit && this.hud && h.alive && session.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, world, camera);
 
     this.audio?.update({
       rpm: h.alive ? h.rpm : 0, collective: h.collective, airspeed: speed,
@@ -214,8 +224,26 @@ export class FlightRenderer {
     this.raf = requestAnimationFrame(this.tick);
   };
 
+  private renderTads(now: number, flir: boolean) {
+    const { scene, sky, beam } = this.scene, world = this.opts.session.world;
+    const fog = scene.fog as THREE.Fog, bg = scene.background;
+    const saved = { near: fog.near, far: fog.far, color: fog.color.clone(), root: this.model.root.visible, beam: beam.visible, sky: sky.visible, shadow: this.scene.shadow.visible };
+    this.model.root.visible = false;
+    beam.visible = false;
+    this.scene.shadow.visible = false;
+    fog.near = 2500; fog.far = 9000;
+    if (flir) { sky.visible = false; scene.background = this.black; fog.color.copy(this.flirFog); }
+    this.tads.aim(world.player, world.tads);
+    sky.position.copy(this.tads.camera.position);
+    this.tads.render(this.renderer, scene, world.tads, now * 0.001);
+    fog.near = saved.near; fog.far = saved.far; fog.color.copy(saved.color);
+    scene.background = bg;
+    this.model.root.visible = saved.root; beam.visible = saved.beam; sky.visible = saved.sky; this.scene.shadow.visible = saved.shadow;
+  }
+
   dispose() {
     cancelAnimationFrame(this.raf);
+    this.tads.dispose();
     this.offEvents();
     this.effects.dispose();
     this.units.dispose();

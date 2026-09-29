@@ -61,6 +61,7 @@ src/
       flight.ts         # 현재 Sim.fly()·collide()의 비행 모델 (순수 함수 + 상태)
       systems.ts        # 연료, 엔진, 로터 회전수, 피해 계통, 무게
       assists.ts        # 보조 기능 (Controls3 → Controls3)
+      autohover.ts      # TADS 조종 인계 자동 호버 (위치·고도·기수 유지)
       loadout.ts        # 파일런·탄약·무게 계산
     weapons/
       projectile.ts     # 기관포·로켓 탄도, 선분 충돌
@@ -89,6 +90,7 @@ src/
     unitRenderer.ts     # 유형별 InstancedMesh 갱신
     effects.ts          # 폭발, 연기, 불, 예광탄, 섬광 (풀링)
     tadsView.ts         # TADS 렌더 타깃 + TV/FLIR 셰이더
+    tadsHud.ts          # TADS 화면 심볼 (07장 7.5절)
     cockpit/
       instruments.ts    # MPD 페이지 시스템
       pages/*.ts        # FLT, TSD, WPN, TADS, FCR, ASE, ENG
@@ -219,7 +221,7 @@ type SimEvent =
 
 - **유닛**: 유형별 `InstancedMesh` 1개(부품이 여럿이면 부품별 1개). 파괴된 유닛은 잔해용 인스턴스 메시로 옮김. 포탑 회전 같은 부품 움직임은 부품별 인스턴스 행렬로.
 - **효과**: 폭발·연기·불·예광탄은 미리 만든 풀(각 64~256개)에서 꺼내 쓴다. 매 프레임 `new` 금지. 연기·폭발·섬광은 Kenney 파티클(CC0)로 만든 512² 스프라이트 아틀라스 1장(10장 10.5절).
-- **TADS**: `WebGLRenderTarget` 하나, TADS 카메라는 기체의 TADS 터릿 위치에 붙인다. FLIR은 후처리 셰이더: 유닛은 `userData.heat`(엔진 켜짐 1.0, 보병 0.7, 잔해 불 1.0)로 흰색, 지형은 높이·경사 기반 회색 — **열상용 별도 머티리얼 오버라이드**(`scene.overrideMaterial` 대신 레이어 + 머티리얼 교체)로 구현.
+- **TADS**: `WebGLRenderTarget` 하나, TADS 카메라는 기체의 TADS 터릿 위치에 붙인다. 구현(`src/render/tadsView.ts`, 화면 심볼은 `tadsHud.ts`): 열상 패스에선 유닛 머티리얼만 열 머티리얼로 바꾸고 인스턴스 색을 `(heat, 0, 0)`으로 칠한다. 후처리 셰이더는 `r − max(g, b)`를 열로, 나머지를 휘도로 읽어 지형은 어두운 회색, 열원(유닛·폭발·불빛)은 흰색으로 만든다. 열상 중엔 하늘을 끄고 배경·안개를 검게 한다. FLIR은 후처리 셰이더: 유닛은 `userData.heat`(엔진 켜짐 1.0, 보병 0.7, 잔해 불 1.0)로 흰색, 지형은 높이·경사 기반 회색 — **열상용 별도 머티리얼 오버라이드**(`scene.overrideMaterial` 대신 레이어 + 머티리얼 교체)로 구현.
 - **지형 청크**: 2km 청크, 가까운 청크는 12.5m 격자(161×161 정점), 먼 청크는 50m. 청크 경계 틈은 스커트(아래로 내린 테두리)로 가린다.
 - **조종석**은 기존처럼 기체 모델의 자식. 로그 깊이 버퍼(`logarithmicDepthBuffer: true`)는 유지 — 근평면 0.05m와 원평면 7km를 같이 쓰기 위해 필요.
 

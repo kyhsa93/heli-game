@@ -12,6 +12,14 @@ export interface FlightEnv { terrain: Terrain; wind: Vector3 }
 
 const tmpV = new Vector3();
 
+export function liftPerCollective(h: HeliState, env: FlightEnv) {
+  const height = agl(h, env.terrain);
+  const ge = AIRCRAFT.groundEffect, ceil = AIRCRAFT.ceiling;
+  const ground = height < ge.height ? 1 + ge.gain * (1 - Math.max(0, height) / ge.height) : 1;
+  const ceiling = h.pos.y > ceil.start ? Math.max(0, 1 - (h.pos.y - ceil.start) / ceil.fade) : 1;
+  return MAX_THRUST * h.thrustScale * h.rpm * h.rpm * ground * ceiling;
+}
+
 export function stepFlight(h: HeliState, c: Controls, env: FlightEnv, dt: number, emit: Emit): 'air' | 'ground' {
   const collective = clamp(c.collective, 0, 1);
   const dColl = (collective - h.collective) / dt;
@@ -25,11 +33,7 @@ export function stepFlight(h: HeliState, c: Controls, env: FlightEnv, dt: number
   const air = h.vel.clone().sub(env.wind);
   stepRotor(h, -air.dot(up), collective, dt);
 
-  const height = agl(h, env.terrain);
-  const ge = AIRCRAFT.groundEffect, ceil = AIRCRAFT.ceiling;
-  const ground = height < ge.height ? 1 + ge.gain * (1 - Math.max(0, height) / ge.height) : 1;
-  const ceiling = h.pos.y > ceil.start ? Math.max(0, 1 - (h.pos.y - ceil.start) / ceil.fade) : 1;
-  const thrust = MAX_THRUST * h.thrustScale * collective * h.rpm * h.rpm * ground * ceiling;
+  const thrust = liftPerCollective(h, env) * collective;
 
   if (h.landed) {
     h.vel.set(0, 0, 0);

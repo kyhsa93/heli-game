@@ -3,10 +3,12 @@ import { EventBus } from '../core/events';
 import { rng } from '../core/math';
 import type { SimEvent } from './events';
 import { BASE_REFUEL_RATE, GEAR_Y } from './heli/airframe';
+import { autoHover, createHold, type Hold } from './heli/autohover';
 import { clampToArea, collide, stepFlight } from './heli/flight';
 import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
 import { createHeli, type Controls, type HeliState } from './heli/state';
 import { toggleEngine } from './heli/systems';
+import { createTads, type Tads } from './sensors/tads';
 import { PAD_R, Terrain, type Pad3 } from './terrain';
 import { UNIT_DEFS, type Unit } from './units';
 import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
@@ -34,6 +36,8 @@ export class World {
   loadoutDef: LoadoutDef = STANDARD_LOADOUT;
   loadout: Loadout = createLoadout(STANDARD_LOADOUT);
   commands = { fire: false, aim: { yaw: 0, pitch: 0 } as Aim };
+  tads: Tads = createTads();
+  hold: Hold | null = null;
   private nextUnitId = 1;
   private nextProjectileId = 1;
   private atBoundary = false;
@@ -55,6 +59,8 @@ export class World {
     this.refuelNoted = false;
     this.applyLoadout(this.loadoutDef);
     this.commands = { fire: false, aim: { yaw: 0, pitch: 0 } };
+    this.tads = createTads();
+    this.hold = null;
   }
 
   applyLoadout(def: LoadoutDef) {
@@ -125,6 +131,12 @@ export class World {
     this.arms.salvoLeft = 0;
   }
 
+  toggleTads() {
+    if (!this.active) return;
+    this.tads.active = !this.tads.active;
+    this.hold = this.tads.active ? createHold(this.player) : null;
+  }
+
   clearCombat() {
     this.units = [];
     this.projectiles = [];
@@ -162,6 +174,8 @@ export class World {
     const h = this.player;
     if (this.active && h.alive) {
       this.updateWeight();
+      if (this.hold && !h.landed) autoHover(h, this.hold, this, dt, this.controls);
+      else if (this.hold) this.hold = createHold(h);
       const phase = stepFlight(h, this.controls, this, dt, this.emit);
       if (phase === 'ground') this.onGround(dt);
       else {

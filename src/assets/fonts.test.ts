@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { brotliDecompressSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
@@ -68,6 +68,44 @@ function names(file: string): Map<number, Set<string>> {
   return out;
 }
 
+function codepoints(file: string): Set<number> {
+  const t = woff2Table(file, 'cmap');
+  const out = new Set<number>();
+  const n = t.readUInt16BE(2);
+  for (let i = 0; i < n; i++) {
+    const off = t.readUInt32BE(4 + i * 8 + 4);
+    const format = t.readUInt16BE(off);
+    if (format === 4) {
+      const segs = t.readUInt16BE(off + 6) / 2;
+      const ends = off + 14, starts = ends + segs * 2 + 2;
+      for (let k = 0; k < segs; k++) {
+        const end = t.readUInt16BE(ends + k * 2), start = t.readUInt16BE(starts + k * 2);
+        if (start === 0xffff) continue;
+        for (let c = start; c <= end; c++) out.add(c);
+      }
+    } else if (format === 12) {
+      const groups = t.readUInt32BE(off + 12);
+      for (let k = 0; k < groups; k++) {
+        const g = off + 16 + k * 12;
+        for (let c = t.readUInt32BE(g); c <= t.readUInt32BE(g + 4); c++) out.add(c);
+      }
+    }
+  }
+  return out;
+}
+
+function contentChars(dir: string): Set<number> {
+  const out = new Set<number>();
+  for (const e of readdirSync(dir, { withFileTypes: true, recursive: true })) {
+    if (!e.isFile() || !e.name.endsWith('.json')) continue;
+    for (const ch of readFileSync(join(e.parentPath, e.name), 'utf8')) {
+      const c = ch.codePointAt(0)!;
+      if (c > 0x7e) out.add(c);
+    }
+  }
+  return out;
+}
+
 const NAMING_IDS = [1, 3, 4, 6, 16, 17, 18, 20, 21, 22];
 
 describe('shipped fonts', () => {
@@ -82,6 +120,15 @@ describe('shipped fonts', () => {
   it('keeps the original copyright notice, which OFL requires', () => {
     const copyright = [...names(join(FONTS, 'karda-sans-regular.woff2')).get(0)!].join(' ');
     expect(copyright).toMatch(/Kil Hyung-jin/);
+  });
+
+  it('covers every non-ASCII character in the content strings (#68)', () => {
+    const need = contentChars(join(__dirname, '../content'));
+    for (const f of ['karda-sans-regular.woff2', 'karda-sans-bold.woff2']) {
+      const have = codepoints(join(FONTS, f));
+      const missing = [...need].filter(c => !have.has(c)).map(c => String.fromCodePoint(c));
+      expect(missing, `${f} lacks glyphs — rerun scripts/subset-font.mjs --strings`).toEqual([]);
+    }
   });
 
   it('keeps the B612 Mono name, which declares no reserved name', () => {

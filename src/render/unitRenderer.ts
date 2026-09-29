@@ -10,6 +10,8 @@ const TINT = {
   wreck: new THREE.Color(0.13, 0.12, 0.11),
 };
 
+export const WRECK_HEAT = 0.35;
+
 const FORMATION = [[0, 0], [2.2, 0.6], [-2.2, 0.6], [1.1, 2.4], [-1.1, 2.4], [0, 4], [3.3, 2.8], [-3.3, 2.8]];
 
 interface Visual { key: string; mesh: THREE.InstancedMesh; capacity: number; count: number; fromAsset: boolean }
@@ -18,6 +20,8 @@ export class UnitRenderer {
   readonly group = new THREE.Group();
   private visuals = new Map<string, Visual>();
   private material = new THREE.MeshLambertMaterial({ vertexColors: true });
+  private heatMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x400000 });
+  private heat = false;
   private m = new THREE.Matrix4();
   private q = new THREE.Quaternion();
   private s = new THREE.Vector3(1, 1, 1);
@@ -78,11 +82,13 @@ export class UnitRenderer {
     this.q.setFromAxisAngle(this.up, yaw);
     this.m.compose(this.p, this.q, this.s);
     v.mesh.setMatrixAt(i, this.m);
-    this.c.copy(u.alive ? TINT[u.side] : TINT.wreck);
+    if (this.heat) this.c.setRGB(u.alive ? u.def.heat : WRECK_HEAT, 0, 0);
+    else this.c.copy(u.alive ? TINT[u.side] : TINT.wreck);
     v.mesh.setColorAt(i, this.c);
   }
 
-  update(world: World) {
+  update(world: World, heat = false) {
+    this.heat = heat;
     const need = new Map<string, number>();
     for (const u of world.units) {
       const key = this.keyFor(u.defId);
@@ -110,6 +116,7 @@ export class UnitRenderer {
       }
     }
     for (const v of this.visuals.values()) {
+      v.mesh.material = heat ? this.heatMaterial : this.material;
       v.mesh.count = v.count;
       v.mesh.visible = v.count > 0;
       v.mesh.instanceMatrix.needsUpdate = true;
@@ -126,5 +133,6 @@ export class UnitRenderer {
   dispose() {
     for (const v of this.visuals.values()) { v.mesh.geometry.dispose(); v.mesh.dispose(); }
     this.material.dispose();
+    this.heatMaterial.dispose();
   }
 }
