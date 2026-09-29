@@ -4,27 +4,32 @@ import { HALF, PAD_R, Terrain, type Pad3 } from './terrain';
 
 export const G3 = 9.81;
 export const MAX_THRUST = 1.7 * G3;
-export const SKID_Y = -1.35;
-export const ROTOR_R = 5;
+export const GEAR_Y = -2.1;
+export const ROTOR_R = 7.3;
+export const ROTOR_Y = 2.4;
+export const ROTOR_HZ = 4.8;
+export const BLADES = 4;
 export const LAND_DESCENT = 3;
 export const LAND_HS = 4;
 export const LAND_ATT = 12 * Math.PI / 180;
 export const SLOPE_MAX = 10 * Math.PI / 180;
 export const MAX_PITCH = 25 * Math.PI / 180;
 export const MAX_ROLL = 35 * Math.PI / 180;
-export const EYE = new Vector3(0.42, 0.42, -0.72);
+export const EYE = new Vector3(0, 1.02, -2.55);
 export const M_TO_FT = 3.281;
 export const MS_TO_KT = 1.944;
 export const MS_TO_FPM = 196.85;
 
-const SKIDS = [
-  new Vector3(-1, SKID_Y, -1.8), new Vector3(1, SKID_Y, -1.8),
-  new Vector3(-1, SKID_Y, 1.3), new Vector3(1, SKID_Y, 1.3),
+const GEAR = [
+  new Vector3(-1.2, GEAR_Y, -2.35), new Vector3(1.2, GEAR_Y, -2.35), new Vector3(0, GEAR_Y, 7.9),
 ];
 const HULL = [
-  new Vector3(0, -0.4, -2.2), new Vector3(0, -0.9, 0), new Vector3(0, 0.4, 5.8), new Vector3(0, -0.4, 5.8),
-  ...Array.from({ length: 8 }, (_, i) => new Vector3(Math.cos(i * Math.PI / 4) * ROTOR_R, 1.35, Math.sin(i * Math.PI / 4) * ROTOR_R)),
+  new Vector3(0, -0.75, -6.8), new Vector3(0, -1.25, -5.0), new Vector3(0, -1.05, -2.0), new Vector3(0, -1.05, 1.5),
+  new Vector3(0, -0.3, 8.0), new Vector3(-1.7, 0, 8.7), new Vector3(1.7, 0, 8.7), new Vector3(0, 2.5, 9.3),
+  new Vector3(-0.35, 0.7, 9.0), new Vector3(-2.6, 0.3, 0.15), new Vector3(2.6, 0.3, 0.15),
+  new Vector3(-2.1, -0.3, 0.2), new Vector3(2.1, -0.3, 0.2),
 ];
+const ROTOR_TIPS = Array.from({ length: 8 }, (_, i) => new Vector3(Math.cos(i * Math.PI / 4) * ROTOR_R, ROTOR_Y, Math.sin(i * Math.PI / 4) * ROTOR_R));
 
 export type Mode3 = 'brief' | 'play' | 'crashed' | 'over';
 export type Stage = 'pickup' | 'deliver';
@@ -102,7 +107,7 @@ export class Sim {
   reset() {
     const base = this.pads[0];
     this.heli = {
-      pos: new Vector3(base.x, base.y - SKID_Y, base.z), vel: new Vector3(),
+      pos: new Vector3(base.x, base.y - GEAR_Y, base.z), vel: new Vector3(),
       yaw: this.random() * Math.PI * 2, pitch: 0, roll: 0, pRate: 0, rRate: 0, yRate: 0,
       q: new Quaternion(), rpm: 0, engineOn: false, collective: 0, fuel: 100, landed: true, alive: true,
     };
@@ -157,7 +162,7 @@ export class Sim {
 
   agl() {
     const h = this.heli;
-    return h.pos.y + SKID_Y - this.terrain.surfaceAt(h.pos.x, h.pos.z);
+    return h.pos.y + GEAR_Y - this.terrain.surfaceAt(h.pos.x, h.pos.z);
   }
 
   airspeed() {
@@ -166,15 +171,15 @@ export class Sim {
 
   padUnder(): number {
     const h = this.heli;
-    return this.pads.findIndex(p => Math.hypot(p.x - h.pos.x, p.z - h.pos.z) < PAD_R && Math.abs(h.pos.y + SKID_Y - p.y) < 1);
+    return this.pads.findIndex(p => Math.hypot(p.x - h.pos.x, p.z - h.pos.z) < PAD_R && Math.abs(h.pos.y + GEAR_Y - p.y) < 1);
   }
 
   groundAttitude() {
     const h = this.heli, t = this.terrain;
     const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), rx = Math.cos(h.yaw), rz = -Math.sin(h.yaw);
     const { x, z } = h.pos;
-    const pitch = Math.atan2(t.heightAt(x + fx * 1.5, z + fz * 1.5) - t.heightAt(x - fx * 1.5, z - fz * 1.5), 3);
-    const roll = Math.atan2(t.heightAt(x - rx, z - rz) - t.heightAt(x + rx, z + rz), 2);
+    const pitch = Math.atan2(t.heightAt(x + fx * 2.35, z + fz * 2.35) - t.heightAt(x - fx * 7.9, z - fz * 7.9), 10.25);
+    const roll = Math.atan2(t.heightAt(x - rx * 1.2, z - rz * 1.2) - t.heightAt(x + rx * 1.2, z + rz * 1.2), 2.4);
     return { pitch, roll };
   }
 
@@ -244,7 +249,7 @@ export class Sim {
     const vf = air.dot(fwd), vr = air.dot(right), vu = air.dot(up);
     const acc = up.multiplyScalar(thrust);
     acc.y -= G3;
-    acc.addScaledVector(fwd, -(0.03 * vf + 0.0012 * vf * Math.abs(vf)));
+    acc.addScaledVector(fwd, -(0.03 * vf + 0.0009 * vf * Math.abs(vf)));
     acc.addScaledVector(right, -(0.1 * vr + 0.006 * vr * Math.abs(vr)));
     acc.addScaledVector(new Vector3(0, 1, 0).applyQuaternion(h.q), -(0.35 * vu + 0.02 * vu * Math.abs(vu)));
     h.vel.addScaledVector(acc, dt);
@@ -264,27 +269,31 @@ export class Sim {
 
   private collide() {
     const h = this.heli, t = this.terrain, p = new Vector3();
-    for (let i = 0; i < HULL.length; i++) {
-      this.toWorld(HULL[i], p);
+    for (const tip of ROTOR_TIPS) {
+      this.toWorld(tip, p);
+      if (p.y < t.surfaceAt(p.x, p.z)) { this.crash('로터 블레이드가 지형에 부딪혔습니다'); return; }
+    }
+    for (const pt of HULL) {
+      this.toWorld(pt, p);
       if (p.y < t.surfaceAt(p.x, p.z)) {
-        this.crash(i >= 4 ? '로터 블레이드가 지형에 부딪혔습니다' : p.y < 0.3 && t.heightAt(p.x, p.z) < 0 ? '물에 추락했습니다' : '기체가 지형에 충돌했습니다');
+        this.crash(p.y < 0.3 && t.heightAt(p.x, p.z) < 0 ? '물에 추락했습니다' : '기체가 지형에 충돌했습니다');
         return;
       }
     }
     for (const tr of t.treesNear(h.pos.x, h.pos.z)) {
-      if (Math.hypot(tr.x - h.pos.x, tr.z - h.pos.z) < tr.r + ROTOR_R - 0.5 && h.pos.y + SKID_Y < tr.y + tr.h && h.pos.y + 1.35 > tr.y) {
+      if (Math.hypot(tr.x - h.pos.x, tr.z - h.pos.z) < tr.r + ROTOR_R - 0.5 && h.pos.y + GEAR_Y < tr.y + tr.h && h.pos.y + ROTOR_Y > tr.y) {
         this.crash('나무에 부딪혔습니다'); return;
       }
     }
     for (const b of t.buildings) {
-      if (Math.abs(b.x - h.pos.x) < b.w / 2 + ROTOR_R - 0.5 && Math.abs(b.z - h.pos.z) < b.d / 2 + ROTOR_R - 0.5 && h.pos.y + SKID_Y < b.y + b.h + (b.kind === 'house' ? 2.4 : 0)) {
+      if (Math.abs(b.x - h.pos.x) < b.w / 2 + ROTOR_R - 0.5 && Math.abs(b.z - h.pos.z) < b.d / 2 + ROTOR_R - 0.5 && h.pos.y + GEAR_Y < b.y + b.h + (b.kind === 'house' ? 2.4 : 0)) {
         this.crash('건물에 부딪혔습니다'); return;
       }
     }
 
     if (h.vel.y > 0.1) return;
     let touching = false;
-    for (const s of SKIDS) { this.toWorld(s, p); if (p.y <= t.surfaceAt(p.x, p.z)) { touching = true; break; } }
+    for (const s of GEAR) { this.toWorld(s, p); if (p.y <= t.surfaceAt(p.x, p.z)) { touching = true; break; } }
     if (!touching) return;
 
     const descent = -h.vel.y, hs = Math.hypot(h.vel.x, h.vel.z);
@@ -300,7 +309,7 @@ export class Sim {
       h.pitch = ga.pitch; h.roll = ga.roll;
       h.pRate = h.rRate = h.yRate = 0;
       h.vel.set(0, 0, 0);
-      h.pos.y = t.heightAt(h.pos.x, h.pos.z) - SKID_Y;
+      h.pos.y = t.heightAt(h.pos.x, h.pos.z) - GEAR_Y;
       this.updateQ();
       this.touchdownDescent = descent;
       if (descent < 1) this.say('부드러운 착륙', '#06d6a0');

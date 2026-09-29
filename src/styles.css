@@ -66,10 +66,10 @@ button.mode.primary b { color: #ffd166; }
 .flight3d, .viewport { position: fixed; inset: 0; }
 .viewport canvas { display: block; position: static; width: 100% !important; height: 100% !important; }
 .hud3d {
-  position: fixed; top: 10px; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .8); width: calc(100% - 32px);
+  position: fixed; top: 10px; left: 12px; text-align: left; pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .8); max-width: calc(50% - 150px); min-width: 180px;
 }
-.hud3d .mission { font-weight: 700; font-size: 16px; }
+.hud3d .mission { font-weight: 700; font-size: 14px; }
 .hud3d .telemetry { font: 12px ui-monospace, Menlo, Consolas, monospace; margin-top: 4px; color: #d8e6f5; }
 .hud3d .score3d { font-size: 12px; color: #aebbd0; margin-top: 3px; }
 .messages {
@@ -98,3 +98,4 @@ button.mode.primary b { color: #ffd166; }
 }
 .tbtn.engine { left: 50%; transform: translateX(-110%); bottom: calc(40px + env(safe-area-inset-bottom)); }
 .tbtn.view { left: 50%; transform: translateX(10%); bottom: calc(40px + env(safe-area-inset-bottom)); }
+.ihadss { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }

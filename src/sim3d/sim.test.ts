@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { STEP } from '../game/constants';
 import { rng } from '../game/math';
-import { G3, MAX_THRUST, SKID_Y, Sim } from './sim';
+import { G3, MAX_THRUST, GEAR_Y, Sim } from './sim';
 
 function setup(seed = 7) {
   const sim = new Sim({ seed, random: rng(seed) });
@@ -101,7 +101,7 @@ describe('flight', () => {
   it('lands softly on a pad', () => {
     const sim = setup();
     const b = sim.pads[0];
-    airborneAt(sim, b.x, b.z, b.y - SKID_Y + 30);
+    airborneAt(sim, b.x, b.z, b.y - GEAR_Y + 30);
     run(sim, 30, descend(sim));
     expect(sim.heli.alive).toBe(true);
     expect(sim.heli.landed).toBe(true);
@@ -111,7 +111,7 @@ describe('flight', () => {
   it('crashes on a hard touchdown', () => {
     const sim = setup();
     const b = sim.pads[0];
-    airborneAt(sim, b.x, b.z, b.y - SKID_Y + 20);
+    airborneAt(sim, b.x, b.z, b.y - GEAR_Y + 20);
     sim.controls.collective = 0;
     run(sim, 5);
     expect(sim.heli.alive).toBe(false);
@@ -146,7 +146,7 @@ describe('flight', () => {
 describe('missions', () => {
   function landOn(sim: Sim, idx: number) {
     const p = sim.pads[idx];
-    airborneAt(sim, p.x, p.z, p.y - SKID_Y + 8);
+    airborneAt(sim, p.x, p.z, p.y - GEAR_Y + 8);
     run(sim, 25, descend(sim, p));
     expect(sim.heli.landed).toBe(true);
   }

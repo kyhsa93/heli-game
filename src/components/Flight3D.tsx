@@ -7,7 +7,8 @@ import { buildHeli } from '../sim3d/heliModel';
 import { FlightInput } from '../sim3d/input';
 import { Instruments } from '../sim3d/instruments';
 import { buildWorld } from '../sim3d/scene';
-import { EYE, M_TO_FT, MS_TO_FPM, MS_TO_KT, Sim, type BestStore3 } from '../sim3d/sim';
+import { drawIhadss } from '../sim3d/ihadss';
+import { BLADES, EYE, M_TO_FT, MS_TO_FPM, MS_TO_KT, ROTOR_HZ, Sim, type BestStore3 } from '../sim3d/sim';
 import { VirtualStick } from './VirtualStick';
 
 const bestStore: BestStore3 = {
@@ -34,6 +35,9 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
   const touchRef = useRef(touch);
   touchRef.current = touch;
   const [hud, setHud] = useState(true);
+  const hudOnRef = useRef(true);
+  hudOnRef.current = hud;
+  const ihadssRef = useRef<HTMLCanvasElement>(null);
   const [help, setHelp] = useState(false);
   const [muted, setMuted] = useState(false);
   const snap = useSyncExternalStore(sim.subscribe, sim.getSnapshot);
@@ -60,8 +64,14 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
     const model = buildHeli();
     world.scene.add(model.root);
     const inst = new Instruments(sim);
-    (model.panel.material as THREE.MeshBasicMaterial).map = inst.texture;
-    (model.panel.material as THREE.MeshBasicMaterial).needsUpdate = true;
+    const tex = inst.textures();
+    for (const key of Object.keys(tex) as (keyof typeof tex)[]) {
+      const mat = model.screens[key].material as THREE.MeshBasicMaterial;
+      mat.map = tex[key];
+      mat.needsUpdate = true;
+    }
+    const overlay = ihadssRef.current!;
+    const og = overlay.getContext('2d')!;
 
     const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 7000);
     model.head.add(camera);
@@ -71,6 +81,9 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
     const resize = () => {
       const w = mount.clientWidth, h = mount.clientHeight;
       renderer.setSize(w, h);
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      overlay.width = w * dpr; overlay.height = h * dpr;
+      og.setTransform(dpr, 0, 0, dpr, 0, 0);
       camera.aspect = w / h;
       camera.fov = w >= h ? 72 : Math.min(100, 2 * Math.atan(Math.tan(37 * Math.PI / 180) * h / w) * 180 / Math.PI);
       camera.updateProjectionMatrix();
@@ -78,7 +91,7 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
     resize();
     window.addEventListener('resize', resize);
 
-    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { sim, input, view: viewRef } });
+    if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { sim, input, view: viewRef, model } });
     input.onEngine = () => sim.toggleEngine();
     input.onView = toggleView;
 
@@ -96,8 +109,8 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
       model.root.quaternion.copy(h.q);
       model.root.visible = h.alive || sim.mode === 'brief';
 
-      rotorAngle += h.rpm * Math.PI * 2 * 6.6 * dt;
-      tailAngle += h.rpm * Math.PI * 2 * 40 * dt;
+      rotorAngle += h.rpm * Math.PI * 2 * ROTOR_HZ * dt;
+      tailAngle += h.rpm * Math.PI * 2 * 23 * dt;
       model.rotor.rotation.y = rotorAngle;
       model.tailRotor.rotation.x = tailAngle;
       const blur = clamp((h.rpm - 0.25) / 0.5, 0, 1);
@@ -106,18 +119,17 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
 
       model.cyclic.rotation.set(-c.cyclicY * 0.25, 0, -c.cyclicX * 0.25);
       model.collective.rotation.x = h.collective * 0.45;
-      model.pedalL.position.z = -1.55 + c.pedal * 0.06;
-      model.pedalR.position.z = -1.55 - c.pedal * 0.06;
+      model.pedalL.position.z = -3.18 + c.pedal * 0.05;
+      model.pedalR.position.z = -3.18 - c.pedal * 0.05;
 
       const cockpit = viewRef.current === 'cockpit';
-      model.exterior.visible = !cockpit;
-      model.cockpit.visible = cockpit;
+      model.shell.visible = !cockpit;
       if (cockpit) {
         if (camera.parent !== model.head) { model.head.add(camera); camera.position.set(0, 0, 0); }
         const vib = h.rpm * (0.0012 + sim.airspeed() * 0.00003) * (h.landed ? 0.5 : 1);
         model.head.position.set(
           EYE.x + (Math.random() - 0.5) * vib,
-          EYE.y + Math.sin(now * 0.001 * Math.PI * 2 * 13 * h.rpm) * vib + (Math.random() - 0.5) * vib,
+          EYE.y + Math.sin(now * 0.001 * Math.PI * 2 * ROTOR_HZ * BLADES * h.rpm) * vib + (Math.random() - 0.5) * vib,
           EYE.z,
         );
         camera.rotation.set(input.headPitch, input.headYaw, 0, 'YXZ');
@@ -125,8 +137,8 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
       } else {
         if (camera.parent !== world.scene) world.scene.add(camera);
         const yawDir = tmp.set(-Math.sin(h.yaw), 0, -Math.cos(h.yaw));
-        const want = tmp2.copy(h.pos).addScaledVector(yawDir, -18);
-        want.y += 6;
+        const want = tmp2.copy(h.pos).addScaledVector(yawDir, -30);
+        want.y += 9;
         want.y = Math.max(want.y, sim.terrain.surfaceAt(want.x, want.z) + 2);
         if (!chaseInit) { chasePos.copy(want); chaseInit = true; }
         chasePos.lerp(want, Math.min(1, dt * 3));
@@ -153,14 +165,17 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
       const sy = sim.terrain.surfaceAt(h.pos.x, h.pos.z);
       world.shadow.visible = h.alive && agl < 90;
       world.shadow.position.set(h.pos.x, sy + 0.12, h.pos.z);
-      world.shadow.scale.setScalar(3.2 + Math.max(0, agl) * 0.02);
+      world.shadow.scale.setScalar(5.5 + Math.max(0, agl) * 0.03);
       (world.shadow.material as THREE.MeshBasicMaterial).opacity = 0.4 * (1 - clamp(agl / 90, 0, 1));
 
       camera.getWorldPosition(tmp);
       world.sky.position.copy(tmp);
 
-      if (frame++ % 2 === 0) inst.draw(sim);
+      inst.draw(sim, frame++ % 3);
       renderer.render(world.scene, camera);
+
+      og.clearRect(0, 0, overlay.width, overlay.height);
+      if (cockpit && hudOnRef.current && h.alive && sim.mode !== 'brief') drawIhadss(og, mount.clientWidth, mount.clientHeight, sim, camera);
 
       audioRef.current?.update({
         rpm: h.alive ? h.rpm : 0, collective: h.collective, airspeed: sim.airspeed(),
@@ -168,6 +183,7 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
       });
 
       if (hudRef.current) {
+        hudRef.current.style.display = !cockpit && hudOnRef.current ? '' : 'none';
         hudRef.current.textContent =
           `RAD ALT ${Math.round(Math.max(0, agl) * M_TO_FT)} ft · VS ${Math.round(h.vel.y * MS_TO_FPM)} fpm · ${Math.round(sim.airspeed() * MS_TO_KT)} kt · COLL ${Math.round(h.collective * 100)}% · ROTOR ${Math.round(h.rpm * 100)}%`;
       }
@@ -204,7 +220,7 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
       world.dispose();
-      inst.texture.dispose();
+      inst.dispose();
       renderer.dispose();
       mount.removeChild(renderer.domElement);
       audioRef.current?.dispose();
@@ -263,10 +279,11 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
         onPointerCancel={onPointerUp}
         onDoubleClick={() => input.centerView()}
       />
+      <canvas className="ihadss" ref={ihadssRef} />
       {snap.mode !== 'brief' && (
         <div className="hud3d">
           <div className="mission" ref={missionRef} />
-          <div className="telemetry" ref={hudRef} style={{ display: hud ? undefined : 'none' }} />
+          <div className="telemetry" ref={hudRef} />
           <div className="score3d">점수 {snap.score} · 배달 {snap.delivered}{muted ? ' · 음소거' : ''}</div>
         </div>
       )}
@@ -285,8 +302,8 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
       {(help || snap.mode === 'brief') && (
         <div className="overlay">
           <div className="card wide">
-            <h1>조종석</h1>
-            <p className="sub">베이스(H)에서 시동을 걸고, 화물을 실어 목적지 패드에 내려놓으세요.<br />
+            <h1>AH-64 조종석</h1>
+            <p className="sub">아파치 뒷좌석(조종사석)에 앉았습니다. 베이스(H)에서 시동을 걸고, 보급품을 실어 목적지 패드에 내려놓으세요.<br />
               콜렉티브는 놓아도 그 자리에 머뭅니다 — 실제 헬기처럼요.</p>
             {touch ? (
               <div className="keys">
@@ -303,14 +320,14 @@ export default function Flight3D({ onExit, touch }: { onExit: () => void; touch:
               <b>방향키</b><span>사이클릭 — 기수 숙이기·들기, 좌우 기울이기</span>
               <b>A / D</b><span>페달 — 기수 좌우 회전</span>
               <b>마우스 드래그</b><span>고개 돌리기 (C 또는 더블클릭: 정면)</span>
-              <b>V · U · M</b><span>외부 시점 · 계기 HUD · 소리</span>
+              <b>V · U · M</b><span>외부 시점 · 헬멧 심볼(IHADSS) · 소리</span>
               <b>R · Esc</b><span>다시 시작 · 메뉴</span>
             </div>
             )}
             <ul className="rules">
               <li>착륙: 하강률 {Math.round(3 * MS_TO_FPM)} fpm 이하, 거의 멈춘 채로, 수평으로.</li>
               <li>픽업 패드에 3초, 목적지 패드에 2초 머무르면 적재·하역됩니다.</li>
-              <li>계기판 GPS와 방위계의 화살표가 목표를 가리킵니다. 연료는 H 패드에서.</li>
+              <li>헬멧 심볼의 방위 화살표·마름모와 오른쪽 MPD 지도(TSD)가 목표를 가리킵니다. 가운데 선은 기체가 흘러가는 방향(호버 벡터)입니다.</li>
               <li>엔진이 꺼지면 콜렉티브를 내려 로터를 살리고(오토로테이션), 지면 직전에 올리세요.</li>
               <li>게임패드: 왼쪽 스틱 콜렉티브·페달, 오른쪽 스틱 사이클릭, A 시동, Y 시점.</li>
             </ul>

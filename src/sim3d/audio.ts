@@ -85,7 +85,7 @@ export class RotorAudio {
     const t = this.ctx.currentTime, k = 0.08;
     const rpm = Math.max(0, s.rpm);
     const load = 0.35 + s.collective * 0.9;
-    this.lfo.frequency.setTargetAtTime(13 * rpm, t, k);
+    this.lfo.frequency.setTargetAtTime(19.2 * rpm, t, k);
     const chopAmp = Math.min(1, rpm * 1.1) * 0.45 * load;
     this.chop.gain.setTargetAtTime(chopAmp * 0.55, t, k);
     this.chopDepth.gain.setTargetAtTime(chopAmp * 0.45, t, k);
