@@ -45,6 +45,8 @@ function unitName(u: { defId: string; side: string }) {
   return `${sideSymbol(u.side)} ${t(`units.${u.defId}`)}`;
 }
 
+export const OVERVIEW_BACK = 400;
+
 export function BattleHud({ session, runtime, side, renderer, touch }: { session: FlightSession; runtime: Runtime; side: Side; renderer: FlightRenderer | null; touch: boolean }) {
   const world = session.world;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -96,8 +98,14 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
       for (const id of report.loaded) { const g = assets.get<{ scene: THREE.Object3D }>(id); if (g) models[id.replace('model.prop_', '')] = g.scene; }
       props.setModels(models);
     });
-    return () => { alive = false; flags.dispose(); props.dispose(); flagsRef.current = null; };
-  }, [renderer, runtime, world]);
+    const pts = runtime.conquest.points;
+    const home = pts.find(p => p.owner === side) ?? pts[0];
+    const mid = pts.find(p => p.owner === 'neutral') ?? pts[Math.floor(pts.length / 2)];
+    const dx = home.x - mid.x, dz = home.z - mid.z, d = Math.hypot(dx, dz) || 1;
+    const bx = home.x + (dx / d) * OVERVIEW_BACK, bz = home.z + (dz / d) * OVERVIEW_BACK;
+    renderer.overview = { from: new THREE.Vector3(bx, 0, bz), look: new THREE.Vector3(mid.x, ground(mid.x, mid.z) + 20, mid.z) };
+    return () => { alive = false; flags.dispose(); props.dispose(); flagsRef.current = null; renderer.overview = null; };
+  }, [renderer, runtime, world, side]);
 
   const shade = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {

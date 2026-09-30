@@ -54,9 +54,13 @@ export interface RendererOptions {
   onFrame?: (info: FrameInfo) => void;
 }
 
+export const OVERVIEW_AGL = 180;
+export const OVERVIEW_DRIFT = 60;
+
 export class FlightRenderer {
   view: View = 'cockpit';
   debugCamera: { pos: THREE.Vector3; look: THREE.Vector3 } | null = null;
+  overview: { from: THREE.Vector3; look: THREE.Vector3 } | null = null;
   hud = true;
   audio: GameAudio | null = null;
   private listener = new THREE.Vector3();
@@ -227,9 +231,10 @@ export class FlightRenderer {
     const soldier = world.avatar.kind === 'soldier' ? world.soldier : null;
     const foot = !!soldier && !this.debugCamera;
     if (foot !== this.onFoot) { this.onFoot = foot; if (!foot) this.resize(); }
-    const cockpit = this.view === 'cockpit' && !this.debugCamera && !foot;
+    const waiting = world.avatar.kind === 'dead' && !!this.overview && !this.debugCamera;
+    const cockpit = this.view === 'cockpit' && !this.debugCamera && !foot && !waiting;
     model.cockpit.visible = cockpit;
-    if (soldier) model.root.visible = false;
+    if (soldier || waiting) model.root.visible = false;
     const speed = airspeed(h, world.wind);
     model.shell.visible = !cockpit;
     if (foot && soldier) {
@@ -244,6 +249,12 @@ export class FlightRenderer {
       if (camera.parent !== scn.scene) scn.scene.add(camera);
       camera.position.copy(this.debugCamera.pos);
       camera.lookAt(this.debugCamera.look);
+    } else if (waiting && this.overview) {
+      if (camera.parent !== scn.scene) scn.scene.add(camera);
+      const { from, look } = this.overview, a = now * 0.00004;
+      camera.position.set(from.x + Math.sin(a) * OVERVIEW_DRIFT, Math.max(from.y, world.terrain.surfaceAt(from.x, from.z) + OVERVIEW_AGL), from.z + Math.cos(a) * OVERVIEW_DRIFT);
+      camera.lookAt(look);
+      this.chaseInit = false;
     } else if (cockpit) {
       if (camera.parent !== model.head) { model.head.add(camera); camera.position.set(0, 0, 0); }
       const vib = h.rpm * (0.0012 + speed * 0.00003) * (h.landed ? 0.5 : 1) * (h.damage.rotor <= DAMAGED ? 4 : 1);
