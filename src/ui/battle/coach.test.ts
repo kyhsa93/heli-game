@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Coach, COACH_STEPS, deathTip, MIN_SHOW, STEP_TIMEOUT, WALK_STEP, type CoachFacts } from './coach';
-import { hasString } from '../../content/strings';
+import { cardDevice, Coach, COACH_STEPS, deathTip, MIN_SHOW, STEP_TIMEOUT, WALK_STEP, type CoachFacts } from './coach';
+import { hasString, tList } from '../../content/strings';
 
 const base: CoachFacts = { agl: 60, tads: false, identified: 0, flips: 0, detected: 0, deaths: 0, playing: true, foot: false, walked: 0, shots: 0, inPoint: false };
 const foot: CoachFacts = { ...base, foot: true };
@@ -59,5 +59,12 @@ describe('battle coach (wiki 8.10)', () => {
     for (const s of COACH_STEPS) expect(hasString(`battle.coach.${s.id}`), s.id).toBe(true);
     for (const r of ['crewKilled', 'terrain', 'outOfBounds', 'hardLanding', undefined]) expect(hasString(deathTip(r, false))).toBe(true);
     expect(hasString(deathTip('crewKilled', true))).toBe(true);
+  });
+
+  it('picks the control card for the device in hand, with a line set for each', () => {
+    expect(cardDevice(true, [{ connected: true }])).toBe('touch');
+    expect(cardDevice(false, [null, { connected: true }])).toBe('pad');
+    expect(cardDevice(false, [null, { connected: false }])).toBe('keyboard');
+    for (const role of ['apache', 'soldier']) for (const d of ['keyboard', 'touch', 'pad']) expect(tList(`battle.card.${role}.${d}`)).toHaveLength(3);
   });
 });

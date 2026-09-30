@@ -69,3 +69,7 @@ export function deathTip(reason: string | undefined, missile: boolean) {
   if (missile) return 'battle.tips.missile';
   return (reason && DEATH_TIPS[reason]) || 'battle.tips.fire';
 }
+
+export function cardDevice(touch: boolean, pads: readonly ({ connected: boolean } | null)[]) {
+  return touch ? 'touch' : pads.some(p => p?.connected) ? 'pad' : 'keyboard';
+}

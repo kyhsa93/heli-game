@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { t, tList } from '../../content/strings';
-import { Coach, deathTip, type CoachFacts } from './coach';
+import { cardDevice, Coach, deathTip, type CoachFacts } from './coach';
 import type { Settings } from '../../save/save';
 import { DIFFICULTIES } from '../../sim/difficulty';
 import type { FlightSession } from '../../sim/session';
@@ -133,7 +133,7 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
           {(role === 'heli' ? firstSortie : firstFoot) && (
             <div className="control-card">
               <b>{t(`battle.card.${role === 'heli' ? 'apache' : 'soldier'}.title`)}</b>
-              {tList(`battle.card.${role === 'heli' ? 'apache' : 'soldier'}.${touch ? 'touch' : 'keyboard'}`).map(l => <span key={l}>{l}</span>)}
+              {tList(`battle.card.${role === 'heli' ? 'apache' : 'soldier'}.${cardDevice(touch, typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [])}`).map(l => <span key={l}>{l}</span>)}
             </div>
           )}
           {tally.current.deaths > 0 && <p className="sub tip">{t(deathTip(tally.current.reason, tally.current.missile))}</p>}
