@@ -419,7 +419,11 @@
       "wait": "출격까지 {s}초",
       "go": "출격",
       "quit": "경기 포기",
-      "points": "거점 {list}"
+      "points": "거점 {list}",
+      "role": "역할",
+      "spawnSoldierBase": "본진",
+      "spawnPoint": "거점 {id}",
+      "spawnSquad": "분대 옆 ({id} 근처)"
     },
     "kits": {
       "antiArmor": "대전차 — 헬파이어 16",
@@ -483,6 +487,10 @@
         "TADS 버튼(자동 호버) · 레이저 · 플레어"
       ],
       "title": "아파치 조작"
+    },
+    "roles": {
+      "soldier": "돌격병",
+      "heli": "아파치"
     }
   }
 }

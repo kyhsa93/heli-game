@@ -78,6 +78,11 @@ export class Conquest {
       else if (d.move && !d.move.air) s[u.side] += r.groundVehicle;
       else if (d.move?.air) s[u.side] += r.air;
     }
+    const body = world.playerBody();
+    const side = world.playerSide;
+    if (body.alive && (side === 'coalition' || side === 'veros') && Math.hypot(body.pos.x - p.x, body.pos.z - p.z) <= p.radius) {
+      s[side] += body.kind === 'soldier' ? r.player : body.kind === 'heli' ? r.air : 0;
+    }
     return s;
   }
 

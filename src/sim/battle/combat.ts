@@ -68,6 +68,7 @@ function fireAt(world: World, u: Unit, o: Unit, dt: number, lethality: number) {
         dir.sub(eye).normalize();
         world.emit({ t: 'fire', weapon: w.id, pos: eye.clone(), dir: dir.clone(), owner: u.id, tracer: w.kind === 'bullet' });
       }
+      b.firedAt = world.time;
       if (hit) world.damageUnit(o, hitDamage(w, o), false, u.id);
     }
     b.fire[w.id] = acc;

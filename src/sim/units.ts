@@ -89,6 +89,7 @@ export interface BattleUnit {
   aim: number;
   fire: Record<string, number>;
   advance?: boolean;
+  firedAt?: number;
 }
 
 export function hostile(a: Side, b: Side) {

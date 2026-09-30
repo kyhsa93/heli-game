@@ -82,10 +82,14 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
     return () => clearInterval(id);
   }, [snap.mode]);
   const firstSortie = !tips.includes('card.apache');
-  const [spawn, setSpawn] = useState(firstSortie ? 1 : 0);
+  const [role, setRole] = useState<'heli' | 'soldier'>('heli');
+  const [spawnId, setSpawnId] = useState(firstSortie ? 'baseAir' : 'base');
   const [kit, setKit] = useState<KitId>('closeSupport');
   const c = runtime.conquest;
-  const points = runtime.spawnPoints(session.world);
+  const all = runtime.spawnPoints(session.world);
+  const points = all.filter(p => p.role === role);
+  const chosen = points.find(p => p.id === spawnId) ?? points[0];
+  const spawnLabel = (p: typeof chosen) => p.role === 'heli' ? t(p.kind === 'pad' ? 'battle.deploy.spawnBase' : 'battle.deploy.spawnBaseAir') : p.label === 'base' ? t('battle.deploy.spawnSoldierBase') : p.label.startsWith('squad:') ? t('battle.deploy.spawnSquad', { id: p.label.slice(6) }) : t('battle.deploy.spawnPoint', { id: p.label });
   if (snap.mode === 'deploy') {
     const wait = session.deployIn();
     return (
@@ -94,13 +98,18 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
           <h1>{t('battle.deploy.title')}</h1>
           <p className="sub">{t('battle.deploy.tickets', { c: Math.floor(c.tickets.coalition), v: Math.floor(c.tickets.veros) })} · {t('battle.deploy.elapsed', { t: clock(c.elapsed), limit: clock(runtime.rules.timeLimitSec) })}</p>
           <p className="sub">{t('battle.deploy.points', { list: c.points.map(p => `${p.id}${p.owner === 'coalition' ? '■' : p.owner === 'veros' ? '▲' : '○'}`).join(' ') })}</p>
+          <div className="setting-row"><span>{t('battle.deploy.role')}</span>
+            <div className="choice">{(['soldier', 'heli'] as const).map(r => <button key={r} className={r === role ? 'on' : ''} onClick={() => { setRole(r); setSpawnId(r === 'heli' ? 'base' : 'soldierBase'); }}>{t(`battle.roles.${r}`)}</button>)}</div>
+          </div>
           <div className="setting-row"><span>{t('battle.deploy.spawn')}</span>
-            <div className="choice">{points.map((p, i) => <button key={p.id} className={i === spawn ? 'on' : ''} onClick={() => setSpawn(i)}>{t(p.kind === 'pad' ? 'battle.deploy.spawnBase' : 'battle.deploy.spawnBaseAir')}</button>)}</div>
+            <div className="choice">{points.map(p => <button key={p.id} className={p === chosen ? 'on' : ''} onClick={() => setSpawnId(p.id)}>{spawnLabel(p)}</button>)}</div>
           </div>
-          <div className="setting-row"><span>{t('battle.deploy.kit')}</span>
-            <div className="choice">{mod.KIT_IDS.map(k => <button key={k} className={k === kit ? 'on' : ''} onClick={() => setKit(k)}>{t(`battle.kits.${k}`)}</button>)}</div>
-          </div>
-          {firstSortie && (
+          {role === 'heli' && (
+            <div className="setting-row"><span>{t('battle.deploy.kit')}</span>
+              <div className="choice">{mod.KIT_IDS.map(k => <button key={k} className={k === kit ? 'on' : ''} onClick={() => setKit(k)}>{t(`battle.kits.${k}`)}</button>)}</div>
+            </div>
+          )}
+          {firstSortie && role === 'heli' && (
             <div className="control-card">
               <b>{t('battle.card.title')}</b>
               {tList(touch ? 'battle.card.touch' : 'battle.card.keyboard').map(l => <span key={l}>{l}</span>)}
@@ -110,7 +119,7 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
           {tally.current.deaths > 0 && !tips.includes('rules.dead') && <p className="sub tip">{t('battle.tips.dead')}</p>}
           <div className="pause-buttons">
             <button className="go secondary" onClick={onSetup}>{t('battle.deploy.quit')}</button>
-            <button className="go" disabled={wait > 0} onClick={() => { if (session.deploy(runtime.spawnFor(points[spawn], mod.KITS[kit]))) { if (firstSortie) onTip('card.apache'); if (tally.current.deaths > 0 && !tips.includes('rules.dead')) onTip('rules.dead'); } }}>
+            <button className="go" disabled={wait > 0} onClick={() => { if (chosen && session.deploy(runtime.spawnFor(chosen, mod.KITS[kit]))) { if (firstSortie) onTip('card.apache'); if (tally.current.deaths > 0 && !tips.includes('rules.dead')) onTip('rules.dead'); } }}>
               {wait > 0 ? t('battle.deploy.wait', { s: Math.ceil(wait) }) : `${t('battle.deploy.go')} ▶`}
             </button>
           </div>

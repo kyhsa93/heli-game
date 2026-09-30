@@ -23,7 +23,15 @@ export const WRECK_SECONDS = 90;
 
 export interface BattleOptions { side: BattleSide; seed: number }
 
-export interface SpawnPoint { id: string; kind: 'pad' | 'air'; pad: number; x: number; z: number; headingDeg: number }
+export type SpawnRole = 'heli' | 'soldier';
+
+export interface SpawnPoint { id: string; role: SpawnRole; kind: 'pad' | 'air' | 'ground'; pad: number; x: number; z: number; headingDeg: number; label: string }
+
+export const POINT_CLEAR = 150;
+export const SQUAD_CLEAR = 100;
+export const SQUAD_QUIET = 10;
+export const SQUAD_OFFSET = 5;
+export const SQUAD_SPAWNS = 3;
 
 export class BattleRuntime implements Objective {
   readonly id: string;
@@ -83,13 +91,29 @@ export class BattleRuntime implements Objective {
     const pad = world.pads.findIndex(p => p.name === base.farp);
     const enemy = this.map.bases.find(b => b.side !== this.opts.side)!;
     const headingDeg = (Math.atan2(enemy.position[0] - base.position[0], -(enemy.position[1] - base.position[1])) * 180) / Math.PI;
-    return [
-      { id: 'base', kind: 'pad', pad, x: base.position[0], z: base.position[1], headingDeg },
-      { id: 'baseAir', kind: 'air', pad, x: base.position[0], z: base.position[1], headingDeg },
+    const out: SpawnPoint[] = [
+      { id: 'base', role: 'heli', kind: 'pad', pad, x: base.position[0], z: base.position[1], headingDeg, label: 'base' },
+      { id: 'baseAir', role: 'heli', kind: 'air', pad, x: base.position[0], z: base.position[1], headingDeg, label: 'baseAir' },
+      { id: 'soldierBase', role: 'soldier', kind: 'ground', pad, x: base.position[0] + 25, z: base.position[1], headingDeg, label: 'base' },
     ];
+    const side = this.opts.side, foe = (u: { side: string; alive: boolean }) => u.alive && u.side !== side && u.side !== 'civilian';
+    for (const p of this.conquest.points) {
+      if (p.owner !== side || p.contested) continue;
+      if (world.units.some(u => foe(u) && u.def.move && Math.hypot(u.pos.x - p.x, u.pos.z - p.z) <= POINT_CLEAR)) continue;
+      out.push({ id: `point:${p.id}`, role: 'soldier', kind: 'ground', pad, x: p.x, z: p.z, headingDeg, label: p.id });
+    }
+    const quiet = world.units.filter(u => u.alive && u.side === side && u.members && !(u.battle?.firedAt !== undefined && world.time - u.battle.firedAt < SQUAD_QUIET)
+      && !world.units.some(o => foe(o) && o.def.move && Math.hypot(o.pos.x - u.pos.x, o.pos.z - u.pos.z) <= SQUAD_CLEAR));
+    quiet.sort((a, b) => Math.hypot(a.pos.x - enemy.position[0], a.pos.z - enemy.position[1]) - Math.hypot(b.pos.x - enemy.position[0], b.pos.z - enemy.position[1]) || a.id - b.id);
+    for (const u of quiet.slice(0, SQUAD_SPAWNS)) {
+      const near = [...this.conquest.points].sort((a, b) => Math.hypot(a.x - u.pos.x, a.z - u.pos.z) - Math.hypot(b.x - u.pos.x, b.z - u.pos.z))[0];
+      out.push({ id: `squad:${u.id}`, role: 'soldier', kind: 'ground', pad, x: u.pos.x + SQUAD_OFFSET, z: u.pos.z, headingDeg: (-u.yaw * 180) / Math.PI, label: `squad:${near.id}` });
+    }
+    return out;
   }
 
   spawnFor(point: SpawnPoint, kit: LoadoutDef): AvatarSpawn {
+    if (point.role === 'soldier') return { kind: 'soldier', x: point.x, z: point.z, headingDeg: point.headingDeg, cls: 'assault' };
     return point.kind === 'pad'
       ? { kind: 'heli', at: 'pad', pad: point.pad, kit, running: true }
       : { kind: 'heli', at: 'air', x: point.x, z: point.z, agl: AIR_SPAWN_AGL, headingDeg: point.headingDeg, kit, speed: AIR_SPAWN_SPEED };

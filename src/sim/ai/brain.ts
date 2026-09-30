@@ -96,6 +96,7 @@ function fireAtSoldier(world: World, u: Unit, eye: Vector3, dist: number, dt: nu
   const w = u.def.squad ? null : directWeapons(u, world).find(x => dist <= x.range && dist >= x.minRange) ?? null;
   const v = volleyAt(u, w, s, dist, partial, world.difficulty.enemyAccuracy * (u.skill ?? 1));
   if (!v) return;
+  if (u.battle) u.battle.firedAt = world.time;
   u.ai.fireAcc += v.rate * dt;
   while (u.ai.fireAcc >= 1) {
     u.ai.fireAcc -= 1;
