@@ -7,14 +7,14 @@ import { SettingsScreen } from './ui/screens/SettingsScreen';
 import { Title } from './ui/screens/Title';
 import { BattleSetup, DEFAULT_CHOICE, type BattleChoice } from './ui/battle/BattleSetup';
 import { UiState } from './ui/state';
-import { hasSave, loadSave, storeSave, withDeviceDefaults } from './save/save';
+import { hasSave, loadSave, storeSave, withDeviceDefaults, withFirstRun } from './save/save';
 
 const Battle = lazy(() => import('./ui/battle/Battle').then(m => ({ default: m.Battle })));
 
 export function App() {
   const [ui] = useState(() => new UiState());
   const screen = useSyncExternalStore(ui.subscribe, ui.getSnapshot);
-  const [save, setSave] = useState(() => (hasSave() ? loadSave() : withDeviceDefaults(loadSave(), { mobile: window.matchMedia('(pointer: coarse)').matches || Math.min(window.screen.width, window.screen.height) < 600 })));
+  const [save, setSave] = useState(() => (hasSave() ? loadSave() : withDeviceDefaults(withFirstRun(loadSave()), { mobile: window.matchMedia('(pointer: coarse)').matches || Math.min(window.screen.width, window.screen.height) < 600 })));
   useEffect(() => { storeSave(save); }, [save]);
   const [choice, setChoice] = useState<BattleChoice>(DEFAULT_CHOICE);
   const touch = window.matchMedia('(pointer: coarse)').matches;
@@ -45,6 +45,6 @@ export function App() {
     case 'battleSetup':
       return <BattleSetup choice={choice} settings={save.settings} onChoice={setChoice} onDifficulty={difficulty => setSave(prev => ({ ...prev, settings: { ...prev.settings, difficulty } }))} onDeploy={() => ui.go({ name: 'battle', map: choice.map, mode: choice.mode })} onBack={() => ui.go({ name: 'title' })} />;
     case 'battle':
-      return <Suspense fallback={<Loading progress={1} />}><Battle choice={choice} touch={touch} settings={save.settings} onSettings={settings => setSave(prev => ({ ...prev, settings }))} onSetup={() => ui.go({ name: 'battleSetup' })} onTitle={() => ui.go({ name: 'title' })} /></Suspense>;
+      return <Suspense fallback={<Loading progress={1} />}><Battle choice={choice} touch={touch} settings={save.settings} onSettings={settings => setSave(prev => ({ ...prev, settings }))} onSetup={() => ui.go({ name: 'battleSetup' })} onTitle={() => ui.go({ name: 'title' })} tips={save.tips} onTip={id => setSave(prev => prev.tips.includes(id) ? prev : { ...prev, tips: [...prev.tips, id] })} /></Suspense>;
   }
 }

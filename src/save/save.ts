@@ -34,10 +34,11 @@ const inRange = (v: unknown, [lo, hi]: readonly [number, number]) => typeof v ==
 export interface GameSave {
   version: 1;
   settings: Settings;
+  tips: string[];
 }
 
 export function freshSave(): GameSave {
-  return { version: 1, settings: defaultSettings() };
+  return { version: 1, settings: defaultSettings(), tips: [] };
 }
 
 function sanitize(raw: unknown): GameSave | null {
@@ -45,6 +46,7 @@ function sanitize(raw: unknown): GameSave | null {
   const r = raw as Record<string, unknown>;
   if (r.version !== 1) return null;
   const save = freshSave();
+  if (Array.isArray(r.tips)) save.tips = r.tips.filter((x): x is string => typeof x === 'string').slice(0, 200);
   const s = r.settings as Partial<Settings> | undefined;
   if (s) {
     if (isDifficulty(s.difficulty)) save.settings.difficulty = s.difficulty;
@@ -89,6 +91,10 @@ export function hasSave(store: KeyValue | null = browserStorage()) {
 
 export function withDeviceDefaults(save: GameSave, device: { mobile: boolean }): GameSave {
   return { ...save, settings: { ...save.settings, display: { ...save.settings.display, quality: device.mobile ? 'low' : 'high' } } };
+}
+
+export function withFirstRun(save: GameSave): GameSave {
+  return { ...save, settings: { ...save.settings, difficulty: 'easy', assists: { autoIdentify: true, autoCountermeasures: true } } };
 }
 
 export function storeSave(save: GameSave, store: KeyValue | null = browserStorage()) {

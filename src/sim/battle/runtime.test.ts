@@ -66,7 +66,8 @@ describe('battle runtime (B1-7)', () => {
     expect(session.deploy(runtime.spawnFor(air, STANDARD_LOADOUT))).toBe(true);
     expect(world.player.alive).toBe(true);
     expect(world.player.landed).toBe(false);
-    expect(world.playerBody().agl).toBeGreaterThan(100);
+    expect(world.playerBody().agl).toBeCloseTo(60, 0);
+    expect(Math.hypot(world.player.vel.x, world.player.vel.z)).toBeCloseTo(31, 0);
   });
 
   it('warns outside the combat zone and destroys the helicopter after 10 s', () => {

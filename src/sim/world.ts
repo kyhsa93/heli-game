@@ -5,7 +5,7 @@ import type { SimEvent } from './events';
 import { BASE_REFUEL_RATE, EYE, GEAR_Y } from './heli/airframe';
 import { autoHover, createHold, type Hold } from './heli/autohover';
 import { clampToArea, collide, stepFlight } from './heli/flight';
-import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
+import { createLoadout, grossWeight, hoverCollective, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
 import { agl, createHeli, toWorld, updateQ, type Controls, type HeliState } from './heli/state';
 import type { Avatar, AvatarSpawn, PlayerBody } from './avatar';
 import { toggleEngine } from './heli/systems';
@@ -129,8 +129,11 @@ export class World {
       h.yaw = -(s.headingDeg * Math.PI) / 180;
       h.pitch = h.roll = 0;
       updateQ(h);
+      const v = s.speed ?? 0;
+      h.vel.set(-Math.sin(h.yaw) * v, 0, -Math.cos(h.yaw) * v);
     }
     if (s.at === 'air' || s.running) { h.engineOn = true; h.rpm = 1; h.landed = s.at === 'pad'; }
+    if (s.at === 'air') { h.collective = this.controls.collective = hoverCollective(this.grossWeight); }
     this.avatar = { kind: 'heli' };
   }
 

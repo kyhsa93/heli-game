@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BACKUP_KEY, freshSave, hasSave, loadSave, SAVE_KEY, storeSave, withDeviceDefaults } from './save';
+import { BACKUP_KEY, freshSave, hasSave, loadSave, SAVE_KEY, storeSave, withDeviceDefaults, withFirstRun } from './save';
 import { memoryStorage, type KeyValue } from './storage';
 
 describe('settings save', () => {
@@ -24,7 +24,7 @@ describe('settings save', () => {
     store.setItem(SAVE_KEY, JSON.stringify({ version: 1, missions: { m01: { completed: true } }, settings: { difficulty: 'easy', voiceWarnings: false } }));
     const s = loadSave(store);
     expect(s.settings).toMatchObject({ difficulty: 'easy', voiceWarnings: false });
-    expect(Object.keys(s)).toEqual(['version', 'settings']);
+    expect(Object.keys(s)).toEqual(['version', 'settings', 'tips']);
   });
 
   it('moves unreadable data to the backup key and survives a broken storage', () => {
@@ -43,5 +43,16 @@ describe('settings save', () => {
     expect(withDeviceDefaults(freshSave(), { mobile: true }).settings.display.quality).toBe('low');
     storeSave(freshSave(), store);
     expect(hasSave(store)).toBe(true);
+  });
+
+  it('remembers the coach tips already shown and uses the first-match defaults on a first run (wiki 8.10)', () => {
+    const store = memoryStorage();
+    storeSave({ ...freshSave(), tips: ['card.apache', 'rules.points'] }, store);
+    expect(loadSave(store).tips).toEqual(['card.apache', 'rules.points']);
+    store.setItem(SAVE_KEY, JSON.stringify({ version: 1, settings: {}, tips: ['ok', 3, null] }));
+    expect(loadSave(store).tips).toEqual(['ok']);
+    const first = withFirstRun(freshSave());
+    expect(first.settings.difficulty).toBe('easy');
+    expect(first.settings.assists).toEqual({ autoIdentify: true, autoCountermeasures: true });
   });
 });

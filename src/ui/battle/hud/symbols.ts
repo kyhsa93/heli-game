@@ -3,7 +3,7 @@ export type Owner = 'coalition' | 'veros' | 'neutral';
 export const COLORS = { friend: '#4cc9f0', enemy: '#ff9f1c', neutral: '#e8eef7', text: '#e8eef7' } as const;
 
 export function pointSymbol(owner: Owner, contested: boolean) {
-  if (contested) return '⊘';
+  if (contested) return '×';
   return owner === 'coalition' ? '■' : owner === 'veros' ? '▲' : '○';
 }
 

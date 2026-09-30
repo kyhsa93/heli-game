@@ -16,7 +16,8 @@ import { PlayerSpotting } from './spotting';
 import { insidePolygon, modeZone, type BattleMapDef, type BattleSide } from './schema';
 import { battleTerrainOptions } from './terrain';
 
-export const AIR_SPAWN_AGL = 150;
+export const AIR_SPAWN_AGL = 60;
+export const AIR_SPAWN_SPEED = 31;
 export const WRECK_SECONDS = 90;
 
 export interface BattleOptions { side: BattleSide; seed: number }
@@ -88,7 +89,7 @@ export class BattleRuntime implements Objective {
   spawnFor(point: SpawnPoint, kit: LoadoutDef): AvatarSpawn {
     return point.kind === 'pad'
       ? { kind: 'heli', at: 'pad', pad: point.pad, kit, running: true }
-      : { kind: 'heli', at: 'air', x: point.x, z: point.z, agl: AIR_SPAWN_AGL, headingDeg: point.headingDeg, kit };
+      : { kind: 'heli', at: 'air', x: point.x, z: point.z, agl: AIR_SPAWN_AGL, headingDeg: point.headingDeg, kit, speed: AIR_SPAWN_SPEED };
   }
 
   tick(world: World, dt: number) {

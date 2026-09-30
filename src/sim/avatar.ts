@@ -17,6 +17,6 @@ export interface PlayerBody {
 
 export type HeliSpawn =
   | { kind: 'heli'; at: 'pad'; pad: number; kit: LoadoutDef; running?: boolean }
-  | { kind: 'heli'; at: 'air'; x: number; z: number; agl: number; headingDeg: number; kit: LoadoutDef };
+  | { kind: 'heli'; at: 'air'; x: number; z: number; agl: number; headingDeg: number; kit: LoadoutDef; speed?: number };
 
 export type AvatarSpawn = HeliSpawn;
