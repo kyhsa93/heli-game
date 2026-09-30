@@ -9,6 +9,7 @@ import { createLoadout, grossWeight, hoverCollective, STANDARD_LOADOUT, thrustSc
 import { agl, createHeli, toWorld, updateQ, type Controls, type HeliState } from './heli/state';
 import type { Avatar, AvatarSpawn, PlayerBody } from './avatar';
 import type { Obstacle } from './obstacles';
+import { createMembers, HEADSHOT, MEMBER_LOD, segmentHitsMember, syncMembers, type Member } from './infantry/squad';
 import { createSoldier, createSoldierCommands, SOLDIER_RADIUS, type SoldierCommands, type SoldierState, type Stance } from './infantry/soldier';
 import { createMotion, setStance, sprinting, stepSoldier, type SoldierMotion } from './infantry/movement';
 import { createArms as createSoldierArms, select, startReload, stepArms, type InfantryWeaponId, type SoldierArms } from './infantry/arms';
@@ -31,7 +32,7 @@ import { constrainTads, createTads, lookAngles, tadsDirection, tadsFovDeg, tadsL
 import { PAD_R, Terrain, type Pad3, type TerrainOptions } from './terrain';
 import { createAiState, hostile, UNIT_DEFS, type Side, type Unit } from './units';
 import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
-import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
+import { explode, explodeWeapon, falloffDamage, hitUnit, WEAPONS } from './weapons/damage';
 import { integrate, PLAYER_OWNER, segmentHitsTerrain, segmentHitsUnit, type Projectile } from './weapons/projectile';
 import { gunAim } from './weapons/ballistics';
 import { hellfireSolution, launchHellfire, longbowSolution } from './weapons/hellfire';
@@ -281,6 +282,7 @@ export class World {
       pos: new Vector3(x, y, z), yaw, vel: new Vector3(), hp: def.hp, alive: true,
       ai: createAiState(), weaponCooldown: 0, identified: false, passive: opts.passive, skill: opts.skill, aam: opts.aam,
     };
+    if (def.squad) u.members = createMembers(u);
     this.units.push(u);
     return u;
   }
@@ -460,9 +462,19 @@ export class World {
     return this.units.find(u => u.id === id);
   }
 
+  damageMember(u: Unit, m: Member, amount: number, byPlayer: boolean) {
+    if (!u.alive || !m.alive || amount <= 0) return;
+    const take = Math.min(m.hp, amount);
+    m.hp -= take;
+    if (m.hp <= 1e-9) { m.hp = 0; m.alive = false; }
+    this.emit({ t: 'memberHit', unit: u.id, killed: !m.alive, byPlayer });
+    this.damageUnit(u, take, byPlayer);
+  }
+
   damageUnit(u: Unit, amount: number, byPlayer: boolean, by?: number) {
     if (!u.alive || u.def.indestructible || amount <= 0) return;
     u.hp = Math.max(0, u.hp - amount);
+    syncMembers(u);
     if (u.hp === 0) {
       u.alive = false;
       u.diedAt = this.time;
@@ -808,11 +820,17 @@ export class World {
       const p = list[i];
       const a = integrate(p, dt).clone();
       const b = p.pos;
-      let bestT = Infinity, bestUnit: Unit | null = null;
+      let bestT = Infinity, bestUnit: Unit | null = null, bestMember: { member: Member; head: boolean } | null = null;
+      const me = this.playerBody().pos;
       for (const u of this.units) {
         if (!u.alive) continue;
+        if (u.members && p.owner === PLAYER_OWNER && Math.hypot(u.pos.x - me.x, u.pos.z - me.z) <= MEMBER_LOD) {
+          const hit = segmentHitsMember(a, b, u);
+          if (hit && hit.t < bestT) { bestT = hit.t; bestUnit = u; bestMember = hit; }
+          continue;
+        }
         const t = segmentHitsUnit(a, b, u);
-        if (t !== null && t < bestT) { bestT = t; bestUnit = u; }
+        if (t !== null && t < bestT) { bestT = t; bestUnit = u; bestMember = null; }
       }
       const tg = segmentHitsTerrain(a, b, this.terrain);
       let done = p.life <= 0;
@@ -821,7 +839,8 @@ export class World {
         const w = WEAPONS[p.weapon];
         const byPlayer = p.owner === PLAYER_OWNER;
         if (at.distanceTo(p.origin) >= w.minRange) {
-          hitUnit(this, bestUnit, w, byPlayer, at.distanceTo(p.origin));
+          if (bestMember) this.damageMember(bestUnit, bestMember.member, falloffDamage(w, at.distanceTo(p.origin)) * (bestMember.head ? HEADSHOT : 1) / (w.squadScale ?? 1), byPlayer);
+          else hitUnit(this, bestUnit, w, byPlayer, at.distanceTo(p.origin));
           explodeWeapon(this, at, w, byPlayer, bestUnit);
         }
         this.emit({ t: 'impact', weapon: p.weapon, pos: at, unit: bestUnit.id, ground: false });

@@ -78,6 +78,7 @@ export interface Unit {
   aam?: boolean;
   beam?: { yaw: number; pitch: number; lost: number; lit: boolean };
   battle?: BattleUnit;
+  members?: { ox: number; oz: number; hp: number; alive: boolean }[];
   diedAt?: number;
 }
 
