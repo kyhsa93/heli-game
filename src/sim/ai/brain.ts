@@ -155,5 +155,7 @@ export function stepBrain(world: World, u: Unit, dt = AI_TICK) {
 }
 
 export function stepBrains(world: World, dt = AI_TICK) {
-  for (const u of world.units) if (u.alive && u.side === 'veros' && u.def.detect !== 'none' && !u.passive) stepBrain(world, u, dt);
+  for (const u of world.units) {
+    if (u.alive && world.huntsPlayer(u) && u.def.detect !== 'none' && !u.passive && u.battle?.target?.kind !== 'unit') stepBrain(world, u, dt);
+  }
 }

@@ -23,7 +23,7 @@ import { castRay, createLaser, crosshairUnit, identifyRange, unitCenter, DESIGNA
 import { CHAFF_JAM, createCountermeasures, decoyChaff, decoyFlare, FLARE_LIFE, FLARE_PER_DROP, type Countermeasures, type Flare } from './sensors/ase';
 import { constrainTads, createTads, lookAngles, tadsDirection, tadsFovDeg, tadsLocal, tadsPosition, type Tads } from './sensors/tads';
 import { PAD_R, Terrain, type Pad3, type TerrainOptions } from './terrain';
-import { createAiState, UNIT_DEFS, type Unit } from './units';
+import { createAiState, hostile, UNIT_DEFS, type Side, type Unit } from './units';
 import { aimDirection, createArms, GUN_INTERVAL, gunInLimits, muzzlePosition, SALVOS, type Aim, type Arms, type WeaponId } from './weapons/arms';
 import { explode, explodeWeapon, hitUnit, WEAPONS } from './weapons/damage';
 import { integrate, PLAYER_OWNER, segmentHitsTerrain, segmentHitsUnit, type Projectile } from './weapons/projectile';
@@ -55,6 +55,7 @@ export class World {
   controls: Controls = { cyclicX: 0, cyclicY: 0, pedal: 0, collective: 0 };
   wind = new Vector3();
   target: NavTarget | null = null;
+  playerSide: Side = 'coalition';
   active = false;
   readonly events = new EventBus<SimEvent>();
   units: Unit[] = [];
@@ -333,6 +334,10 @@ export class World {
     this.aams = [];
     this.flares = [];
     this.remoteLasers = [];
+  }
+
+  huntsPlayer(u: Unit) {
+    return hostile(u.side, this.playerSide);
   }
 
   unit(id: number) {

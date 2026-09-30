@@ -75,6 +75,19 @@ export interface Unit {
   skill?: number;
   aam?: boolean;
   beam?: { yaw: number; pitch: number; lost: number; lit: boolean };
+  battle?: BattleUnit;
+}
+
+export type TargetRef = { kind: 'player' } | { kind: 'unit'; id: number };
+
+export interface BattleUnit {
+  target: TargetRef | null;
+  aim: number;
+  fire: Record<string, number>;
+}
+
+export function hostile(a: Side, b: Side) {
+  return a !== b && a !== 'civilian' && b !== 'civilian';
 }
 
 export function squadMembers(u: Unit) {

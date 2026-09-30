@@ -103,13 +103,13 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
   if (!h.alive) return;
   const eye = new Vector3();
   for (const u of world.units) {
-    if (!u.alive || u.side !== 'veros' || u.def.detect === 'none' || u.passive) continue;
+    if (!u.alive || !world.huntsPlayer(u) || u.def.detect === 'none' || u.passive) continue;
     eyeOf(u, eye);
     const dist = eye.distanceTo(h.pos);
     if (u.def.detect === 'radar' && u.def.radar) {
       const r = u.def.radar;
       if (u.ai.jammed > 0) { u.ai.jammed = Math.max(0, u.ai.jammed - dt); setRadar(world, u, 'search'); continue; }
-      const link = u.defId === 'sam_short' ? linkedRadars(world, u) : [];
+      const link = u.defId.endsWith('sam_short') ? linkedRadars(world, u) : [];
       const search = link.length && link.every(o => !o.alive) ? r.search * RADAR_LOST_FACTOR : r.search;
       const cued = link.some(o => o.alive && o.ai.radar !== 'search');
       const seen = dist <= search && los.radar(u.id, eye, h.pos, world.time);

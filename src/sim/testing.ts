@@ -95,12 +95,12 @@ export function openPair(world: World, dist: number, lowAgl = 9) {
   throw new Error('no open pair');
 }
 
-export function hiddenPair(world: World) {
+export function hiddenPair(world: World, dist = 1200) {
   const HALF = world.terrain.half;
   for (let i = 0; i < 3000; i++) {
     const x = ((i * 7919) % 173) / 173 * HALF * 1.4 - HALF * 0.7, z = ((i * 104729) % 181) / 181 * HALF * 1.4 - HALF * 0.7;
     const ang = (i % 8) * Math.PI / 4;
-    const px = x + Math.sin(ang) * 1200, pz = z + Math.cos(ang) * 1200;
+    const px = x + Math.sin(ang) * dist, pz = z + Math.cos(ang) * dist;
     if (Math.abs(px) > HALF - 100 || Math.abs(pz) > HALF - 100) continue;
     const eye = new Vector3(x, world.terrain.surfaceAt(x, z) + 4.4, z);
     const p = new Vector3(px, world.terrain.surfaceAt(px, pz) + 20, pz);

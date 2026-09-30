@@ -32,7 +32,7 @@ export function relativeBearing(world: World, p: Vector3) {
 }
 
 function symbolFor(defId: string): ThreatSymbol {
-  return defId === 'sam_short' || defId === 'sam_radar' ? 'S' : 'Z';
+  return defId.endsWith('sam_short') || defId === 'sam_radar' ? 'S' : 'Z';
 }
 
 export function aseThreats(world: World): Threat[] {
@@ -40,7 +40,7 @@ export function aseThreats(world: World): Threat[] {
   if (!h.alive) return out;
   const launching = new Set(world.enemyMissiles.filter(m => m.kind === 'radar' && m.guiding).map(m => m.owner));
   for (const u of world.units) {
-    if (!u.alive || u.side !== 'veros' || !u.def.radar || u.passive) continue;
+    if (!u.alive || !world.huntsPlayer(u) || !u.def.radar || u.passive) continue;
     const dist = u.pos.distanceTo(h.pos);
     if (dist > u.def.radar.search) continue;
     const eye = new Vector3(u.pos.x, u.pos.y + u.def.size[1] + 2, u.pos.z);

@@ -61,6 +61,13 @@ export function radarSight(t: Terrain, a: Vector3, b: Vector3) {
 
 interface Entry { sight: Sight; radar: boolean; ox: number; oz: number; oy: number; tx: number; ty: number; tz: number; time: number }
 
+export const LOS_PAIR_BASE = 1_000_000;
+export const LOS_PRUNE_SECONDS = 5;
+
+export function pairKey(observer: number, target: number) {
+  return (observer + 1) * LOS_PAIR_BASE + target;
+}
+
 export class LosCache {
   private entries = new Map<number, Entry>();
   computed = 0;
@@ -87,6 +94,12 @@ export class LosCache {
   radar(key: number, observer: Vector3, target: Vector3, time: number) {
     return this.entry(key, observer, target, time).radar;
   }
+
+  prune(time: number, maxAge = LOS_PRUNE_SECONDS) {
+    for (const [k, e] of this.entries) if (time - e.time > maxAge) this.entries.delete(k);
+  }
+
+  get size() { return this.entries.size; }
 
   clear() { this.entries.clear(); }
 }

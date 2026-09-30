@@ -12,8 +12,8 @@ export function isAir(u: Unit) {
   return !!u.def.move?.air;
 }
 
-function hunting(u: Unit) {
-  return u.side === 'veros' && !u.passive && u.ai.state === 'engage' && u.ai.detected;
+function hunting(world: World, u: Unit) {
+  return world.huntsPlayer(u) && !u.passive && u.ai.state === 'engage' && u.ai.detected;
 }
 
 function orbit(world: World, u: Unit, dt: number) {
@@ -53,6 +53,6 @@ export function stepAir(world: World, dt: number) {
   for (const u of world.units) {
     if (!isAir(u)) continue;
     if (!u.alive) fall(world, u, dt);
-    else if (world.player.alive && hunting(u)) orbit(world, u, dt);
+    else if (world.player.alive && hunting(world, u)) orbit(world, u, dt);
   }
 }
