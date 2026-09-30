@@ -6,6 +6,6 @@
     "ticketCost": { "person": 1, "light": 2, "apc": 3, "airDefense": 3, "tank": 4, "transportHeli": 4, "attackHeli": 5, "jet": 5 },
     "botWaveSec": 30, "botLethality": 1, "playerRespawnSec": 10, "boundaryGraceSec": 10, "forces": "large"
   },
-  "quick": { "extends": "conquest", "tickets": 200, "bleedPerPointPerSec": 0.3, "timeLimitSec": 900, "forces": "quick" },
+  "quick": { "extends": "conquest", "tickets": 180, "bleedPerPointPerSec": 0.3, "timeLimitSec": 900, "forces": "quick" },
   "breakthrough": { "attackerTickets": 600, "sectorBonus": 200, "defenderWavesPerSector": 3 }
 }

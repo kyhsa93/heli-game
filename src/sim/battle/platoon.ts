@@ -144,7 +144,9 @@ export class Platoon {
       const a = (i / Math.max(1, infantry.length)) * Math.PI * 2 + this.id.length;
       this.route(world, u, [p.x + Math.cos(a) * p.radius * 0.5, p.z + Math.sin(a) * p.radius * 0.5]);
     });
-    vehicles.forEach((u, i) => this.route(world, u, offset([p.x + (dx / d) * SUPPORT, p.z + (dz / d) * SUPPORT], i, 30)));
+    const alone = p.strength[this.side === 'coalition' ? 'veros' : 'coalition'] === 0 && !infantry.some(u => Math.hypot(u.pos.x - p.x, u.pos.z - p.z) <= STRAGGLER);
+    const stand = alone ? p.radius * 0.5 : SUPPORT;
+    vehicles.forEach((u, i) => this.route(world, u, offset([p.x + (dx / d) * stand, p.z + (dz / d) * stand], i, alone ? 15 : 30)));
   }
 
   private route(world: World, u: Unit, dest: Vec2) {

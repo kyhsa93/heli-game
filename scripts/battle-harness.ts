@@ -22,7 +22,7 @@ const trace = process.argv.includes('--trace');
 const overrides = process.argv.flatMap((a, i) => (a === '--set' ? [process.argv[i + 1]] : []));
 const def = JSON.parse(readFileSync(`src/content/battle/maps/${mapId}.json`, 'utf8')) as BattleMapDef;
 
-interface Run { seed: number; minutes: number; winner: string; tickets: string; flips: Record<string, number>; kills: number; proxyKills: number; proxyDeaths: number; life: number; ms: number }
+interface Run { starts: Record<string, string>; fell: string[]; seed: number; minutes: number; winner: string; tickets: string; flips: Record<string, number>; kills: number; proxyKills: number; proxyDeaths: number; life: number; ms: number }
 
 function play(seed: number): Run {
   const { session, runtime } = createBattleSession(def, mode, { side, seed });
@@ -31,8 +31,10 @@ function play(seed: number): Run {
   session.frozen = false;
   const world = session.world;
   const flips: Record<string, number> = Object.fromEntries(runtime.conquest.points.map(p => [p.id, 0]));
+  const starts = Object.fromEntries(runtime.conquest.points.filter(p => p.owner !== 'neutral').map(p => [p.owner, p.id]));
+  const fell = new Set<string>();
   let kills = 0;
-  world.events.on('pointOwner', e => { flips[e.id]++; });
+  world.events.on('pointOwner', e => { flips[e.id]++; if (e.from !== 'neutral' && starts[e.from] === e.id) fell.add(e.from); });
   world.events.on('unitDestroyed', () => { kills++; });
   const proxy = player === 'proxy' ? new ProxyPilot(runtime, side) : null;
   const soldier = player === 'soldier' ? new SoldierProxy(runtime, side, stance) : null;
@@ -56,7 +58,7 @@ function play(seed: number): Run {
   }
   const c = runtime.conquest;
   return {
-    seed, minutes: c.elapsed / 60, winner: c.winner ?? 'none', tickets: `${Math.floor(c.tickets.coalition)}:${Math.floor(c.tickets.veros)}`,
+    starts, fell: [...fell], seed, minutes: c.elapsed / 60, winner: c.winner ?? 'none', tickets: `${Math.floor(c.tickets.coalition)}:${Math.floor(c.tickets.veros)}`,
     flips, kills, proxyKills: proxy?.kills ?? soldier?.kills ?? 0, proxyDeaths: proxy?.deaths ?? soldier?.deaths ?? 0, life: soldier ? soldier.aliveTime / Math.max(1, soldier.deaths) : 0, ms: (performance.now() - t0) / Math.max(1, steps / 2),
   };
 }
@@ -72,12 +74,17 @@ const median = sorted[Math.floor(sorted.length / 2)];
 const wins = runs.filter(r => r.winner === side).length;
 const draws = runs.filter(r => r.winner === 'draw').length;
 const everyFlip = runs.filter(r => Object.values(r.flips).every(v => v >= 1)).length;
+const middle = runs.filter(r => Object.entries(r.flips).some(([id, v]) => !Object.values(r.starts).includes(id) && v >= 1)).length;
+const decided = runs.filter(r => r.winner === 'coalition' || r.winner === 'veros');
+const loserFell = decided.filter(r => r.fell.includes(r.winner === 'coalition' ? 'veros' : 'coalition')).length;
 console.log('');
 console.log(`| ${mapId} ${mode} · ${side} · ${player}${player === 'soldier' ? ` (${stance})` : ''} · ${runs.length} seeds | value |`);
 console.log('| --- | --- |');
 console.log(`| median length | ${median.toFixed(1)} min (min ${sorted[0].toFixed(1)}, max ${sorted[sorted.length - 1].toFixed(1)}) |`);
 console.log(`| ${side} wins | ${wins}/${runs.length} (${((wins / runs.length) * 100).toFixed(0)}%), draws ${draws} |`);
 console.log(`| seeds where every point changed owner | ${everyFlip}/${runs.length} (${((everyFlip / runs.length) * 100).toFixed(0)}%) |`);
+console.log(`| seeds where a middle point changed owner | ${middle}/${runs.length} (${((middle / runs.length) * 100).toFixed(0)}%) |`);
+console.log(`| decided seeds where the loser's start point fell | ${loserFell}/${decided.length} (${((loserFell / Math.max(1, decided.length)) * 100).toFixed(0)}%) |`);
 console.log(`| mean kills | ${(runs.reduce((a, r) => a + r.kills, 0) / runs.length).toFixed(0)} |`);
 if (player === 'soldier') console.log(`| proxy seconds alive per death | ${(runs.reduce((a, r) => a + r.life, 0) / runs.length).toFixed(0)} |`);
 if (player !== 'idle') console.log(`| proxy kills / deaths | ${(runs.reduce((a, r) => a + r.proxyKills, 0) / runs.length).toFixed(1)} / ${(runs.reduce((a, r) => a + r.proxyDeaths, 0) / runs.length).toFixed(1)} |`);

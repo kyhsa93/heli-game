@@ -87,6 +87,24 @@ describe('platoons and commanders (wiki 5.2, 5.9)', () => {
     expect(cmd.reserve()!.order?.point).toBe(own.id);
   });
 
+  it('lets vehicles take an undefended point themselves when the platoon infantry is far behind', () => {
+    const w = world();
+    const base = harek.bases[0].position;
+    const c = new Conquest(harek, 'quick', conquestRules('quick'));
+    const d = c.points.find(p => p.id === 'D')!;
+    const slots = [slot(w, 'v', 'c_apc', d.x + 400, d.z + 400), slot(w, 'i', 'c_inf', base[0], base[1] - 60)];
+    const pl = new Platoon('coalition:0', 'coalition', slots, base);
+    pl.give({ kind: 'attack', point: 'D', utility: 1 }, 0);
+    const apc = w.units.find(u => u.defId === 'c_apc')!;
+    for (let s = 1; s <= 300; s++) {
+      pl.step(w, c.points, s);
+      c.step(w, 1);
+      for (let i = 0; i < 120; i++) w.step(STEP);
+    }
+    expect(pl.state).not.toBe('move');
+    expect(Math.hypot(apc.pos.x - d.x, apc.pos.z - d.z)).toBeLessThanOrEqual(d.radius);
+  }, 120000);
+
   it('knows only enemies its side has seen in the last 20 s', () => {
     const w = world();
     const intel = new Intel();

@@ -30,7 +30,7 @@ const pointD = (c: Conquest) => c.points.find(p => p.id === 'D')!;
 
 describe('modes.json (wiki 3.6)', () => {
   it('resolves quick conquest on top of conquest and validates', () => {
-    expect(quick).toMatchObject({ tickets: 200, bleedPerPointPerSec: 0.3, timeLimitSec: 900, forces: 'quick', captureRatePerSec: 4, playerRespawnSec: 10 });
+    expect(quick).toMatchObject({ tickets: 180, bleedPerPointPerSec: 0.3, timeLimitSec: 900, forces: 'quick', captureRatePerSec: 4, playerRespawnSec: 10 });
     expect(conquestRules('conquest').bleedPerPointPerSec).toBe(0.1);
     expect(conquestRules('conquest')).toMatchObject({ tickets: 800, timeLimitSec: 2100, forces: 'large' });
     expect(validateRules(quick)).toEqual([]);
