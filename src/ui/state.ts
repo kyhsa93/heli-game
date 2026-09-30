@@ -1,16 +1,23 @@
+export type BattleMode = 'quick' | 'conquest' | 'breakthrough';
+
 export type Screen =
   | { name: 'title' }
   | { name: 'settings' }
-  | { name: 'credits' };
+  | { name: 'credits' }
+  | { name: 'battleSetup' }
+  | { name: 'battle'; map: string; mode: BattleMode };
 
 export function parseHash(hash: string): Screen {
   const first = hash.replace(/^#\/?/, '').split('/').filter(Boolean)[0];
   if (first === 'settings') return { name: 'settings' };
   if (first === 'credits') return { name: 'credits' };
+  if (first === 'battle') return { name: 'battleSetup' };
   return { name: 'title' };
 }
 
 export function toHash(screen: Screen): string {
+  if (screen.name === 'battleSetup') return '#/battle';
+  if (screen.name === 'battle') return `#/battle/${screen.map}/${screen.mode}`;
   return `#/${screen.name}`;
 }
 
@@ -37,7 +44,7 @@ export class UiState {
   }
 
   syncFromLocation() {
-    if (toHash(parseHash(this.location.hash)) === toHash(this.screen) || this.location.hash === toHash(this.screen)) return;
+    if (this.location.hash === toHash(this.screen)) return;
     this.screen = parseHash(this.location.hash);
     for (const fn of this.listeners) fn();
   }

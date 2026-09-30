@@ -8,6 +8,8 @@ describe('screen routing', () => {
     ['#/settings', { name: 'settings' }],
     ['#/credits', { name: 'credits' }],
     ['#/campaign/m05', { name: 'title' }],
+    ['#/battle', { name: 'battleSetup' }],
+    ['#/battle/harek/quick', { name: 'battleSetup' }],
     ['#/flight/t1', { name: 'title' }],
     ['#/nonsense', { name: 'title' }],
   ])('%s', (hash, screen) => {
@@ -15,7 +17,8 @@ describe('screen routing', () => {
   });
 
   it('round-trips every screen', () => {
-    for (const s of [{ name: 'title' }, { name: 'settings' }, { name: 'credits' }] as const) expect(parseHash(toHash(s))).toEqual(s);
+    for (const s of [{ name: 'title' }, { name: 'settings' }, { name: 'credits' }, { name: 'battleSetup' }] as const) expect(parseHash(toHash(s))).toEqual(s);
+    expect(toHash({ name: 'battle', map: 'harek', mode: 'quick' })).toBe('#/battle/harek/quick');
   });
 
   it('writes the hash on navigation and follows external hash changes', () => {
@@ -27,5 +30,16 @@ describe('screen routing', () => {
     loc.hash = '#/title';
     ui.syncFromLocation();
     expect(ui.getSnapshot()).toEqual({ name: 'title' });
+  });
+
+  it('sends a reload during a battle back to the battle setup (wiki 8.1)', () => {
+    const loc = { hash: '' };
+    const ui = new UiState(loc);
+    ui.go({ name: 'battleSetup' });
+    ui.go({ name: 'battle', map: 'harek', mode: 'quick' });
+    expect(loc.hash).toBe('#/battle/harek/quick');
+    expect(new UiState(loc).getSnapshot()).toEqual({ name: 'battleSetup' });
+    ui.syncFromLocation();
+    expect(ui.getSnapshot()).toEqual({ name: 'battle', map: 'harek', mode: 'quick' });
   });
 });

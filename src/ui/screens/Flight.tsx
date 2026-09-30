@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent, type ReactNode } from 'react';
 import { assets } from '../../assets/loader';
 import { GameAudio } from '../../audio/game';
 import { t, tList, tPairs } from '../../content/strings';
@@ -26,9 +26,9 @@ import { watchViewport } from '../../core/viewport';
 
 const STICK_RADIUS = { S: 46, M: 56, L: 70 } as const;
 
-interface FlightProps { session: FlightSession; touch: boolean; settings?: Settings; onSettings?: (s: Settings) => void; onExit: () => void }
+interface FlightProps { session: FlightSession; touch: boolean; settings?: Settings; onSettings?: (s: Settings) => void; onExit: () => void; children?: ReactNode }
 
-export function Flight({ session, touch, settings = freshSave().settings, onSettings, onExit }: FlightProps) {
+export function Flight({ session, touch, settings = freshSave().settings, onSettings, onExit, children }: FlightProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
@@ -109,7 +109,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
   const runCommandRef = useRef(runCommand);
   runCommandRef.current = runCommand;
 
-  const begin = () => {
+  const ensureAudio = () => {
     if (!audioRef.current) {
       try {
         audioRef.current = new GameAudio();
@@ -120,10 +120,18 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
     }
     if (rendererRef.current) rendererRef.current.audio = audioRef.current;
     void audioRef.current?.resume();
+  };
+
+  const begin = () => {
+    ensureAudio();
     input.centerView();
     logRef.current.clear();
     session.start();
   };
+
+  useEffect(() => {
+    if (snap.mode === 'play') { ensureAudio(); input.centerView(); }
+  }, [snap.mode]);
 
   useEffect(() => {
     if (rendererRef.current) rendererRef.current.hud = hud;
@@ -162,7 +170,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
           radioRef.current.style.display = 'none';
         }
         if (missionRef.current) {
-          missionRef.current.textContent = tp
+          missionRef.current.textContent = session.respawns ? '' : tp
             ? t(tp.area ? 'hud.targetArea' : 'hud.target', { name: tp.area && !tp.raw ? t(`targets.${tp.name}`) : tp.name, dist: Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) })
             : t('hud.practice');
           missionRef.current.style.color = '#06d6a0';
@@ -266,7 +274,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
         onWheel={e => { if (sim.tads.active) zoomTads(sim.tads, e.deltaY < 0 ? 1 : -1); }}
       />
       <canvas className="ihadss" ref={ihadssRef} />
-      {snap.mode !== 'brief' && (
+      {(snap.mode === 'play' || snap.mode === 'crashed') && (
         <div className="hud3d">
           <div className="mission" ref={missionRef} />
           <div className="telemetry" ref={hudRef} />
@@ -354,6 +362,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
           </div>
         </div>
       )}
+      {children}
     </div>
   );
 }

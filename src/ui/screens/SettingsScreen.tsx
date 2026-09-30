@@ -5,7 +5,7 @@ import { DIFFICULTY_LEVELS } from '../../sim/difficulty';
 
 type Update = (s: Settings) => void;
 
-function Choice<T extends string>({ value, options, label, onPick }: { value: T; options: readonly T[]; label: (v: T) => string; onPick: (v: T) => void }) {
+export function Choice<T extends string>({ value, options, label, onPick }: { value: T; options: readonly T[]; label: (v: T) => string; onPick: (v: T) => void }) {
   return <div className="choice">{options.map(o => <button key={o} className={o === value ? 'on' : ''} onClick={() => onPick(o)}>{label(o)}</button>)}</div>;
 }
 

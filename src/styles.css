@@ -214,3 +214,5 @@ button.mode:disabled { opacity: .45; cursor: default; }
   .choice button, .setting-row .choice button, .farp-menu button { min-height: 44px; min-width: 44px; }
   .pylon { min-height: 64px; }
 }
+.choice button small { margin-left: 6px; font-size: 11px; opacity: .75; }
+.choice button:disabled { opacity: .55; cursor: default; }

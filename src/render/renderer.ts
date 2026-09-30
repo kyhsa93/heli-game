@@ -302,7 +302,7 @@ export class FlightRenderer {
     const og = this.overlayCtx;
     og.clearRect(0, 0, overlay.width, overlay.height);
     if (tads) drawTads(og, mount.clientWidth, mount.clientHeight, world);
-    else if (cockpit && this.hud && h.alive && session.mode !== 'brief') { og.globalAlpha = this.ihadssAlpha; drawIhadss(og, mount.clientWidth, mount.clientHeight, world, camera, this.pnvs && h.damage.sensors > 0); og.globalAlpha = 1; }
+    else if (cockpit && this.hud && h.alive && (session.mode === 'play' || session.mode === 'crashed')) { og.globalAlpha = this.ihadssAlpha; drawIhadss(og, mount.clientWidth, mount.clientHeight, world, camera, this.pnvs && h.damage.sensors > 0); og.globalAlpha = 1; }
     if (cockpit && !tads && h.damage.cockpit <= DAMAGED) drawCanopyCracks(og, mount.clientWidth, mount.clientHeight, 1 - h.damage.cockpit / DAMAGED);
     const f = this.fps;
     f.frames++;

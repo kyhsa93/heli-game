@@ -212,7 +212,8 @@
     "subtitle": "카르다 전선",
     "settings": "설정",
     "soon": "준비 중",
-    "battle": "전장"
+    "battle": "전장",
+    "battleSub": "봇과 함께 싸우는 빠른 점령전 — 아파치"
   },
   "training": {
     "back": "뒤로"
@@ -371,6 +372,72 @@
       "easy": "쉬움",
       "normal": "보통",
       "hard": "어려움"
+    }
+  },
+  "battle": {
+    "setup": {
+      "title": "전장",
+      "mode": "경기 방식",
+      "map": "맵",
+      "side": "진영",
+      "difficulty": "난이도",
+      "time": "시간대",
+      "deploy": "배치",
+      "back": "타이틀",
+      "estimate": "예상 {min}~{max}분 · 진영당 분대 {squads} · 지상 탈것 {vehicles}",
+      "soon": "준비 중"
+    },
+    "modes": {
+      "quick": "빠른 점령전",
+      "conquest": "점령전",
+      "breakthrough": "돌파"
+    },
+    "maps": {
+      "harek": "하레크 계곡",
+      "reservoir": "베로스 저수지",
+      "pass": "카르다 고개"
+    },
+    "sides": {
+      "coalition": "■ 연합",
+      "veros": "▲ VPA"
+    },
+    "times": {
+      "day": "주간",
+      "dusk": "해질녘"
+    },
+    "deploy": {
+      "title": "배치",
+      "loading": "전장을 준비하는 중…",
+      "tickets": "연합 {c} : {v} VPA",
+      "elapsed": "경과 {t} / {limit}",
+      "spawn": "스폰",
+      "spawnBase": "본진 FARP (엔진 켠 채)",
+      "spawnBaseAir": "본진 상공 공중 투입",
+      "kit": "아파치 무장",
+      "wait": "출격까지 {s}초",
+      "go": "출격",
+      "quit": "경기 포기",
+      "points": "거점 {list}"
+    },
+    "kits": {
+      "antiArmor": "대전차 — 헬파이어 16",
+      "closeSupport": "근접지원 — 로켓 38 · 헬파이어 8",
+      "antiAir": "대공 — 로켓 19 · 헬파이어 4 · 스팅어 2"
+    },
+    "report": {
+      "win": "승리",
+      "loss": "패배",
+      "draw": "무승부",
+      "time": "시간이 다 됐습니다",
+      "score": "티켓 {own} : {enemy}",
+      "length": "경기 시간 {t}",
+      "kills": "내 처치 {n}",
+      "deaths": "내 사망 {n}",
+      "again": "다시 하기",
+      "setup": "전장 설정",
+      "title": "타이틀",
+      "ticketsWon": "적 티켓이 바닥났습니다",
+      "ticketsLost": "우리 티켓이 바닥났습니다"
     }
   }
 }

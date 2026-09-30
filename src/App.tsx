@@ -1,18 +1,23 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
 import { assets } from './assets/loader';
 import { BOOT_GROUP } from './assets/manifest';
 import { Credits } from './ui/screens/Credits';
 import { Loading } from './ui/screens/Loading';
 import { SettingsScreen } from './ui/screens/SettingsScreen';
 import { Title } from './ui/screens/Title';
+import { BattleSetup, DEFAULT_CHOICE, type BattleChoice } from './ui/battle/BattleSetup';
 import { UiState } from './ui/state';
 import { hasSave, loadSave, storeSave, withDeviceDefaults } from './save/save';
+
+const Battle = lazy(() => import('./ui/battle/Battle').then(m => ({ default: m.Battle })));
 
 export function App() {
   const [ui] = useState(() => new UiState());
   const screen = useSyncExternalStore(ui.subscribe, ui.getSnapshot);
   const [save, setSave] = useState(() => (hasSave() ? loadSave() : withDeviceDefaults(loadSave(), { mobile: window.matchMedia('(pointer: coarse)').matches || Math.min(window.screen.width, window.screen.height) < 600 })));
   useEffect(() => { storeSave(save); }, [save]);
+  const [choice, setChoice] = useState<BattleChoice>(DEFAULT_CHOICE);
+  const touch = window.matchMedia('(pointer: coarse)').matches;
   const [boot, setBoot] = useState(0);
   const [booted, setBooted] = useState(false);
 
@@ -32,10 +37,14 @@ export function App() {
 
   switch (screen.name) {
     case 'title':
-      return <Title onSettings={() => ui.go({ name: 'settings' })} onCredits={() => ui.go({ name: 'credits' })} />;
+      return <Title onBattle={() => ui.go({ name: 'battleSetup' })} onSettings={() => ui.go({ name: 'settings' })} onCredits={() => ui.go({ name: 'credits' })} />;
     case 'settings':
       return <SettingsScreen settings={save.settings} onChange={settings => setSave(prev => ({ ...prev, settings }))} onCredits={() => ui.go({ name: 'credits' })} onBack={() => ui.go({ name: 'title' })} />;
     case 'credits':
       return <Credits onBack={() => ui.go({ name: 'title' })} />;
+    case 'battleSetup':
+      return <BattleSetup choice={choice} settings={save.settings} onChoice={setChoice} onDifficulty={difficulty => setSave(prev => ({ ...prev, settings: { ...prev.settings, difficulty } }))} onDeploy={() => ui.go({ name: 'battle', map: choice.map, mode: choice.mode })} onBack={() => ui.go({ name: 'title' })} />;
+    case 'battle':
+      return <Suspense fallback={<Loading progress={1} />}><Battle choice={choice} touch={touch} settings={save.settings} onSettings={settings => setSave(prev => ({ ...prev, settings }))} onSetup={() => ui.go({ name: 'battleSetup' })} onTitle={() => ui.go({ name: 'title' })} /></Suspense>;
   }
 }
