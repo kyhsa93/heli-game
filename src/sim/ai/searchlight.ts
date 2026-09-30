@@ -32,7 +32,7 @@ const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 
 export function stepSearchlights(world: World, dt: number) {
   const night = world.conditions.time === 'night';
-  const h = world.player, lamp = new Vector3(), to = new Vector3(), dir = new Vector3();
+  const h = world.playerBody(), lamp = new Vector3(), to = new Vector3(), dir = new Vector3();
   for (const u of world.units) {
     if (!isSearchlight(u)) continue;
     const b = u.beam ??= { yaw: u.yaw, pitch: 25 * DEG, lost: TRACK_SECONDS, lit: false };

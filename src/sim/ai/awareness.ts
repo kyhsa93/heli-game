@@ -1,6 +1,5 @@
 import { Vector3 } from 'three';
 import { clamp } from '../../core/math';
-import { agl } from '../heli/state';
 import type { LosCache } from '../los';
 import type { Terrain } from '../terrain';
 import type { Unit } from '../units';
@@ -59,11 +58,11 @@ export function skylined(t: Terrain, eye: Vector3, target: Vector3, reach = 3000
 }
 
 export function visualRate(world: World, eye: Vector3, occlusion: number, cond: Conditions, range = visualRange(cond)) {
-  const h = world.player;
+  const h = world.playerBody();
   const dist = eye.distanceTo(h.pos);
   const distF = Math.pow(clamp(1 - dist / range, 0, 1), 1.5);
   if (distF <= 0) return 0;
-  const low = agl(h, world.terrain) <= LOW_AGL && Math.hypot(h.vel.x, h.vel.z) <= SLOW;
+  const low = h.agl <= LOW_AGL && Math.hypot(h.vel.x, h.vel.z) <= SLOW;
   let exposure = low ? LOW_EXPOSURE : 1;
   if (skylined(world.terrain, eye, h.pos)) exposure *= SKYLINE;
   const noise = dist <= NOISE_RANGE ? NOISE : 1;
@@ -73,7 +72,7 @@ export function visualRate(world: World, eye: Vector3, occlusion: number, cond: 
 function detect(world: World, u: Unit, by: 'visual' | 'radar') {
   const ai = u.ai;
   ai.awareness = 1;
-  ai.lastSeen = world.player.pos.clone();
+  ai.lastSeen = world.playerBody().pos.clone();
   ai.lastSeenAt = world.time;
   if (ai.detected) return;
   ai.detected = true;
@@ -99,7 +98,7 @@ function setRadar(world: World, u: Unit, mode: Unit['ai']['radar']) {
 }
 
 export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt = AI_TICK) {
-  const h = world.player;
+  const h = world.playerBody();
   if (!h.alive) return;
   const eye = new Vector3();
   for (const u of world.units) {
@@ -120,7 +119,7 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
         continue;
       }
       if (u.ai.radar === 'search') {
-        const p = cond.playerRadar || cued ? 1 : Math.min(1, (agl(h, world.terrain) < RADAR_CLUTTER_AGL ? RADAR_P_LOW : RADAR_P) * world.difficulty.detection);
+        const p = cond.playerRadar || cued ? 1 : Math.min(1, (h.agl < RADAR_CLUTTER_AGL ? RADAR_P_LOW : RADAR_P) * world.difficulty.detection);
         if (world.rng() < p) { setRadar(world, u, 'acquire'); u.ai.radarTimer = 0; detect(world, u, 'radar'); }
         else forget(world, u, dt);
       } else {

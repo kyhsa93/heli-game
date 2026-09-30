@@ -1,6 +1,5 @@
 import { Vector3 } from 'three';
 import { clamp } from '../../core/math';
-import { airspeed } from '../heli/state';
 import { hitsAir, type Unit, type UnitWeaponDef } from '../units';
 import type { World } from '../world';
 import { AI_TICK, eyeOf, SUSPECT } from './awareness';
@@ -26,7 +25,8 @@ export function directWeapons(u: Unit) {
 }
 
 export function hitChance(world: World, w: UnitWeaponDef, dist: number) {
-  const speed = airspeed(world.player, world.wind);
+  const v = world.playerBody().vel, wind = world.wind;
+  const speed = Math.hypot(v.x - wind.x, v.y - wind.y, v.z - wind.z);
   return clamp((w.accuracy ?? 0) * (1 - (dist / w.range) ** 2) * (speed >= FAST ? FAST_FACTOR : 1) * world.difficulty.enemyAccuracy, 0, 1);
 }
 
@@ -39,13 +39,13 @@ function inRange(u: Unit, dist: number) {
 }
 
 function sees(world: World, u: Unit, eye: Vector3) {
-  const p = world.player.pos;
+  const p = world.playerBody().pos;
   return u.def.detect === 'radar' ? world.los.radar(u.id, eye, p, world.time) : world.los.visual(u.id, eye, p, world.time).clear;
 }
 
 function nearestCover(world: World, u: Unit): Vector3 | null {
   let best: Vector3 | null = null, bestD = COVER_RANGE;
-  const threat = world.player.pos;
+  const threat = world.playerBody().pos;
   for (const t of world.terrain.trees) {
     const d = Math.hypot(t.x - u.pos.x, t.z - u.pos.z);
     if (d < bestD && Math.hypot(t.x - threat.x, t.z - threat.z) > Math.hypot(u.pos.x - threat.x, u.pos.z - threat.z) - 50) { bestD = d; best = new Vector3(t.x, 0, t.z); }
@@ -85,7 +85,7 @@ function fire(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
     while (u.ai.fireAcc >= 1) {
       u.ai.fireAcc -= 1;
       const hit = world.rng() < unitHitChance(world, u, w, range);
-      const target = world.player.pos.clone();
+      const target = world.playerBody().pos.clone();
       if (!hit) target.add(new Vector3(world.rng() - 0.5, world.rng() - 0.5, world.rng() - 0.5).multiplyScalar(30 + range * 0.02));
       const dir = target.sub(eye).normalize();
       world.emit({ t: 'fire', weapon: w.id, pos: eye.clone(), dir, owner: u.id, tracer: true });
@@ -114,7 +114,7 @@ function launchMissiles(world: World, u: Unit, dist: number, dt: number) {
 }
 
 export function stepBrain(world: World, u: Unit, dt = AI_TICK) {
-  const ai = u.ai, h = world.player;
+  const ai = u.ai, h = world.playerBody();
   ai.stateTimer += dt;
   if (ai.state !== 'retreat' && u.def.move && !u.def.move.air && u.hp < u.def.hp * RETREAT_HP && u.def.weapons.length >= 0) {
     enter(u, 'retreat');

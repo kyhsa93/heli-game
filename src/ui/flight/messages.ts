@@ -19,6 +19,7 @@ export function eventMessage(e: SimEvent): Omit<Message, 'life'> | null {
       return { text: t('msg.landed'), color: '#ffd166' };
     case 'refuel': return { text: t('msg.refuel'), color: '#4cc9f0' };
     case 'boundary': return { text: t('msg.boundary'), color: '#ef476f' };
+    case 'zone': return e.inside ? { text: t('msg.zoneIn'), color: '#06d6a0' } : { text: t('msg.zoneOut', { s: Math.ceil(e.seconds) }), color: '#ef476f' };
     case 'advice':
       return { text: t(`advice.${e.code}`, { fpm: Math.round(e.value ?? 0), max: 500 }), color: '#ffd166' };
     case 'objective':

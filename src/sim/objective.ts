@@ -12,4 +12,5 @@ export interface Objective {
   start(world: World): void;
   tick?(world: World, dt: number): void;
   onEvent(e: SimEvent, world: World): void;
+  readonly respawnDelay?: number;
 }

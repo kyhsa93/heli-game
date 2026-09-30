@@ -1,9 +1,10 @@
+import type { AvatarSpawn } from './avatar';
 import type { CrashReason } from './events';
 import type { Objective } from './objective';
 import type { TerrainOptions } from './terrain';
 import { World } from './world';
 
-export type Mode = 'brief' | 'play' | 'crashed' | 'over' | 'done';
+export type Mode = 'brief' | 'deploy' | 'play' | 'crashed' | 'over' | 'done';
 
 export interface Crash { reason: CrashReason; value?: number }
 
@@ -20,9 +21,11 @@ export class FlightSession {
   failure: string | null = null;
   private failTimer = 0;
   private doneTimer = 0;
+  frozen = false;
+  deployReadyAt = 0;
 
-  constructor(seed: number, readonly objective: Objective | null = null, terrain?: TerrainOptions) {
-    this.world = new World({ seed, terrain });
+  constructor(seed: number, readonly objective: Objective | null = null, terrain?: TerrainOptions, terrainSeed?: number) {
+    this.world = new World({ seed, terrain, terrainSeed });
     if (objective) this.world.events.onAny(e => objective.onEvent(e, this.world));
     this.world.events.on('objective', e => {
       if (e.state === 'done' && this.mode === 'play') { this.doneTimer = 1.5; }
@@ -32,6 +35,7 @@ export class FlightSession {
       this.crash = { reason: e.reason, value: e.value };
       this.mode = 'crashed';
       this.overTimer = 2.2;
+      this.deployReadyAt = this.world.time + (this.objective?.respawnDelay ?? 0);
       this.publish();
     });
   }
@@ -48,6 +52,10 @@ export class FlightSession {
     for (const fn of this.listeners) fn();
   }
 
+  get respawns() {
+    return this.objective?.respawnDelay !== undefined;
+  }
+
   start() {
     this.world.resetPlayer();
     this.world.clearCombat();
@@ -59,12 +67,31 @@ export class FlightSession {
     this.failure = null;
     this.crash = null;
     this.paused = false;
-    this.mode = 'play';
+    if (this.respawns) {
+      this.world.killAvatar();
+      this.frozen = true;
+      this.deployReadyAt = this.world.time;
+      this.mode = 'deploy';
+    } else this.mode = 'play';
     this.publish();
   }
 
+  deployIn() {
+    return this.frozen ? 0 : Math.max(0, this.deployReadyAt - this.world.time);
+  }
+
+  deploy(spawn: AvatarSpawn) {
+    if (this.mode !== 'deploy' || this.deployIn() > 0) return false;
+    this.world.spawnAvatar(spawn);
+    this.frozen = false;
+    this.crash = null;
+    this.mode = 'play';
+    this.publish();
+    return true;
+  }
+
   step(dt: number) {
-    if (this.paused) return;
+    if (this.paused || (this.mode === 'deploy' && this.frozen)) return;
     this.world.step(dt);
     if (this.mode === 'play') this.objective?.tick?.(this.world, dt);
     if (this.doneTimer > 0 && this.mode === 'play') {
@@ -77,7 +104,10 @@ export class FlightSession {
     }
     if (this.mode === 'crashed') {
       this.overTimer -= dt;
-      if (this.overTimer <= 0) { this.mode = 'over'; this.publish(); }
+      if (this.overTimer <= 0) {
+        if (this.respawns) { this.world.killAvatar(); this.mode = 'deploy'; } else this.mode = 'over';
+        this.publish();
+      }
     }
   }
 }

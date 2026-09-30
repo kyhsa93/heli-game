@@ -17,7 +17,7 @@ function hunting(world: World, u: Unit) {
 }
 
 function orbit(world: World, u: Unit, dt: number) {
-  const h = world.player, t = world.terrain;
+  const h = world.playerBody(), t = world.terrain;
   const dx = u.pos.x - h.pos.x, dz = u.pos.z - h.pos.z;
   const d = Math.hypot(dx, dz) || 1;
   const rx = dx / d, rz = dz / d;
@@ -53,6 +53,6 @@ export function stepAir(world: World, dt: number) {
   for (const u of world.units) {
     if (!isAir(u)) continue;
     if (!u.alive) fall(world, u, dt);
-    else if (world.player.alive && hunting(world, u)) orbit(world, u, dt);
+    else if (world.playerBody().alive && hunting(world, u)) orbit(world, u, dt);
   }
 }

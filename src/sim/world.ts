@@ -6,7 +6,8 @@ import { BASE_REFUEL_RATE, EYE, GEAR_Y } from './heli/airframe';
 import { autoHover, createHold, type Hold } from './heli/autohover';
 import { clampToArea, collide, stepFlight } from './heli/flight';
 import { createLoadout, grossWeight, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
-import { createHeli, toWorld, type Controls, type HeliState } from './heli/state';
+import { agl, createHeli, toWorld, updateQ, type Controls, type HeliState } from './heli/state';
+import type { Avatar, AvatarSpawn, PlayerBody } from './avatar';
 import { toggleEngine } from './heli/systems';
 import { blastShares, DAMAGED, hitSystem, randomHitPoint, ROTOR_FAIL_SECONDS, systemAt, type SystemId } from './heli/damage';
 import type { CrashReason } from './events';
@@ -36,6 +37,7 @@ import { createSeeker, launchStinger, seekerTarget, STINGER, stepSeeker, type Aa
 import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SALVO_INTERVAL } from './weapons/rockets';
 
 export const STEP = 1 / 120;
+export const PLAYER_RADIUS = 8;
 
 export const BATTLE_TICK = 0.1;
 export const BATTLE_SLOW_TICK = 1;
@@ -52,6 +54,8 @@ export class World {
   readonly rng: () => number;
   readonly terrain: Terrain;
   player!: HeliState;
+  avatar: Avatar = { kind: 'heli' };
+  private body: PlayerBody = { kind: 'heli', pos: new Vector3(), vel: new Vector3(), alive: false, agl: 0, heat: 1, radius: PLAYER_RADIUS };
   controls: Controls = { cyclicX: 0, cyclicY: 0, pedal: 0, collective: 0 };
   wind = new Vector3();
   target: NavTarget | null = null;
@@ -93,15 +97,44 @@ export class World {
   private atBoundary = false;
   private refuelNoted = false;
 
-  constructor(opts: { seed: number; terrain?: TerrainOptions }) {
+  constructor(opts: { seed: number; terrain?: TerrainOptions; terrainSeed?: number }) {
     this.rng = rng(opts.seed);
-    this.terrain = new Terrain(opts.seed, opts.terrain);
+    this.terrain = new Terrain(opts.terrainSeed ?? opts.seed, opts.terrain);
     this.los = new LosCache(this.terrain);
     this.events.on('playerHit', e => this.hitPlayer(e.by, e.damage));
     this.resetPlayer();
   }
 
   get pads() { return this.terrain.pads; }
+
+  playerBody(): PlayerBody {
+    const b = this.body, h = this.player;
+    b.kind = this.avatar.kind;
+    b.pos = h.pos;
+    b.vel = h.vel;
+    b.alive = this.avatar.kind === 'heli' && h.alive;
+    b.agl = agl(h, this.terrain);
+    return b;
+  }
+
+  spawnAvatar(s: AvatarSpawn) {
+    this.loadoutDef = s.kit;
+    this.resetPlayer(s.at === 'pad' ? s.pad : 0);
+    const h = this.player;
+    if (s.at === 'air') {
+      h.pos.set(s.x, this.terrain.surfaceAt(s.x, s.z) - GEAR_Y + s.agl, s.z);
+      h.yaw = -(s.headingDeg * Math.PI) / 180;
+      h.pitch = h.roll = 0;
+      updateQ(h);
+    }
+    if (s.at === 'air' || s.running) { h.engineOn = true; h.rpm = 1; h.landed = s.at === 'pad'; }
+    this.avatar = { kind: 'heli' };
+  }
+
+  killAvatar() {
+    this.avatar = { kind: 'dead' };
+    this.commands.fire = false;
+  }
 
   resetPlayer(padIndex = 0) {
     const pad = this.pads[padIndex];
@@ -301,8 +334,9 @@ export class World {
     else if (id === 'cockpit') this.killPlayer('crewKilled');
   }
 
-  private killPlayer(reason: CrashReason) {
+  killPlayer(reason: CrashReason) {
     const h = this.player;
+    if (!h.alive) return;
     h.alive = false; h.engineOn = false;
     this.emit({ t: 'crash', reason });
   }
@@ -370,7 +404,7 @@ export class World {
     this.wind.set(Math.cos(wa) * ws, 0, Math.sin(wa) * ws);
 
     const h = this.player;
-    if (this.active && h.alive) {
+    if (this.active && this.avatar.kind === 'heli' && h.alive) {
       this.updateWeight();
       this.stepRotorFailure(dt);
       if (this.hold && !h.landed) autoHover(h, this.hold, this, dt, this.controls);
