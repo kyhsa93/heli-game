@@ -9,7 +9,8 @@ export const EXPLOSION_MAX = 9000;
 
 export const SOUND_SPEED = 340;
 
-export type SampleId = 'gun_shot' | 'rocket_launch' | 'hellfire_launch' | 'hit_metal_0' | 'hit_metal_1' | 'hit_metal_2' | 'radio_squelch' | 'impact_metal' | 'impact_ground' | 'explosion_near' | 'explosion_fire';
+export type SampleId = 'gun_shot' | 'rocket_launch' | 'hellfire_launch' | 'hit_metal_0' | 'hit_metal_1' | 'hit_metal_2' | 'radio_squelch' | 'impact_metal' | 'impact_ground' | 'explosion_near' | 'explosion_fire'
+  | 'rifle_shot' | 'rifle_enemy' | 'mg_shot' | 'sniper_shot' | 'grenade_launch' | 'reload' | 'hit_marker' | 'footstep_0' | 'footstep_1' | 'impact_body';
 
 export interface ClipOptions { gain: number; length: number; rate?: number; delay?: number; lowpass?: number; highpass?: number }
 
@@ -36,6 +37,8 @@ export class SfxPlayer {
   }
 
   get activeVoices() { return this.voices; }
+
+  has(id: SampleId) { return !!this.samples[id]; }
 
   onEvent(e: SimEvent, listener: Vector3) {
     switch (e.t) {

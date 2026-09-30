@@ -35,3 +35,13 @@
 | audio/radio_squelch.mp3 | Radio Sign Off / Squelch | JovianSounds | https://freesound.org/people/JovianSounds/sounds/524205/ | CC0 | 공개 HQ 미리듣기에서 모노 48kbps, 끝 0.1초 페이드 | 2026-09-29 |
 | audio/impact_metal.mp3 | Impact Sounds — impactMetal_medium_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 정규화, 모노 48kbps | 2026-09-29 |
 | audio/impact_ground.mp3 | Impact Sounds — impactSoft_heavy_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 정규화, 모노 48kbps | 2026-09-29 |
+| audio/rifle_shot.mp3 | AR15 rifle shot | michorvath | https://freesound.org/people/michorvath/sounds/427596/ | CC0 | 공개 미리듣기에서 0.06–0.91초 구간, 0.4초 페이드아웃, 모노 64kbps. 플레이어 돌격소총 | 2026-09-30 |
+| audio/rifle_enemy.mp3 | AK47 Shot | LeMudCrab | https://freesound.org/people/LeMudCrab/sounds/163457/ | CC0 | 공개 미리듣기 전체(0.6초), 0.2초 페이드아웃, 모노 64kbps. 봇 소총 | 2026-09-30 |
+| audio/mg_shot.mp3 | Clean Machine Gun Burst | qubodup | https://freesound.org/people/qubodup/sounds/482122/ | CC0 | 공개 미리듣기에서 첫 발 0.12초만 잘라 단발로 반복 재생, 모노 64kbps. 봇 기관총 | 2026-09-30 |
+| audio/sniper_shot.mp3 | Sniper Shot in Field 2 (M2010 Enhanced Sniper Rifle ESR) | qubodup | https://freesound.org/people/qubodup/sounds/855607/ | CC0 | 공개 미리듣기 첫 1.2초, 0.5초 페이드아웃, 모노 64kbps. 봇 저격조 | 2026-09-30 |
+| audio/grenade_launch.mp3 | Grenade Launcher | LeMudCrab | https://freesound.org/people/LeMudCrab/sounds/163458/ | CC0 | 공개 미리듣기 전체(0.44초), 0.1초 페이드아웃, 모노 64kbps | 2026-09-30 |
+| audio/reload.mp3 | Assault Rifle Reload | qubodup | https://freesound.org/people/qubodup/sounds/815879/ | CC0 | 공개 미리듣기 첫 1.2초, 모노 64kbps | 2026-09-30 |
+| audio/hit_marker.mp3 | Hitmarker Sound Effect | User391915396 | https://freesound.org/people/User391915396/sounds/570335/ | CC0 | 공개 미리듣기 전체(0.19초), 모노 64kbps | 2026-09-30 |
+| audio/footstep_0.mp3 | Impact Sounds — footstep_grass_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 첫 0.3초, 0.1초 페이드아웃, OGG → 모노 64kbps MP3 | 2026-09-30 |
+| audio/footstep_1.mp3 | Impact Sounds — footstep_grass_002 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 첫 0.3초, 0.1초 페이드아웃, OGG → 모노 64kbps MP3 | 2026-09-30 |
+| audio/impact_body.mp3 | Impact Sounds — impactPunch_heavy_002 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 0.1초 페이드아웃, OGG → 모노 64kbps MP3. 플레이어 보병 피격 | 2026-09-30 |

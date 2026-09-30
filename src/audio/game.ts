@@ -36,6 +36,16 @@ export const AUDIO_ASSETS: Record<string, string> = {
   'audio.hit_metal_1': 'hit_metal_1',
   'audio.hit_metal_2': 'hit_metal_2',
   'audio.radio_squelch': 'radio_squelch',
+  'audio.rifle_shot': 'rifle_shot',
+  'audio.rifle_enemy': 'rifle_enemy',
+  'audio.mg_shot': 'mg_shot',
+  'audio.sniper_shot': 'sniper_shot',
+  'audio.grenade_launch': 'grenade_launch',
+  'audio.reload': 'reload',
+  'audio.hit_marker': 'hit_marker',
+  'audio.footstep_0': 'footstep_0',
+  'audio.footstep_1': 'footstep_1',
+  'audio.impact_body': 'impact_body',
 };
 
 export const VOICE_DUCK = 1.6;
@@ -67,7 +77,7 @@ export class GameAudio {
     }));
     if (this.buffers.rotor_interior_loop) this.rotor.setRotorLoop(this.buffers.rotor_interior_loop);
     const s: Partial<Record<SampleId, AudioBuffer>> = {};
-    for (const k of ['gun_shot', 'rocket_launch', 'hellfire_launch', 'hit_metal_0', 'hit_metal_1', 'hit_metal_2', 'radio_squelch', 'impact_metal', 'impact_ground', 'explosion_near', 'explosion_fire'] as SampleId[]) if (this.buffers[k]) s[k] = this.buffers[k];
+    for (const k of ['gun_shot', 'rocket_launch', 'hellfire_launch', 'hit_metal_0', 'hit_metal_1', 'hit_metal_2', 'radio_squelch', 'impact_metal', 'impact_ground', 'explosion_near', 'explosion_fire', 'rifle_shot', 'rifle_enemy', 'mg_shot', 'sniper_shot', 'grenade_launch', 'reload', 'hit_marker', 'footstep_0', 'footstep_1', 'impact_body'] as SampleId[]) if (this.buffers[k]) s[k] = this.buffers[k];
     this.sfx.setSamples(s);
   }
 

@@ -106,4 +106,28 @@ describe('infantry sounds from reworked clips (B2-14)', () => {
     expect(played().length).toBeGreaterThanOrEqual(4);
     expect(played().every(id => id === 'noise')).toBe(true);
   });
+
+  it('prefers the adopted recordings over the reworked clips when they loaded', () => {
+    const c = fakeCtx();
+    const tag = (id: string) => Object.assign(c.createBuffer(1, 100, 22050), { id }) as unknown as AudioBuffer;
+    const ids: SampleId[] = ['gun_shot', 'rocket_launch', 'impact_ground', 'impact_metal', 'hit_metal_2', 'rifle_shot', 'rifle_enemy', 'mg_shot', 'sniper_shot', 'grenade_launch', 'reload', 'hit_marker', 'footstep_0', 'footstep_1', 'impact_body'];
+    const sfx = new SfxPlayer(asCtx(c), c.destination as unknown as AudioNode, Object.fromEntries(ids.map(id => [id, tag(id)])), () => 0.5);
+    const inf = new InfantryAudio(sfx, () => c.currentTime, () => 0.5);
+    const played = () => c.started.map(s => (s.buffer as { id: string }).id);
+    inf.onEvent(fire('rifle', 0), new Vector3(), true);
+    inf.onEvent(fire('grenade', 0), new Vector3(), true);
+    inf.onEvent(fire('g_rifle', 5, 100), new Vector3(), true);
+    inf.onEvent(fire('g_lmg', 6, 100), new Vector3(), true);
+    c.currentTime += 0.1;
+    inf.onEvent(fire('g_sniper', 7, 300), new Vector3(), true);
+    inf.onEvent({ t: 'playerHit', by: 5, weapon: 'g_rifle', damage: 4 }, new Vector3(), true);
+    inf.onEvent({ t: 'memberHit', unit: 5, killed: true, byPlayer: true }, new Vector3(), true);
+    expect(played()).toEqual(['rifle_shot', 'grenade_launch', 'rifle_enemy', 'sniper_shot', 'impact_body', 'hit_marker']);
+    c.started.length = 0;
+    const s = { speed: 0, stance: 'stand' as const, onGround: true, reloading: false };
+    walk(c, inf, { ...s, reloading: true }, 0.2);
+    walk(c, inf, s, 0.2);
+    walk(c, inf, { ...s, speed: 3 }, 2);
+    expect(played()).toEqual(['reload', 'footstep_0', 'footstep_1', 'footstep_0', 'footstep_1']);
+  });
 });
