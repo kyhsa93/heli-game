@@ -8,6 +8,7 @@ import { clampToArea, collide, stepFlight } from './heli/flight';
 import { createLoadout, grossWeight, hoverCollective, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
 import { agl, createHeli, toWorld, updateQ, type Controls, type HeliState } from './heli/state';
 import type { Avatar, AvatarSpawn, PlayerBody } from './avatar';
+import type { Obstacle } from './obstacles';
 import { createSoldier, createSoldierCommands, SOLDIER_RADIUS, type SoldierCommands, type SoldierState, type Stance } from './infantry/soldier';
 import { createMotion, setStance, stepSoldier, type SoldierMotion } from './infantry/movement';
 import { toggleEngine } from './heli/systems';
@@ -93,6 +94,7 @@ export class World {
   readonly los: LosCache;
   private aiClock = 0;
   battleHooks: BattleHooks | null = null;
+  obstacles: Obstacle[] = [];
   retireAfter: number | null = null;
   retired: { id: number; defId: string; side: Side; diedAt: number }[] = [];
   private retireClock = 0;
@@ -162,7 +164,7 @@ export class World {
   }
 
   private stepSoldier(s: SoldierState, dt: number) {
-    const out = stepSoldier(s, this.soldierCommands, this.soldierMotion, this.terrain, this.units, dt);
+    const out = stepSoldier(s, this.soldierCommands, this.soldierMotion, this.terrain, this.units, dt, this.obstacles);
     if (out?.t === 'runOver') this.killPlayer('killed');
     else if (out?.t === 'fall') {
       s.hp = Math.max(0, s.hp - out.damage);

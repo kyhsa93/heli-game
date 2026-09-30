@@ -30,6 +30,8 @@ export interface BattleMapDef {
 }
 
 export const MAP_BYTES = 40 * 1024;
+export const MIN_PROPS = 10;
+export const PROP_MARGIN = 20;
 export const BASE_SEPARATION = 9000;
 export const BASE_TO_POINT: [number, number] = [3000, 3500];
 export const POINT_SPACING: [number, number] = [1200, 1900];
@@ -251,6 +253,12 @@ export function checkPrinciples(def: BattleMapDef, terrain: Terrain, mode: ModeI
       const a = points[i], b = points[j], d = dist(a.position, b.position);
       if (d < POINT_SPACING[0]) fail(4, `${a.id}-${b.id} only ${d.toFixed(0)} m apart`);
       else if (d <= POINT_SPACING[1] && !sightBlocked(terrain, a.position, b.position)) fail(4, `${a.id}-${b.id} see each other`);
+    }
+  }
+  if (want(5)) {
+    for (const p of points) {
+      const n = p.props.filter(pr => dist(pr.position, p.position) <= p.radius + PROP_MARGIN).length;
+      if (n < MIN_PROPS) fail(5, `${p.id} has ${n} cover props`);
     }
   }
   if (want(6)) {

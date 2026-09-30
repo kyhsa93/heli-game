@@ -13,7 +13,8 @@ import { conquestRules, type ConquestRules } from './modes';
 import { buildRoster } from './roster';
 import { Spawner } from './spawner';
 import { PlayerSpotting } from './spotting';
-import { insidePolygon, modeZone, type BattleMapDef, type BattleSide } from './schema';
+import { mapObstacles } from './props';
+import { insidePolygon, modePoints, modeZone, type BattleMapDef, type BattleSide } from './schema';
 import { battleTerrainOptions } from './terrain';
 
 export const AIR_SPAWN_AGL = 60;
@@ -48,6 +49,8 @@ export class BattleRuntime implements Objective {
   start(world: World) {
     world.playerSide = this.opts.side;
     world.retireAfter = WRECK_SECONDS;
+    world.obstacles = mapObstacles(this.map, world.terrain, modePoints(this.map, this.mode).map(p => p.id));
+    world.los.obstacles = world.obstacles;
     this.conquest = new Conquest(this.map, this.mode, this.rules);
     const roster = (side: BattleSide) => buildRoster({ scale: this.rules.forces, side, playerSide: this.opts.side, difficulty: world.difficulty.level });
     this.spawner = new Spawner(this.map, { coalition: roster('coalition'), veros: roster('veros') }, this.conquest, this.rules.botWaveSec);

@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { t } from '../../../content/strings';
 import { Flags } from '../../../render/battle/flags';
+import { BattleProps, type BattlePropKind } from '../../../render/battle/props';
+import { assets } from '../../../assets/loader';
+import { FARP_GROUP } from '../../../assets/manifest';
 import type { FlightRenderer } from '../../../render/renderer';
 import type { SimEvent } from '../../../sim/events';
 import type { FlightSession } from '../../../sim/session';
@@ -16,7 +19,7 @@ interface Runtime {
   conquest: { points: Point[]; tickets: Record<Side, number>; elapsed: number };
   rules: { timeLimitSec: number };
   spotting: { markers(world: FlightSession['world']): Unit[] };
-  map: { bases: { side: Side; position: [number, number] }[] };
+  map: { bases: { side: Side; position: [number, number] }[]; points: { id: string; props: { kind: string }[] }[] };
 }
 
 export const FEED_LINES = 4;
@@ -73,7 +76,18 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
     const flags = new Flags(runtime.conquest.points, ground);
     renderer.scene.scene.add(flags.group);
     flagsRef.current = flags;
-    return () => { flags.dispose(); flagsRef.current = null; };
+    const ids = new Set(runtime.conquest.points.map(p => p.id));
+    const kinds = runtime.map.points.filter(p => ids.has(p.id)).flatMap(p => p.props.map(pr => pr.kind as BattlePropKind));
+    const props = new BattleProps(world.obstacles.map((box, i) => ({ kind: kinds[i] ?? 'wall', box })));
+    renderer.scene.scene.add(props.group);
+    let alive = true;
+    void assets.loadGroup(FARP_GROUP).then(report => {
+      if (!alive) return;
+      const models: Record<string, THREE.Object3D> = {};
+      for (const id of report.loaded) { const g = assets.get<{ scene: THREE.Object3D }>(id); if (g) models[id.replace('model.prop_', '')] = g.scene; }
+      props.setModels(models);
+    });
+    return () => { alive = false; flags.dispose(); props.dispose(); flagsRef.current = null; };
   }, [renderer, runtime, world]);
 
   const shade = useRef<HTMLCanvasElement | null>(null);

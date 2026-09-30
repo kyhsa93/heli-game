@@ -91,7 +91,7 @@ describe('soldier movement (wiki 12.3)', () => {
     const w = harekWorld();
     const t = w.terrain;
     let shallow: { x: number; z: number } | null = null, deep: { x: number; z: number } | null = null;
-    for (let x = 1500; x < 3500 && (!shallow || !deep); x += 5) for (let z = 1100; z < 1300; z += 2) {
+    for (let x = 1500; x < 3500 && (!shallow || !deep); x += 5) for (let z = 1100; z < 1300; z += 0.25) {
       const d = waterDepth(t, x, z);
       if (!shallow && d > 0.2 && d < 1) shallow = { x, z };
       if (!deep && d > 2) deep = { x, z };

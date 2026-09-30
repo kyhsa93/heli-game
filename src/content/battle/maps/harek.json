@@ -39,7 +39,8 @@
             1000
           ]
         ],
-        "width": 30
+        "width": 30,
+        "bank": 450
       },
       {
         "kind": "base",
@@ -139,7 +140,8 @@
             -1000
           ]
         ],
-        "width": 30
+        "width": 30,
+        "bank": 450
       },
       {
         "kind": "village",
@@ -501,7 +503,104 @@
       ],
       "radius": 80,
       "value": 1,
-      "props": []
+      "props": [
+        {
+          "kind": "sandbags",
+          "position": [
+            -1000,
+            1344
+          ],
+          "yawDeg": 0
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -961.9,
+            1322
+          ],
+          "yawDeg": 60
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -961.9,
+            1278
+          ],
+          "yawDeg": 120
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -988.7,
+            1257.5
+          ],
+          "yawDeg": 165
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -1038.1,
+            1278
+          ],
+          "yawDeg": -120
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -1031.2,
+            1331.1
+          ],
+          "yawDeg": -45
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -990.4,
+            1317.6
+          ],
+          "yawDeg": 29
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -999.5,
+            1280
+          ],
+          "yawDeg": 178
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -1020,
+            1299.5
+          ],
+          "yawDeg": -91
+        },
+        {
+          "kind": "wall",
+          "position": [
+            -945.1,
+            1340.1
+          ],
+          "yawDeg": 54
+        },
+        {
+          "kind": "wall",
+          "position": [
+            -1063.4,
+            1275.4
+          ],
+          "yawDeg": -111
+        },
+        {
+          "kind": "barracks",
+          "position": [
+            -958.3,
+            1220.2
+          ],
+          "yawDeg": 152
+        }
+      ]
     },
     {
       "id": "B",
@@ -512,7 +611,104 @@
       ],
       "radius": 50,
       "value": 1.5,
-      "props": [],
+      "props": [
+        {
+          "kind": "sandbags",
+          "position": [
+            907.1,
+            1176.6
+          ],
+          "yawDeg": 15
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            921.4,
+            1186.7
+          ],
+          "yawDeg": 30
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            907.3,
+            1123.5
+          ],
+          "yawDeg": 165
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            892.9,
+            1123.4
+          ],
+          "yawDeg": -165
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            878.6,
+            1113.3
+          ],
+          "yawDeg": -150
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            892.7,
+            1176.5
+          ],
+          "yawDeg": -15
+        },
+        {
+          "kind": "crates",
+          "position": [
+            910.1,
+            1191.3
+          ],
+          "yawDeg": 14
+        },
+        {
+          "kind": "crates",
+          "position": [
+            922.1,
+            1113.7
+          ],
+          "yawDeg": 149
+        },
+        {
+          "kind": "crates",
+          "position": [
+            877.6,
+            1186.1
+          ],
+          "yawDeg": -32
+        },
+        {
+          "kind": "wall",
+          "position": [
+            915.8,
+            1110.6
+          ],
+          "yawDeg": 158
+        },
+        {
+          "kind": "wall",
+          "position": [
+            884.2,
+            1189.4
+          ],
+          "yawDeg": -22
+        },
+        {
+          "kind": "barracks",
+          "position": [
+            927.8,
+            1096.8
+          ],
+          "yawDeg": 152
+        }
+      ],
       "asset": "farp"
     },
     {
@@ -524,7 +720,104 @@
       ],
       "radius": 50,
       "value": 1,
-      "props": []
+      "props": [
+        {
+          "kind": "sandbags",
+          "position": [
+            -1450,
+            -22.5
+          ],
+          "yawDeg": 0
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -1426.2,
+            -36.2
+          ],
+          "yawDeg": 60
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -1426.2,
+            -63.7
+          ],
+          "yawDeg": 120
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -1450,
+            -77.5
+          ],
+          "yawDeg": 180
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -1473.8,
+            -63.8
+          ],
+          "yawDeg": -120
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -1473.8,
+            -36.2
+          ],
+          "yawDeg": -60
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -1444,
+            -39
+          ],
+          "yawDeg": 29
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -1449.7,
+            -62.5
+          ],
+          "yawDeg": 178
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -1462.5,
+            -50.3
+          ],
+          "yawDeg": -91
+        },
+        {
+          "kind": "wall",
+          "position": [
+            -1410.4,
+            -34.6
+          ],
+          "yawDeg": 69
+        },
+        {
+          "kind": "wall",
+          "position": [
+            -1489.6,
+            -65.4
+          ],
+          "yawDeg": -111
+        },
+        {
+          "kind": "barracks",
+          "position": [
+            -1409.5,
+            -94.2
+          ],
+          "yawDeg": 138
+        }
+      ]
     },
     {
       "id": "D",
@@ -535,7 +828,104 @@
       ],
       "radius": 50,
       "value": 1.2,
-      "props": [],
+      "props": [
+        {
+          "kind": "sandbags",
+          "position": [
+            0,
+            27.5
+          ],
+          "yawDeg": 0
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            23.8,
+            13.8
+          ],
+          "yawDeg": 60
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            23.8,
+            -13.7
+          ],
+          "yawDeg": 120
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            0,
+            -27.5
+          ],
+          "yawDeg": 180
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -23.8,
+            -13.8
+          ],
+          "yawDeg": -120
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -23.8,
+            13.8
+          ],
+          "yawDeg": -60
+        },
+        {
+          "kind": "crates",
+          "position": [
+            3,
+            12.1
+          ],
+          "yawDeg": 14
+        },
+        {
+          "kind": "crates",
+          "position": [
+            0.3,
+            -12.5
+          ],
+          "yawDeg": 178
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -26.7,
+            6.4
+          ],
+          "yawDeg": -76
+        },
+        {
+          "kind": "wall",
+          "position": [
+            39.6,
+            15.4
+          ],
+          "yawDeg": 69
+        },
+        {
+          "kind": "wall",
+          "position": [
+            -39.6,
+            -15.4
+          ],
+          "yawDeg": -111
+        },
+        {
+          "kind": "barracks",
+          "position": [
+            27.8,
+            -53.2
+          ],
+          "yawDeg": 152
+        }
+      ],
       "asset": "radar"
     },
     {
@@ -547,7 +937,104 @@
       ],
       "radius": 50,
       "value": 1,
-      "props": []
+      "props": [
+        {
+          "kind": "sandbags",
+          "position": [
+            1450,
+            77.5
+          ],
+          "yawDeg": 0
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            1473.8,
+            63.8
+          ],
+          "yawDeg": 60
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            1473.8,
+            36.3
+          ],
+          "yawDeg": 120
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            1450,
+            22.5
+          ],
+          "yawDeg": 180
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            1426.2,
+            36.2
+          ],
+          "yawDeg": -120
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            1426.2,
+            63.8
+          ],
+          "yawDeg": -60
+        },
+        {
+          "kind": "crates",
+          "position": [
+            1456,
+            61
+          ],
+          "yawDeg": 29
+        },
+        {
+          "kind": "crates",
+          "position": [
+            1456.5,
+            39.3
+          ],
+          "yawDeg": 149
+        },
+        {
+          "kind": "crates",
+          "position": [
+            1439,
+            56
+          ],
+          "yawDeg": -62
+        },
+        {
+          "kind": "wall",
+          "position": [
+            1489.6,
+            65.4
+          ],
+          "yawDeg": 69
+        },
+        {
+          "kind": "wall",
+          "position": [
+            1410.4,
+            34.6
+          ],
+          "yawDeg": -111
+        },
+        {
+          "kind": "barracks",
+          "position": [
+            1507.2,
+            31.7
+          ],
+          "yawDeg": 108
+        }
+      ]
     },
     {
       "id": "F",
@@ -558,7 +1045,104 @@
       ],
       "radius": 50,
       "value": 1.5,
-      "props": [],
+      "props": [
+        {
+          "kind": "sandbags",
+          "position": [
+            -892.9,
+            -1123.4
+          ],
+          "yawDeg": 15
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -878.6,
+            -1113.3
+          ],
+          "yawDeg": 30
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -892.7,
+            -1176.5
+          ],
+          "yawDeg": 165
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -907.1,
+            -1176.6
+          ],
+          "yawDeg": -165
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -921.4,
+            -1186.7
+          ],
+          "yawDeg": -150
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            -907.3,
+            -1123.5
+          ],
+          "yawDeg": -15
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -889.9,
+            -1108.7
+          ],
+          "yawDeg": 14
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -877.9,
+            -1186.3
+          ],
+          "yawDeg": 149
+        },
+        {
+          "kind": "crates",
+          "position": [
+            -922.4,
+            -1113.9
+          ],
+          "yawDeg": -32
+        },
+        {
+          "kind": "wall",
+          "position": [
+            -884.2,
+            -1189.4
+          ],
+          "yawDeg": 158
+        },
+        {
+          "kind": "wall",
+          "position": [
+            -915.8,
+            -1110.6
+          ],
+          "yawDeg": -22
+        },
+        {
+          "kind": "barracks",
+          "position": [
+            -872.2,
+            -1203.2
+          ],
+          "yawDeg": 152
+        }
+      ],
       "asset": "farp"
     },
     {
@@ -570,7 +1154,104 @@
       ],
       "radius": 80,
       "value": 1,
-      "props": []
+      "props": [
+        {
+          "kind": "sandbags",
+          "position": [
+            988.7,
+            -1257.5
+          ],
+          "yawDeg": -15
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            1038.1,
+            -1278
+          ],
+          "yawDeg": 60
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            1031.2,
+            -1331.1
+          ],
+          "yawDeg": 135
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            1000,
+            -1344
+          ],
+          "yawDeg": 180
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            961.9,
+            -1322
+          ],
+          "yawDeg": -120
+        },
+        {
+          "kind": "sandbags",
+          "position": [
+            961.9,
+            -1278
+          ],
+          "yawDeg": -60
+        },
+        {
+          "kind": "crates",
+          "position": [
+            1009.6,
+            -1282.4
+          ],
+          "yawDeg": 29
+        },
+        {
+          "kind": "crates",
+          "position": [
+            1014.4,
+            -1313.8
+          ],
+          "yawDeg": 134
+        },
+        {
+          "kind": "crates",
+          "position": [
+            980,
+            -1300.5
+          ],
+          "yawDeg": -91
+        },
+        {
+          "kind": "wall",
+          "position": [
+            1063.4,
+            -1275.4
+          ],
+          "yawDeg": 69
+        },
+        {
+          "kind": "wall",
+          "position": [
+            945.1,
+            -1340.1
+          ],
+          "yawDeg": -126
+        },
+        {
+          "kind": "barracks",
+          "position": [
+            1060.8,
+            -1366.4
+          ],
+          "yawDeg": 138
+        }
+      ]
     }
   ],
   "waypoints": [

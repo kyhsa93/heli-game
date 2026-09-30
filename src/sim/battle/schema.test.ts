@@ -5,7 +5,7 @@ import { battleTerrain } from './terrain';
 
 const harek = JSON.parse(harekRaw) as BattleMapDef;
 const clone = () => structuredClone(harek);
-const TESTED = [1, 2, 3, 4, 6, 7, 9, 11, 13];
+const TESTED = [1, 2, 3, 4, 5, 6, 7, 9, 11, 13];
 
 describe('battle map schema (wiki 9.8)', () => {
   it('accepts the Harek valley map', () => {

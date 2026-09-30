@@ -10,6 +10,7 @@ export const ROAD_FLAT = ROAD_HALF_WIDTH + CELL * 1.5;
 export const RIVER_BED = -3;
 export const RIVER_BANK = 45;
 export const SEAM = 300;
+export const BRIDGE_APPROACH: [number, number] = [12, 70];
 
 export function seamWeight(z: number) {
   return smooth(clamp((z + SEAM) / (2 * SEAM), 0, 1));
@@ -23,7 +24,7 @@ export type TerrainFeature =
   | { kind: 'flatten'; center: Vec2; radius: number }
   | { kind: 'forest'; center: Vec2; radius: number; density?: number }
   | { kind: 'bridge'; from: Vec2; to: Vec2 }
-  | { kind: 'river'; path: Vec2[]; width: number };
+  | { kind: 'river'; path: Vec2[]; width: number; bank?: number };
 
 export interface TerrainOptions {
   size?: number;
@@ -114,7 +115,7 @@ export class Terrain {
     }
 
     if (sym) this.mirrorHeights();
-    for (const f of opts.features ?? []) if (f.kind === 'river') this.carveRiver(f.path, f.width);
+    for (const f of opts.features ?? []) if (f.kind === 'river') this.carveRiver(f.path, f.width, f.bank);
     for (const f of opts.features ?? []) {
       if (f.kind === 'flatten' || f.kind === 'base' || f.kind === 'village') {
         const y = Math.max(4, this.meanHeight(f.center[0], f.center[1], f.radius * 0.5));
@@ -122,6 +123,7 @@ export class Terrain {
       } else if (f.kind === 'bridge') {
         const y = Math.max(6, (this.heightAt(f.from[0], f.from[1]) + this.heightAt(f.to[0], f.to[1])) / 2);
         this.bridges.push({ from: f.from, to: f.to, y });
+        for (const end of [f.from, f.to]) this.flatten(end[0], end[1], y, BRIDGE_APPROACH[0], BRIDGE_APPROACH[1]);
       }
     }
     for (const road of this.roads) this.flattenRoad(road);
@@ -294,8 +296,8 @@ export class Terrain {
     }
   }
 
-  private carveRiver(path: readonly Vec2[], width: number) {
-    const N = this.n, HALF = this.half, inner = width / 2, outer = inner + RIVER_BANK;
+  private carveRiver(path: readonly Vec2[], width: number, bank = RIVER_BANK) {
+    const N = this.n, HALF = this.half, inner = width / 2, outer = inner + bank;
     for (let k = 0; k + 1 < path.length; k++) {
       const [ax, az] = path[k], [bx, bz] = path[k + 1];
       const dx = bx - ax, dz = bz - az, len2 = dx * dx + dz * dz;
@@ -307,7 +309,7 @@ export class Terrain {
           const t = len2 > 0 ? clamp(((x - ax) * dx + (z - az) * dz) / len2, 0, 1) : 0;
           const d = Math.hypot(x - (ax + dx * t), z - (az + dz * t));
           if (d >= outer) continue;
-          const w = d <= inner ? 1 : 1 - smooth((d - inner) / (outer - inner));
+          const w = d <= inner ? 1 : 1 - (d - inner) / (outer - inner);
           const idx = j * (N + 1) + i;
           this.heights[idx] = Math.min(this.heights[idx], this.heights[idx] * (1 - w) + RIVER_BED * w);
         }

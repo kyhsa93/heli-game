@@ -2,6 +2,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 import { checkPrinciples, modePoints, validateBattleMap, type BattleMapDef, type ModeId } from '../src/sim/battle/schema';
 import { battleTerrain } from '../src/sim/battle/terrain';
+import { PROP_BOX } from '../src/sim/battle/props';
+import { badGround, MIN_PROPS, type PropKind } from '../src/sim/battle/schema';
 import type { Terrain } from '../src/sim/terrain';
 
 const SEARCHED = [1, 4, 7, 9, 13];
@@ -39,6 +41,18 @@ if (process.argv.includes('--search')) {
     writeFileSync(file, JSON.stringify(def, null, 2) + '\n');
     console.log(`wrote seed ${best!.seed} to ${file}`);
   }
+}
+
+if (process.argv.includes('--props')) {
+  const t = battleTerrain(def);
+  let added = 0;
+  for (const p of def.points) {
+    if (p.props.length >= MIN_PROPS) continue;
+    p.props = layoutProps(t, p.position, p.radius);
+    added += p.props.length;
+  }
+  writeFileSync(file, JSON.stringify(def, null, 2) + '\n');
+  console.log(`placed ${added} props in ${file}`);
 }
 
 const { t, fails } = evaluate(def.environment.seed);
@@ -100,4 +114,34 @@ function encodePng(w: number, h: number, rgb: Uint8Array) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 2;
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
+
+function layoutProps(t: Terrain, [cx, cz]: [number, number], R: number) {
+  const plan: [PropKind, number, number][] = [
+    ...[0, 1, 2, 3, 4, 5].map(i => ['sandbags', R * 0.55, (i / 6) * Math.PI * 2] as [PropKind, number, number]),
+    ...[0, 1, 2].map(i => ['crates', R * 0.25, (i / 3) * Math.PI * 2 + 0.5] as [PropKind, number, number]),
+    ...[0, 1].map(i => ['wall', R * 0.85, i * Math.PI + 1.2] as [PropKind, number, number]),
+    ['barracks', R + 10, 2.4],
+  ];
+  const placed: { kind: PropKind; position: [number, number]; yawDeg: number }[] = [];
+  for (const [kind, r, a0] of plan) {
+    const b = PROP_BOX[kind];
+    for (let k = 0; k < 120; k++) {
+      const ring = Math.floor(k / 24), step = k % 24;
+      const a = a0 + (step % 2 ? 1 : -1) * Math.ceil(step / 2) * 0.26;
+      const rr = Math.min(R + 18, r + ring * R * 0.3);
+      const x = cx + Math.sin(a) * rr, z = cz + Math.cos(a) * rr;
+      const tx = Math.cos(a), tz = -Math.sin(a);
+      const yaw = Math.atan2(-tz, tx);
+      const half = Math.max(b.w, b.d) / 2;
+      const corners: [number, number][] = [[x, z], [x + tx * b.w / 2, z + tz * b.w / 2], [x - tx * b.w / 2, z - tz * b.w / 2]];
+      if (corners.some(c => badGround(t, c) !== null)) continue;
+      if (t.nearRoad(x, z, half + 4)) continue;
+      if (t.buildings.some(o => Math.hypot(o.x - x, o.z - z) < half + Math.max(o.w, o.d) / 2 + 2)) continue;
+      if (placed.some(o => Math.hypot(o.position[0] - x, o.position[1] - z) < half + Math.max(PROP_BOX[o.kind].w, PROP_BOX[o.kind].d) / 2 + 1)) continue;
+      placed.push({ kind, position: [Math.round(x * 10) / 10, Math.round(z * 10) / 10], yawDeg: Math.round((yaw * 180) / Math.PI) });
+      break;
+    }
+  }
+  return placed;
 }

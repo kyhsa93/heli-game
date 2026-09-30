@@ -1,4 +1,5 @@
 import type { Vector3 } from 'three';
+import { segmentBlocked, type Obstacle } from './obstacles';
 import type { Terrain, Tree } from './terrain';
 
 export const LOS_STEP = 20;
@@ -69,9 +70,20 @@ export function pairKey(observer: number, target: number) {
   return (observer + 1) * LOS_PAIR_BASE + target;
 }
 
+export function obstacleBlocks(obstacles: readonly Obstacle[], a: Vector3, b: Vector3) {
+  const minX = Math.min(a.x, b.x), maxX = Math.max(a.x, b.x), minZ = Math.min(a.z, b.z), maxZ = Math.max(a.z, b.z);
+  for (const o of obstacles) {
+    const r = Math.max(o.w, o.d);
+    if (o.x + r < minX || o.x - r > maxX || o.z + r < minZ || o.z - r > maxZ) continue;
+    if (segmentBlocked(o, a, b)) return true;
+  }
+  return false;
+}
+
 export class LosCache {
   private entries = new Map<number, Entry>();
   computed = 0;
+  obstacles: readonly Obstacle[] = [];
 
   constructor(private terrain: Terrain) {}
 
@@ -80,8 +92,9 @@ export class LosCache {
     const moved = (x: number, y: number, z: number, p: Vector3) => Math.hypot(p.x - x, p.y - y, p.z - z) >= LOS_CACHE_MOVE;
     if (e && time - e.time < LOS_CACHE_SECONDS && !moved(e.tx, e.ty, e.tz, target) && !moved(e.ox, e.oy, e.oz, observer)) return e;
     this.computed++;
+    const blocked = this.obstacles.length > 0 && obstacleBlocks(this.obstacles, observer, target);
     const fresh: Entry = {
-      sight: visualSight(this.terrain, observer, target), radar: radarSight(this.terrain, observer, target),
+      sight: blocked ? { clear: false, occlusion: 1 } : visualSight(this.terrain, observer, target), radar: !blocked && radarSight(this.terrain, observer, target),
       ox: observer.x, oy: observer.y, oz: observer.z, tx: target.x, ty: target.y, tz: target.z, time,
     };
     this.entries.set(key, fresh);
