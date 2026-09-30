@@ -109,6 +109,7 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
           const s = project(p.x, world.terrain.surfaceAt(p.x, p.z) + 16, p.z);
           const edge = 48;
           let x = s.x, y = s.y;
+          if (!s.front && touch) continue;
           if (!s.front) { x = w - x; y = h - edge; }
           x = Math.min(w - edge, Math.max(edge, x)); y = Math.min(h - edge, Math.max(edge, y));
           const minimapRight = (touch ? 0 : MINIMAP.desktop + 16) + 50;
