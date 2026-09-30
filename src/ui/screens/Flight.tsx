@@ -106,8 +106,8 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
       case 'toggleHud': setHud(v => !v); break;
       case 'help': case 'pause': if (session.mode === 'play') setHelp(v => !v); break;
       case 'mute': if (audioRef.current) setMuted(audioRef.current.toggleMute()); break;
-      case 'crouch': if (sim.soldier) sim.soldier.stance = sim.soldier.stance === 'crouch' ? 'stand' : 'crouch'; break;
-      case 'prone': if (sim.soldier) sim.soldier.stance = sim.soldier.stance === 'prone' ? 'stand' : 'prone'; break;
+      case 'crouch': if (sim.soldier) sim.setStance(sim.soldier.stance === 'crouch' ? 'stand' : 'crouch'); break;
+      case 'prone': if (sim.soldier) sim.setStance(sim.soldier.stance === 'prone' ? 'stand' : 'prone'); break;
       default: break;
     }
   };
