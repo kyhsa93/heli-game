@@ -37,18 +37,20 @@ export function hitDamage(w: UnitWeaponDef, target: Unit) {
 
 const eye = new Vector3(), at = new Vector3(), dir = new Vector3();
 
-export function stepCombat(world: World, dt: number) {
-  for (const u of world.units) {
+export function stepCombat(world: World, dt: number, lethality = 1) {
+  const list = world.units, n = list.length, back = (Math.round(world.time * 10) & 1) === 1;
+  for (let k = 0; k < n; k++) {
+    const u = list[back ? n - 1 - k : k];
     const b = u.battle;
     if (!u.alive || !b?.target || b.target.kind !== 'unit') continue;
     const o = world.unit(b.target.id);
     if (!o || !o.alive) { b.target = null; continue; }
     if (b.aim > 0) { b.aim -= dt; continue; }
-    fireAt(world, u, o, dt);
+    fireAt(world, u, o, dt, lethality);
   }
 }
 
-function fireAt(world: World, u: Unit, o: Unit, dt: number) {
+function fireAt(world: World, u: Unit, o: Unit, dt: number, lethality: number) {
   eyeOf(u, eye); eyeOf(o, at);
   if (!world.los.visual(pairKey(u.id, o.id), eye, at, world.time).clear) return;
   const d = Math.hypot(o.pos.x - u.pos.x, o.pos.z - u.pos.z);
@@ -59,7 +61,7 @@ function fireAt(world: World, u: Unit, o: Unit, dt: number) {
     let acc = (b.fire[w.id] ?? 0) + botFire(w).rate * crew * dt;
     while (acc >= 1 && o.alive) {
       acc -= 1;
-      const hit = world.rng() < hitChance(w, d, u.skill ?? 1);
+      const hit = world.rng() < hitChance(w, d, (u.skill ?? 1) * lethality);
       if (seen) {
         dir.copy(at);
         if (!hit) dir.add(new Vector3(world.rng() - 0.5, world.rng() - 0.5, world.rng() - 0.5).multiplyScalar(10 + d * 0.02));

@@ -62,13 +62,19 @@ export class Commander {
       .sort((a, b) => b.u - a.u || a.pl.id.localeCompare(b.pl.id) || a.p.id.localeCompare(b.p.id));
     const load = new Map<string, number>();
     const done = new Set<Platoon>();
+    const crowded = new Set<Platoon>();
     for (const { pl, p, u } of pairs) {
       if (done.has(pl)) continue;
       const cap = this.knownEnemy(world, p, time) * 1.5 + 1;
-      if ((load.get(p.id) ?? 0) >= cap) continue;
-      load.set(p.id, (load.get(p.id) ?? 0) + 1);
+      if ((load.get(p.id) ?? 0) >= cap) { if (pl.order?.point === p.id) crowded.add(pl); continue; }
+      load.set(p.id, (load.get(p.id) ?? 0) + weight(world, pl));
       done.add(pl);
-      this.assign(world, pl, p, u, points, time);
+      this.assign(world, pl, p, u, points, time, crowded.has(pl));
+    }
+    for (const { pl, p, u } of pairs) {
+      if (done.has(pl) || p.owner === this.side) continue;
+      done.add(pl);
+      this.assign(world, pl, p, u, points, time, crowded.has(pl));
     }
   }
 
@@ -81,7 +87,7 @@ export class Commander {
     else if (cur.kind === 'defend' && !threatened.some(p => p.id === cur.point) && time - cur.since >= MIN_ORDER) reserve.give({ kind: 'reserve', point: null, utility: 0 }, time);
   }
 
-  private assign(world: World, pl: Platoon, p: ControlPoint, u: number, points: readonly ControlPoint[], time: number) {
+  private assign(world: World, pl: Platoon, p: ControlPoint, u: number, points: readonly ControlPoint[], time: number, crowded = false) {
     const kind: Order['kind'] = p.owner === this.side ? 'defend' : 'attack';
     const cur = pl.order;
     if (cur && cur.point === p.id) {
@@ -91,8 +97,14 @@ export class Commander {
     if (cur && cur.point) {
       const now = points.find(q => q.id === cur.point);
       const keep = now ? this.utility(world, pl, now, time) : -Infinity;
-      if (time - cur.since < MIN_ORDER || u - keep < HYSTERESIS) return;
+      if (time - cur.since < MIN_ORDER) return;
+      const redeploy = crowded && pl.state === 'hold';
+      if (!redeploy && (u - keep < HYSTERESIS || pl.state === 'move' || pl.state === 'assault')) return;
     }
     pl.give({ kind, point: p.id, utility: u }, time);
   }
+}
+
+function weight(world: World, pl: Platoon) {
+  return pl.members(world).reduce((s, u) => s + (u.def.squad ? 1 : 0.5), 0);
 }

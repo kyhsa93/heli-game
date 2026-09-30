@@ -17,7 +17,7 @@ export function composeHooks(systems: BattleSystems): BattleHooks {
   };
 }
 
-export function brainSystems(intel: Intel | null = null): BattleSystems {
+export function brainSystems(intel: Intel | null = null, lethality = 1): BattleSystems {
   const targeting = new Targeting(intel);
-  return { tick10Hz: [targeting.step, stepCombat], tick1Hz: [] };
+  return { tick10Hz: [targeting.step, (w, dt) => stepCombat(w, dt, lethality)], tick1Hz: [] };
 }

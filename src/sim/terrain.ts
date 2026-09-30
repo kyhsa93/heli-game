@@ -9,6 +9,11 @@ export const ROAD_SHOULDER = 15;
 export const ROAD_FLAT = ROAD_HALF_WIDTH + CELL * 1.5;
 export const RIVER_BED = -3;
 export const RIVER_BANK = 45;
+export const SEAM = 300;
+
+export function seamWeight(z: number) {
+  return smooth(clamp((z + SEAM) / (2 * SEAM), 0, 1));
+}
 
 export type Vec2 = [number, number];
 
@@ -25,6 +30,7 @@ export interface TerrainOptions {
   features?: readonly TerrainFeature[];
   roads?: readonly Vec2[][];
   lift?: number;
+  symmetry?: 'point';
   pads?: readonly { x: number; z: number; name: string; base?: boolean }[];
 }
 
@@ -84,7 +90,8 @@ export class Terrain {
     const r = rng(seed);
     const n1 = makeNoise(seed ^ 0x51ed), n2 = makeNoise(seed ^ 0x2c1b), n3 = makeNoise(seed ^ 0x7a3f);
     const forests = (opts.features ?? []).filter((f): f is Extract<TerrainFeature, { kind: 'forest' }> => f.kind === 'forest');
-    this.forest = (x, z) => {
+    const sym = opts.symmetry === 'point';
+    const forest = (x: number, z: number) => {
       let v = fbm(n3, x / 420, z / 420, 3);
       for (const f of forests) {
         const d = Math.hypot(x - f.center[0], z - f.center[1]) / f.radius;
@@ -92,6 +99,7 @@ export class Terrain {
       }
       return v;
     };
+    this.forest = sym ? (x, z) => { const w = seamWeight(z); return (1 - w) * forest(x, z) + w * forest(-x, -z); } : forest;
 
     for (let j = 0; j <= N; j++) {
       for (let i = 0; i <= N; i++) {
@@ -105,6 +113,7 @@ export class Terrain {
       }
     }
 
+    if (sym) this.mirrorHeights();
     for (const f of opts.features ?? []) if (f.kind === 'river') this.carveRiver(f.path, f.width);
     for (const f of opts.features ?? []) {
       if (f.kind === 'flatten' || f.kind === 'base' || f.kind === 'village') {
@@ -121,7 +130,33 @@ export class Terrain {
     else this.placePads(r);
     for (const f of opts.features ?? []) if (f.kind === 'village') this.placeVillage(r, f.center, f.radius, f.houses ?? 6);
     this.placeBuildings(r);
+    if (sym) this.buildings.splice(0, this.buildings.length, ...mirrorHalf(this.buildings, b => ({ ...b, x: -b.x, z: -b.z })));
     this.placeTrees(r);
+    if (sym) {
+      const trees = mirrorHalf(this.trees, t => ({ ...t, x: -t.x, z: -t.z }));
+      this.trees.length = 0;
+      this.treeGrid.clear();
+      for (const t of trees) this.addTree(t);
+    }
+  }
+
+  private mirrorHeights() {
+    const N = this.n, HALF = this.half, src = this.heights.slice();
+    for (let j = 0; j <= N; j++) {
+      const w = seamWeight(-HALF + j * CELL);
+      if (w === 0) continue;
+      for (let i = 0; i <= N; i++) {
+        const k = j * (N + 1) + i;
+        this.heights[k] = (1 - w) * src[k] + w * src[(N - j) * (N + 1) + (N - i)];
+      }
+    }
+  }
+
+  private addTree(t: Tree) {
+    this.trees.push(t);
+    const key = this.treeKey(t.x, t.z);
+    const list = this.treeGrid.get(key);
+    if (list) list.push(t); else this.treeGrid.set(key, [t]);
   }
 
   private meanHeight(x: number, z: number, rad: number) {
@@ -324,11 +359,7 @@ export class Terrain {
       if (this.buildings.some(b => Math.hypot(b.x - x, b.z - z) < 22)) continue;
       if (this.roads.length && this.nearRoad(x, z, 8)) continue;
       const h = 7 + r() * 9;
-      const t: Tree = { x, z, y, h, r: h * 0.26 };
-      this.trees.push(t);
-      const key = this.treeKey(x, z);
-      const list = this.treeGrid.get(key);
-      if (list) list.push(t); else this.treeGrid.set(key, [t]);
+      this.addTree({ x, z, y, h, r: h * 0.26 });
     }
   }
 
@@ -377,4 +408,9 @@ export class Terrain {
     }
     return out;
   }
+}
+
+function mirrorHalf<T extends { x: number; z: number }>(items: readonly T[], flip: (t: T) => T): T[] {
+  const keep = items.filter(t => t.z < 0 || (t.z === 0 && t.x < 0));
+  return [...keep, ...keep.map(flip)];
 }

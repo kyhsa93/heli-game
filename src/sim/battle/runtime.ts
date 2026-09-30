@@ -53,7 +53,8 @@ export class BattleRuntime implements Objective {
       const home = this.map.bases.find(b => b.side === side)!.position;
       return new Commander(side, buildPlatoons(side, this.spawner.slots[side], home), this.intel);
     });
-    const brains = brainSystems(this.intel);
+    this.spawner.threatened = (side, p) => this.commanders.find(c => c.side === side)!.knownEnemy(world, p, this.conquest.elapsed) > 0;
+    const brains = brainSystems(this.intel, this.rules.botLethality);
     world.battleHooks = composeHooks({ tick10Hz: brains.tick10Hz, tick1Hz: [...brains.tick1Hz, this.conquest.step, this.spawner.step, this.command] });
     this.state = 'active';
     this.result = {};

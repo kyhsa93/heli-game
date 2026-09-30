@@ -11,7 +11,8 @@ import { createBattleSession } from './runtime';
 import type { BattleMapDef } from './schema';
 
 const harek = JSON.parse(harekRaw) as BattleMapDef;
-const rules = conquestRules('quick');
+const quick = conquestRules('quick');
+const rules = { ...quick, tickets: 300, bleedPerPointPerSec: 0.1 };
 
 function setup(mode: 'quick' | 'conquest' = 'quick') {
   const { world, events } = makeWorld(5);
@@ -29,9 +30,10 @@ const pointD = (c: Conquest) => c.points.find(p => p.id === 'D')!;
 
 describe('modes.json (wiki 3.6)', () => {
   it('resolves quick conquest on top of conquest and validates', () => {
-    expect(rules).toMatchObject({ tickets: 300, timeLimitSec: 900, forces: 'quick', captureRatePerSec: 4, bleedPerPointPerSec: 0.1, playerRespawnSec: 10 });
+    expect(quick).toMatchObject({ tickets: 200, bleedPerPointPerSec: 0.3, timeLimitSec: 900, forces: 'quick', captureRatePerSec: 4, playerRespawnSec: 10 });
+    expect(conquestRules('conquest').bleedPerPointPerSec).toBe(0.1);
     expect(conquestRules('conquest')).toMatchObject({ tickets: 800, timeLimitSec: 2100, forces: 'large' });
-    expect(validateRules(rules)).toEqual([]);
+    expect(validateRules(quick)).toEqual([]);
     expect(validateRules({ ...rules, tickets: 0, ticketCost: { ...rules.ticketCost, tank: -1 } })).toEqual(['tickets must be > 0', 'ticketCost.tank must be > 0']);
   });
 });
@@ -156,7 +158,8 @@ describe('battle end through the session', () => {
     session.world.killPlayer('crewKilled');
     for (let i = 0; i < 120 * 3; i++) session.step(STEP);
     expect(session.mode).toBe('deploy');
-    expect(runtime.conquest.tickets.veros).toBeCloseTo(300 - 6 - 0.1 * 3, 0);
+    const r = runtime.rules;
+    expect(runtime.conquest.tickets.veros).toBeCloseTo(r.tickets - 6, 5);
     runtime.conquest.tickets.coalition = 0;
     for (let i = 0; i < 120 * 3; i++) session.step(STEP);
     expect(session.mode).toBe('done');

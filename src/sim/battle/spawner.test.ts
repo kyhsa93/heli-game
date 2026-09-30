@@ -67,7 +67,8 @@ describe('wave spawner (wiki 3.3)', () => {
     for (const u of world.units) {
       expect(badGround(world.terrain, [u.pos.x, u.pos.z]), u.defId).toBe(null);
       const base = harek.bases.find(b => b.side === u.side)!.position;
-      const near = Math.hypot(u.pos.x - base[0], u.pos.z - base[1]) < 200 || Math.hypot(u.pos.x - (u.side === 'coalition' ? -1000 : 1000), u.pos.z - (u.side === 'coalition' ? 1300 : -1350)) < 80;
+      const home = harek.points.find(p => p.id === (u.side === 'coalition' ? 'A' : 'G'))!.position;
+      const near = Math.hypot(u.pos.x - base[0], u.pos.z - base[1]) < 200 || Math.hypot(u.pos.x - home[0], u.pos.z - home[1]) < 80;
       expect(near, `${u.defId} at ${u.pos.x.toFixed(0)},${u.pos.z.toFixed(0)}`).toBe(true);
     }
   });

@@ -87,6 +87,7 @@ export interface BattleUnit {
   target: TargetRef | null;
   aim: number;
   fire: Record<string, number>;
+  advance?: boolean;
 }
 
 export function hostile(a: Side, b: Side) {

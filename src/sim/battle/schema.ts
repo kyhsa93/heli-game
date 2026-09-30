@@ -15,7 +15,7 @@ export interface BattleMapDef {
   id: string;
   title: string;
   environment: { seed: number; times: ('day' | 'dusk' | 'night')[]; fog: 'never' | 'optional' | 'always'; wind: { dirDeg: number; speed: number; gust: number } };
-  terrain: { size: number; lift?: number; features: TerrainFeature[]; roads: Vec2[][]; outer: { size: number; cell: number; seed: number } };
+  terrain: { size: number; lift?: number; symmetry?: 'point'; features: TerrainFeature[]; roads: Vec2[][]; outer: { size: number; cell: number; seed: number } };
   combatZone: Vec2[];
   bases: { side: BattleSide; position: Vec2; farp: string; jetSpawn: { position: [number, number, number]; headingDeg: number }; rearmCorridor: { from: Vec2; to: Vec2; width: number } }[];
   farps: { id: string; position: Vec2; point?: string }[];

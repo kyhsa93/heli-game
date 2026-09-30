@@ -1,11 +1,12 @@
 import { UNIT_DEFS, type Unit } from '../units';
 import type { World } from '../world';
-import type { Conquest } from './conquest';
+import type { Conquest, ControlPoint } from './conquest';
 import { ROSTERS, type RostersDef, type Slot } from './roster';
 import { badGround, UNIT_BUDGET, type BattleMapDef, type BattleSide } from './schema';
 
 export const BASE_SPREAD: [number, number] = [40, 160];
-export const SPAWN_TRIES = 12;
+export const SPAWN_TRIES = 24;
+export const FOOTING: [number, number][] = [[8, 0], [-8, 0], [0, 8], [0, -8]];
 
 export function activeUnits(world: World) {
   let n = 0;
@@ -17,6 +18,7 @@ export class Spawner {
   elapsed = 0;
   nextWave: number;
   private lastPoint: Record<BattleSide, number> = { coalition: 0, veros: 0 };
+  threatened: (side: BattleSide, p: ControlPoint) => boolean = () => false;
 
   constructor(
     readonly map: BattleMapDef,
@@ -64,7 +66,7 @@ export class Spawner {
     for (let k = 0; k < SPAWN_TRIES; k++) {
       const a = world.rng() * Math.PI * 2, d = r0 + world.rng() * (r1 - r0);
       x = cx + Math.cos(a) * d; z = cz + Math.sin(a) * d;
-      if (!badGround(world.terrain, [x, z])) break;
+      if (!badGround(world.terrain, [x, z]) && FOOTING.every(([ox, oz]) => !badGround(world.terrain, [x + ox, z + oz]))) break;
     }
     const enemy = this.map.bases.find(b => b.side !== side)!.position;
     return world.spawnUnit(s.defId, x, z, Math.atan2(-(enemy[0] - x), -(enemy[1] - z)));
@@ -76,10 +78,12 @@ export class Spawner {
   }
 
   private squadSite(side: BattleSide): [number, number, number, number] {
-    const own = this.conquest.points.filter(p => p.owner === side && !p.contested && p.strength[side === 'coalition' ? 'veros' : 'coalition'] === 0);
-    const k = this.lastPoint[side]++ % (own.length + 1);
-    if (k === own.length) return this.baseSite(side);
-    const p = own[k];
+    const own = this.conquest.points.filter(p => p.owner === side && !p.contested && p.strength[side === 'coalition' ? 'veros' : 'coalition'] === 0 && !this.threatened(side, p));
+    if (!own.length) return this.baseSite(side);
+    const enemy = this.map.bases.find(b => b.side !== side)!.position;
+    own.sort((a, b) => Math.hypot(a.x - enemy[0], a.z - enemy[1]) - Math.hypot(b.x - enemy[0], b.z - enemy[1]) || a.id.localeCompare(b.id));
+    const front = own.slice(0, 2);
+    const p = front[this.lastPoint[side]++ % front.length];
     return [p.x, p.z, 0, p.radius * 0.8];
   }
 }

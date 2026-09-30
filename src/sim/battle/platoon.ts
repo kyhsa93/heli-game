@@ -9,10 +9,12 @@ import type { BattleSide } from './schema';
 export const RALLY_MAX = 20;
 export const STAGING = 350;
 export const STAGED_RADIUS = 60;
-export const STAGING_WAIT = 45;
+export const STAGING_WAIT = 20;
+export const STRAGGLER = 1000;
 export const SUPPORT = 250;
 export const RETREAT_BELOW = 0.35;
 export const REGROUP_AT = 0.7;
+export const REGROUP_WAIT = 20;
 export const SQUADS_PER_PLATOON = 2;
 
 export type OrderKind = 'attack' | 'defend' | 'reserve';
@@ -25,6 +27,8 @@ export class Platoon {
   stateSince = 0;
   private stagedAt: number | null = null;
   private stage: Vec2 | null = null;
+  private fallback: Vec2 | null = null;
+  private safeAt: number | null = null;
   private routed = new Map<number, string>();
 
   constructor(readonly id: string, readonly side: BattleSide, readonly slots: Slot[], readonly home: Vec2) {}
@@ -70,6 +74,8 @@ export class Platoon {
 
   step(world: World, points: readonly ControlPoint[], time: number) {
     const members = this.members(world);
+    const push = this.state === 'assault' || this.state === 'hold' || this.state === 'retreat';
+    for (const u of members) if (u.battle) u.battle.advance = push;
     const strength = this.strength(world);
     if (this.state !== 'retreat' && this.state !== 'rally' && strength < RETREAT_BELOW) this.enter('retreat', time);
     const point = this.order?.point ? points.find(p => p.id === this.order!.point) ?? null : null;
@@ -83,7 +89,8 @@ export class Platoon {
         if (!point) break;
         const stage = this.stage ??= this.staging(world, point);
         members.forEach((u, i) => this.route(world, u, offset(stage, i, 20)));
-        const staged = members.length > 0 && members.every(u => Math.hypot(u.pos.x - stage[0], u.pos.z - stage[1]) <= STAGED_RADIUS);
+        const near = members.filter(u => Math.hypot(u.pos.x - stage[0], u.pos.z - stage[1]) <= STRAGGLER);
+        const staged = near.length > 0 && near.every(u => Math.hypot(u.pos.x - stage[0], u.pos.z - stage[1]) <= STAGED_RADIUS);
         if (staged || (this.stagedAt !== null && time - this.stagedAt >= STAGING_WAIT)) this.enter('assault', time);
         else if (this.stagedAt === null && members.some(u => Math.hypot(u.pos.x - stage[0], u.pos.z - stage[1]) <= STAGED_RADIUS)) this.stagedAt = time;
         break;
@@ -97,11 +104,23 @@ export class Platoon {
       case 'hold':
         if (point) this.intoSlots(world, point, members);
         break;
-      case 'retreat':
-        members.forEach((u, i) => this.route(world, u, offset(this.home, i, 30)));
-        if (strength >= REGROUP_AT) this.enter('rally', time);
+      case 'retreat': {
+        const to = this.fallback ??= this.safest(world, points);
+        members.forEach((u, i) => this.route(world, u, offset(to, i, 30)));
+        const there = members.every(u => Math.hypot(u.pos.x - to[0], u.pos.z - to[1]) <= STAGED_RADIUS * 2);
+        if (there && this.safeAt === null) this.safeAt = time;
+        if (strength >= REGROUP_AT || (this.safeAt !== null && time - this.safeAt >= REGROUP_WAIT) || !members.length) { this.fallback = null; this.safeAt = null; this.enter('rally', time); }
         break;
+      }
     }
+  }
+
+  private safest(world: World, points: readonly ControlPoint[]): Vec2 {
+    const [cx, cz] = this.center(world);
+    const enemy = this.side === 'coalition' ? 'veros' : 'coalition';
+    const safe = points.filter(p => p.owner === this.side && p.strength[enemy] === 0 && !p.contested)
+      .sort((a, b) => Math.hypot(a.x - cx, a.z - cz) - Math.hypot(b.x - cx, b.z - cz));
+    return safe.length ? [safe[0].x, safe[0].z] : this.home;
   }
 
   private staging(world: World, p: ControlPoint): Vec2 {

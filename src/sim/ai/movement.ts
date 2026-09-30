@@ -136,7 +136,7 @@ function stepToward(world: World, u: Unit, tx: number, tz: number, speed: number
     const ok = (ax: number, az: number) => passable(t, u.pos.x + ax * Math.max(step, 3), u.pos.z + az * Math.max(step, 3), slope);
     if (!ok(hx, hz)) {
       let found = false;
-      for (const a of [0.5, -0.5, 1, -1, 1.5, -1.5]) {
+      for (const a of [0.5, -0.5, 1, -1, 1.5, -1.5, 2.2, -2.2, 3.1]) {
         const c = Math.cos(a), s = Math.sin(a), rx = hx * c - hz * s, rz = hx * s + hz * c;
         if (ok(rx, rz)) { hx = rx; hz = rz; found = true; break; }
       }
@@ -169,6 +169,15 @@ export function setGroupRoute(world: World, id: string, units: number[], dest: V
   return g;
 }
 
+export const PINNED_RANGE = 200;
+
+function pinned(world: World, u: Unit) {
+  const b = u.battle;
+  if (u.def.category !== 'infantry' || !b || b.advance || b.aim > 0 || b.target?.kind !== 'unit') return false;
+  const o = world.unit(b.target.id);
+  return !!o && o.alive && Math.hypot(o.pos.x - u.pos.x, o.pos.z - u.pos.z) <= PINNED_RANGE;
+}
+
 export function stepGroups(world: World, groups: Iterable<GroupState>, dt: number) {
   for (const g of groups) {
     if (!g.started || g.behavior === 'hold' || g.behavior === 'defend' || g.path.length < 1) continue;
@@ -177,7 +186,7 @@ export function stepGroups(world: World, groups: Iterable<GroupState>, dt: numbe
       const u = world.unit(m.unit);
       if (!u || !u.alive || !u.def.move) continue;
       if (m.arrived) { u.vel.set(0, 0, 0); if (g.behavior === 'convoy') ahead = { u, left: remaining(g, u, m) }; continue; }
-      if (g.behavior !== 'convoy' && (u.ai.state === 'engage' || (u.def.category === 'infantry' && u.battle?.target && u.battle.aim <= 0))) { u.vel.set(0, 0, 0); continue; }
+      if (g.behavior !== 'convoy' && (u.ai.state === 'engage' || pinned(world, u))) { u.vel.set(0, 0, 0); continue; }
       const road = !u.def.move.offroad || world.terrain.roads.length > 0 && world.terrain.nearRoad(u.pos.x, u.pos.z, 12);
       let speed = unitSpeed(u, road, g.speedScale);
       const left = remaining(g, u, m);

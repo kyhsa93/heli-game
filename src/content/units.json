@@ -5,9 +5,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
@@ -49,9 +49,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
@@ -93,9 +93,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
@@ -617,9 +617,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
@@ -943,9 +943,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
@@ -987,9 +987,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
@@ -1109,9 +1109,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
@@ -1153,9 +1153,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
@@ -1197,9 +1197,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
@@ -1244,9 +1244,9 @@
     "armor": 0,
     "category": "infantry",
     "move": {
-      "speed": 4.5,
+      "speed": 5,
       "offroad": true,
-      "offroadSpeed": 4.5
+      "offroadSpeed": 5
     },
     "weapons": [
       {
