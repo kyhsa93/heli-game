@@ -15,10 +15,9 @@ import { FARP_GROUP, UNITS_GROUP } from '../assets/manifest';
 import { FarpProps } from './farp';
 import { Effects, fallbackAtlas } from './effects';
 import { UnitRenderer } from './unitRenderer';
-import { RingGates } from './rings';
 import { watchViewport } from '../core/viewport';
 import { QUALITY } from './quality';
-import type { Settings } from '../save/campaign';
+import type { Settings } from '../save/save';
 import { SearchlightBeams } from './searchlights';
 import { TIME_PRESETS } from './timeOfDay';
 import { FOG_FLIR_RANGE, FOG_TV_RANGE } from '../sim/sensors/laser';
@@ -76,7 +75,6 @@ export class FlightRenderer {
   private tmp2 = new THREE.Vector3();
   readonly effects: Effects;
   readonly units = new UnitRenderer();
-  private rings = new RingGates();
   private stopViewport: () => void = () => {};
   private searchlights = new SearchlightBeams();
   private panelLight = new THREE.PointLight(0xbfe6ff, 0, 2.2, 1.5);
@@ -130,7 +128,6 @@ export class FlightRenderer {
     this.scene.scene.add(this.effects.group);
     this.scene.scene.add(this.units.group);
     this.farp = new FarpProps(session.world.pads);
-    this.scene.scene.add(this.rings.group);
     this.scene.scene.add(this.searchlights.group);
     this.scene.scene.add(this.farp.group);
     void assets.loadGroup(FARP_GROUP).then(report => {
@@ -289,7 +286,6 @@ export class FlightRenderer {
     const tads = world.tads.active && h.alive && !this.debugCamera;
     const flir = tads && world.tads.sensor === 'flir';
     this.units.update(world, flir);
-    this.rings.update(session.objective?.rings ?? []);
     this.searchlights.update(world);
     this.effects.update(steps * STEP, world);
     if (!tads && this.mpdVideo && this.instruments.shows('TADS') && now - this.mpdVideoAt >= MPD_TADS_MS && h.alive) {
@@ -417,7 +413,6 @@ export class FlightRenderer {
     this.offEvents();
     this.effects.dispose();
     this.units.dispose();
-    this.rings.dispose();
     this.searchlights.dispose();
     this.stopViewport();
     this.scene.dispose();

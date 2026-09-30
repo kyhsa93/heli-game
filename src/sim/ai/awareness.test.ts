@@ -4,9 +4,6 @@ import { LosCache } from '../los';
 import { hiddenPair, makeWorld, openPair, putPlayer, runAi } from '../testing';
 import type { Unit } from '../units';
 import { AI_TICK, ALERT_LEVEL, eyeOf, SUSPECT, visualRange, visualRate, type Conditions } from './awareness';
-import { MISSIONS } from '../../content/missions';
-import { missionSession } from '../mission/runtime';
-import { loadMission } from '../mission/schema';
 
 const DAY: Conditions = { night: false, fog: false, playerRadar: false };
 
@@ -130,15 +127,6 @@ describe('time of day (06 6.1)', () => {
       expect(visualRate(world, eyeOf(u), 0, { ...DAY, time, night: time === 'night' }) > 0, `${dist} ${time}`).toBe(sees);
       world.clearCombat();
     }
-  });
-
-  it('takes the hour from the mission', () => {
-    const src = structuredClone(MISSIONS.m01) as unknown as { environment: { time: string } };
-    src.environment.time = 'dusk';
-    const s = missionSession(loadMission(src));
-    s.start();
-    expect(s.world.conditions.time).toBe('dusk');
-    expect(s.world.conditions.night).toBe(false);
   });
 });
 

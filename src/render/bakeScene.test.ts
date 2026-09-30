@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { buildHeliExterior } from './heliModel';
 import { bakeScene } from './unitModels';
 
-describe('wingman model (10.6 M5-4 decision)', () => {
+describe('baking code models into one geometry (#79)', () => {
   it('bakes the player exterior with its own colours, standing on its gear', () => {
     const g = bakeScene(buildHeliExterior());
     const c = g.getAttribute('color');

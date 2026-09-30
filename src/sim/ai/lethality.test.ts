@@ -1,15 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTIES } from '../sim/difficulty';
-import { makeWorld, openPair, putPlayer } from '../sim/testing';
-import { UNIT_DEFS } from '../sim/units';
-import { MISSION_IDS, MISSIONS } from './missions';
-
-export function parFor(id: string) {
-  const m = MISSIONS[id];
-  const kills = m.units.filter(u => UNIT_DEFS[u.type].side === 'veros').reduce((s, u) => s + UNIT_DEFS[u.type].score, 0);
-  const secondary = m.objectives.filter(o => !o.primary).length;
-  return Math.round((1000 + 300 * secondary + 0.85 * kills + 800) / 50) * 50;
-}
+import { DIFFICULTIES } from '../difficulty';
+import { makeWorld, openPair, putPlayer } from '../testing';
 
 function exposed(type: string, dist: number, seconds: number, seed: number) {
   const { world } = makeWorld(seed);
@@ -33,11 +24,7 @@ function exposed(type: string, dist: number, seconds: number, seed: number) {
   return { down: Infinity, worst: Math.min(...Object.values(h.damage)) };
 }
 
-describe('balance pass (M7-6)', () => {
-  it('sets every campaign par to what an expert run scores', () => {
-    for (const id of MISSION_IDS) expect(MISSIONS[id].par, id).toBe(parFor(id));
-  });
-
+describe('enemy gun lethality (M7-6, P2)', () => {
   it('kills a helicopter that hovers in the open in front of a self-propelled AA gun (P2)', () => {
     const downs = [17, 34, 51, 68].map(seed => exposed('spaag', 1000, 60, seed).down);
     expect(downs.filter(t => t < 40).length).toBeGreaterThanOrEqual(3);

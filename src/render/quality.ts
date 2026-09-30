@@ -1,4 +1,4 @@
-import type { Quality } from '../save/campaign';
+import type { Quality } from '../save/save';
 
 export interface QualityProfile { pixelRatio: number; trees: number; mpdVideo: boolean }
 

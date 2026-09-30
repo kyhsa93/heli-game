@@ -22,22 +22,14 @@ export type SimEvent =
   | { t: 'identified'; id: number; defId: string; side: Side }
   | { t: 'detected'; id: number; by: 'visual' | 'radar' }
   | { t: 'radarTrack'; id: number; on: boolean }
-  | { t: 'step'; index: number; total: number }
-  | { t: 'coach'; tip: CoachTip }
-  | { t: 'ring'; index: number; total: number }
-  | { t: 'wingman'; state: 'order' | 'down'; order?: 'formation' | 'attackMine' | 'free' | 'sead' | 'rtb' }
   | { t: 'fcr'; state: 'scan' | 'done' | 'mode'; mode: 'ground' | 'air'; count: number }
   | { t: 'playerHit'; by: number; weapon: string; damage: number }
   | { t: 'systemDamaged'; system: SystemId; level: 'damaged' | 'destroyed' }
   | { t: 'missileWarning'; id: number; kind: 'ir' | 'radar'; from: Vector3; owner: number }
   | { t: 'missileEnd'; id: number; hit: boolean }
+  | { t: 'radio'; from: string; text: string }
   | { t: 'countermeasure'; kind: 'flare' | 'chaff'; decoyed: number; auto: boolean }
-  | { t: 'radio'; from: 'control' | 'steel6' | 'hound2' | 'rescue'; text: string }
-  | { t: 'smoke'; pos: Vector3; color: 'red' | 'green' | 'white' }
-  | { t: 'missionObjective'; id: string; state: 'active' | 'done' | 'failed'; primary: boolean }
   | { t: 'farp'; state: 'started' | 'done' | 'cancelled'; repair: number; rearm: number };
-
-export type CoachTip = 'rwr' | 'missile' | 'farp' | 'fcr' | 'airThreat' | 'night' | 'wingman' | 'wingmanMenu';
 
 export type AdviceCode = 'landingTooHard' | 'wrongPad' | 'tooHigh';
 

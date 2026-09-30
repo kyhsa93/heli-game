@@ -2,8 +2,6 @@ import { MS_TO_KT } from '../../../core/units';
 import type { World } from '../../../sim/world';
 import { AMBER, bearingDeg, bezel, DIM, FUEL_LB, GREEN, headingDeg, screenClip, tape } from './common';
 
-const CYAN = '#4cc9f0';
-
 export function drawTsd(g: CanvasRenderingContext2D, world: World, relief: HTMLCanvasElement, labels: readonly string[], selected: number) {
   const h = world.player;
   bezel(g, labels, selected);
@@ -30,16 +28,6 @@ export function drawTsd(g: CanvasRenderingContext2D, world: World, relief: HTMLC
       if (p.base) { g.strokeRect(-9, -9, 18, 18); g.font = 'bold 13px "B612 Mono", monospace'; g.textAlign = 'center'; g.fillText('H', 0, 5); }
       else { g.beginPath(); g.arc(0, 0, target && blink ? 11 : 8, 0, Math.PI * 2); g.stroke(); }
       g.font = 'bold 15px "B612 Mono", monospace'; g.textAlign = 'left'; g.fillText(p.name, 13, -8);
-      g.restore();
-    }
-    const wing = world.wingman && world.unit(world.wingman.unitId);
-    if (wing?.alive) {
-      g.save(); g.translate((wing.pos.x - h.pos.x) * scale, (wing.pos.z - h.pos.z) * scale); g.rotate(-h.yaw);
-      g.strokeStyle = g.fillStyle = CYAN; g.lineWidth = 2;
-      g.rotate(h.yaw - wing.yaw);
-      g.beginPath(); g.moveTo(0, -9); g.lineTo(-6, 7); g.lineTo(0, 3); g.lineTo(6, 7); g.closePath(); g.stroke();
-      g.rotate(wing.yaw - h.yaw);
-      g.font = 'bold 13px "B612 Mono", monospace'; g.textAlign = 'left'; g.fillText('H2', 10, -6);
       g.restore();
     }
     g.restore();

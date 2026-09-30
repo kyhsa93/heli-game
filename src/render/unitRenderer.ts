@@ -3,8 +3,9 @@ import { squadMembers, UNIT_DEFS, type Unit } from '../sim/units';
 import type { World } from '../sim/world';
 import { airDefenseModel, hasAirDefenseModel } from './airDefenseModels';
 import { buildHeliExterior } from './heliModel';
-import { WINGMAN_TYPE } from '../sim/ai/wingman';
 import { bakeModel, bakeScene, fallbackModel, MODEL_FOR_UNIT } from './unitModels';
+
+const APACHE_UNIT = 'c_apache';
 
 const TINT = {
   veros: new THREE.Color(0.9, 0.92, 0.88),
@@ -40,7 +41,7 @@ export class UnitRenderer {
     let v = this.visuals.get(key);
     if (!v) {
       const def = UNIT_DEFS[defId];
-      const geo = defId === WINGMAN_TYPE ? bakeScene(buildHeliExterior()) : hasAirDefenseModel(defId) ? airDefenseModel(defId) : fallbackModel(def, key === 'soldier' ? 'infantry' : def.category);
+      const geo = defId === APACHE_UNIT ? bakeScene(buildHeliExterior()) : hasAirDefenseModel(defId) ? airDefenseModel(defId) : fallbackModel(def, key === 'soldier' ? 'infantry' : def.category);
       v = this.makeVisual(key, geo, 16, false);
       this.visuals.set(key, v);
     }

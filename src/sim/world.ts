@@ -14,7 +14,6 @@ import { AI_TICK, stepAwareness, type Conditions } from './ai/awareness';
 import { stepBrains } from './ai/brain';
 import { stepAir } from './ai/air';
 import { stepSearchlights } from './ai/searchlight';
-import { setOrder, stepWingman, thinkWingman, type Wingman, type WingmanOrder } from './ai/wingman';
 import { stepService, type FarpService } from './farp';
 import { RoadGraph, stepGroups, type GroupState } from './ai/movement';
 import { DEFAULT_ASSISTS, type Assists } from './assists';
@@ -62,8 +61,6 @@ export class World {
   flares: Flare[] = [];
   cm: Countermeasures = createCountermeasures();
   fcr: Fcr = createFcr();
-  wingman: Wingman | null = null;
-  wingmanMenu = true;
   remoteLasers: { unitId: number; until: number }[] = [];
   arms: Arms = createArms();
   loadoutDef: LoadoutDef = STANDARD_LOADOUT;
@@ -209,13 +206,6 @@ export class World {
     this.emit({ t: 'fcr', state: 'mode', mode: f.mode, count: f.targets.length });
   }
 
-  orderWingman(order: WingmanOrder): boolean {
-    const w = this.wingman;
-    if (!w || !this.wingmanMenu || !this.unit(w.unitId)?.alive) return false;
-    setOrder(this, w, order);
-    return true;
-  }
-
   nextFcrTarget() {
     cycleTarget(this.fcr);
   }
@@ -328,7 +318,6 @@ export class World {
     this.missiles = [];
     this.enemyMissiles = [];
     this.aams = [];
-    this.wingman = null;
     this.flares = [];
     this.remoteLasers = [];
   }
@@ -344,7 +333,6 @@ export class World {
       u.alive = false;
       if (!u.def.move?.air) u.vel.set(0, 0, 0);
       this.emit({ t: 'unitDestroyed', id: u.id, defId: u.defId, side: u.side, byPlayer });
-      if (u.id === this.wingman?.unitId) this.emit({ t: 'wingman', state: 'down' });
       const sec = u.def.secondaryExplosion;
       if (sec) {
         explode(this, u.pos.clone().setY(u.pos.y + u.def.size[1] / 2), sec.damage, sec.radius, WEAPONS.secondary.penetration, byPlayer, u);
@@ -396,7 +384,7 @@ export class World {
       this.stepHellfire(dt, pressed);
       this.stepStinger(dt, pressed);
     }
-    if (this.active) { stepGroups(this, this.groups.values(), dt); stepAir(this, dt); stepSearchlights(this, dt); if (this.wingman) stepWingman(this, this.wingman, dt); }
+    if (this.active) { stepGroups(this, this.groups.values(), dt); stepAir(this, dt); stepSearchlights(this, dt); }
     this.stepProjectiles(dt);
     this.stepMissiles(dt);
     this.stepEnemyMissiles(dt);
@@ -404,7 +392,7 @@ export class World {
     this.stepCountermeasures(dt);
     if (this.active) {
       this.aiClock += dt;
-      while (this.aiClock >= AI_TICK - 1e-9) { this.aiClock -= AI_TICK; stepAwareness(this, this.los, this.conditions); stepBrains(this); if (this.wingman) thinkWingman(this, this.wingman, AI_TICK); }
+      while (this.aiClock >= AI_TICK - 1e-9) { this.aiClock -= AI_TICK; stepAwareness(this, this.los, this.conditions); stepBrains(this); }
     }
     this.events.flush();
   }

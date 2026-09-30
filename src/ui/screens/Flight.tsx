@@ -1,24 +1,17 @@
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent } from 'react';
 import { assets } from '../../assets/loader';
 import { GameAudio } from '../../audio/game';
-import { hasString, t, tList, tPairs } from '../../content/strings';
+import { t, tList, tPairs } from '../../content/strings';
 import { clamp } from '../../core/math';
 import { M_TO_FT, MS_TO_FPM, MS_TO_KT } from '../../core/units';
 import { FlightRenderer } from '../../render/renderer';
 import { LAND_DESCENT } from '../../sim/heli/airframe';
 import { airspeed } from '../../sim/heli/state';
-import { FlightSession } from '../../sim/session';
+import type { FlightSession } from '../../sim/session';
 import { farpUnder } from '../../sim/farp';
 import { FarpMenu } from '../flight/FarpMenu';
-import { MISSIONS } from '../../content/missions';
-import { missionSession, type MissionRuntime } from '../../sim/mission/runtime';
-import { WINGMAN_ORDERS } from '../../sim/ai/wingman';
-import type { UnlockId } from '../../sim/mission/schema';
-import type { LoadoutDef } from '../../sim/heli/loadout';
-import type { MissionDef } from '../../sim/mission/schema';
-import { reportFrom, type MissionReport } from '../report';
 import { DIFFICULTIES } from '../../sim/difficulty';
-import { freshSave, type Settings } from '../../save/campaign';
+import { freshSave, type Settings } from '../../save/save';
 import { zoomTads } from '../../sim/sensors/tads';
 import { sightPoint } from '../../sim/weapons/ballistics';
 import { hellfireSolution } from '../../sim/weapons/hellfire';
@@ -31,27 +24,19 @@ import { VirtualStick } from '../components/VirtualStick';
 import { Pinch } from '../../input/pinch';
 import { watchViewport } from '../../core/viewport';
 
-const COACH_SECONDS = 7;
 const STICK_RADIUS = { S: 46, M: 56, L: 70 } as const;
 
-interface FlightProps { missionId: string; mission?: MissionDef; touch: boolean; loadout?: LoadoutDef; settings?: Settings; unlocked?: ReadonlySet<UnlockId>; tips?: ReadonlySet<string> | null; onTip?: (tip: string) => void; onSettings?: (s: Settings) => void; onExit: () => void; onComplete: (id: string) => void; onMissionEnd?: (report: MissionReport) => void }
+interface FlightProps { session: FlightSession; touch: boolean; settings?: Settings; onSettings?: (s: Settings) => void; onExit: () => void }
 
-export function Flight({ missionId, mission: given, touch, loadout, settings = freshSave().settings, unlocked, tips = null, onTip, onSettings, onExit, onComplete, onMissionEnd }: FlightProps) {
+export function Flight({ session, touch, settings = freshSave().settings, onSettings, onExit }: FlightProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
   const msgRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
-  const mission = given ?? MISSIONS[missionId];
-  const [session] = useState(() => mission ? missionSession(mission, loadout ?? null, unlocked, tips) : new FlightSession((Math.random() * 1e9) | 0));
-  const training = mission?.kind === 'training';
-  const runtime = mission ? session.objective as MissionRuntime : null;
   const radioRef = useRef<HTMLDivElement>(null);
-  const coachRef = useRef<{ text: string; until: number } | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const onTipRef = useRef(onTip);
-  onTipRef.current = onTip;
   const [showKeys, setShowKeys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [portrait, setPortrait] = useState(false);
@@ -90,22 +75,8 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
   const [atFarp, setAtFarp] = useState(false);
   const [, setFarpTick] = useState(0);
 
-  const [radioOpen, setRadioOpen] = useState(false);
-  const radioOpenRef = useRef(false);
-  radioOpenRef.current = radioOpen;
   const runCommand = (cmd: Command) => {
-    const slot = { weapon1: 0, weapon2: 1, weapon3: 2, weapon4: 3, menu5: 4 }[cmd as string];
-    if (radioOpenRef.current && slot !== undefined) {
-      sim.orderWingman(WINGMAN_ORDERS[slot]);
-      setRadioOpen(false);
-      return;
-    }
     switch (cmd) {
-      case 'radioMenu':
-        if (!sim.wingman) logRef.current.push({ text: t('wingman.none'), color: '#ffd166' });
-        else if (!sim.wingmanMenu) logRef.current.push({ text: t('wingman.locked'), color: '#ffd166' });
-        else setRadioOpen(v => !v);
-        break;
       case 'engine': sim.toggleEngine(); break;
       case 'weapon1': sim.selectWeapon(1); break;
       case 'weapon2': sim.selectWeapon(2); break;
@@ -163,16 +134,6 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
   }, [session, help, snap.mode]);
 
   useEffect(() => {
-    if (snap.mode === 'done') onComplete(missionId);
-    if (runtime && onMissionEnd && (snap.mode === 'done' || snap.mode === 'over')) {
-      const report = reportFrom(runtime);
-      if (snap.mode === 'over' && snap.crash) { report.success = false; report.reason = crashText(snap.crash.reason, snap.crash.value); report.score = runtime.computeScore(false); }
-      const id = setTimeout(() => onMissionEnd(report), 600);
-      return () => clearTimeout(id);
-    }
-  }, [snap.mode, snap.crash, missionId, onComplete, onMissionEnd, runtime]);
-
-  useEffect(() => {
     const check = () => setPortrait(touchRef.current && window.innerHeight > window.innerWidth);
     check();
     return watchViewport(check);
@@ -184,7 +145,6 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
     const offEvents = sim.events.onAny(e => {
       const m = eventMessage(e);
       if (m) log.push(m);
-      if (e.t === 'coach') { coachRef.current = { text: t(`coach.${e.tip}`), until: sim.time + COACH_SECONDS }; onTipRef.current?.(e.tip); }
     });
     const r = new FlightRenderer({
       mount: mountRef.current!,
@@ -199,19 +159,9 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
             `RAD ALT ${Math.round(Math.max(0, agl) * M_TO_FT)} ft · VS ${Math.round(h.vel.y * MS_TO_FPM)} fpm · ${Math.round(airspeed(h, sim.wind) * MS_TO_KT)} kt · COLL ${Math.round(h.collective * 100)}% · ROTOR ${Math.round(h.rpm * 100)}%`;
         }
         if (radioRef.current) {
-          const line = runtime?.radioNow;
-          const coach = coachRef.current && coachRef.current.until > sim.time ? coachRef.current.text : null;
-          radioRef.current.style.display = line || coach ? '' : 'none';
-          if (line) radioRef.current.textContent = `${t(`radio.${line.from}`)}: ${line.text}`;
-          else if (coach) radioRef.current.textContent = `${t('radio.control')}: ${coach}`;
+          radioRef.current.style.display = 'none';
         }
-        if (missionRef.current && runtime) {
-          const prim = runtime.objectives.filter(o => o.def.primary && o.state !== 'pending');
-          const done = prim.filter(o => o.state === 'done').length;
-          const next = runtime.objectives.find(o => o.state === 'active');
-          const dist = tp ? Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) : null;
-          missionRef.current.textContent = `◆ ${t('hud.objectives', { done, total: prim.length })}${next ? `\n${next.def.label}${dist !== null && (next.def.kind === 'reach' || next.def.kind === 'land') ? ` · ${dist >= 1000 ? (dist / 1000).toFixed(1) + 'km' : dist + 'm'}` : ''}` : ''}`;
-        } else if (missionRef.current) {
+        if (missionRef.current) {
           missionRef.current.textContent = tp
             ? t(tp.area ? 'hud.targetArea' : 'hud.target', { name: tp.area && !tp.raw ? t(`targets.${tp.name}`) : tp.name, dist: Math.round(Math.hypot(tp.x - h.pos.x, tp.z - h.pos.z)) })
             : t('hud.practice');
@@ -219,7 +169,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
         }
         log.tick(simDt);
         setTadsOn(sim.tads.active);
-        if (touchRef.current) setTouchKey(`${sim.player.engineOn}|${sim.player.landed}|${sim.arms.selected}|${sim.fcr.unlocked}|${sim.cm.chaffUnlocked}|${!!sim.wingman}`);
+        if (touchRef.current) setTouchKey(`${sim.player.engineOn}|${sim.player.landed}|${sim.arms.selected}|${sim.fcr.unlocked}|${sim.cm.chaffUnlocked}`);
         const farp = session.mode === 'play' && h.alive && h.landed && farpUnder(sim) >= 0;
         setAtFarp(farp);
         if (farp) setFarpTick(n => (n + 1) % 1000);
@@ -232,20 +182,11 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
         }
         if (hintRef.current) {
           let hint = '';
-          const steps = runtime?.steps;
-          if (steps && runtime && session.mode === 'play' && h.alive) {
-            const i = runtime.stepIndex;
-            const shown = runtime.stepFlash > 0 ? steps[i - 1] : steps[i];
-            const text = shown ? (touchRef.current && shown.touch) || shown.text : '';
-            hint = !shown ? '' : runtime.stepFlash > 0 ? `✓ ${text}` : `${i + 1}/${steps.length}  ${text}`;
-            hintRef.current.classList.toggle('done', runtime.stepFlash > 0);
-          } else if (session.mode === 'play' && h.alive) {
+          if (session.mode === 'play' && h.alive) {
             if (!h.engineOn && h.landed && h.fuel > 0) hint = t(touchRef.current ? 'hint.startEngineTouch' : 'hint.startEngineKey');
             else if (h.engineOn && h.rpm < 0.95 && h.landed) hint = t('hint.spooling', { pct: Math.round(h.rpm * 100) });
             else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = t(touchRef.current ? 'hint.liftTouch' : 'hint.liftKey');
           }
-          const step = runtime?.step;
-          if (!hint && !steps && step && session.mode === 'play' && h.alive) hint = step;
           hintRef.current.textContent = hint;
         }
       },
@@ -334,13 +275,6 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
       )}
       <div className="messages" ref={msgRef} />
       <div className="radio-sub" ref={radioRef} style={{ display: 'none' }} />
-      {radioOpen && snap.mode === 'play' && (
-        <div className="radio-menu">
-          <b>{t('wingman.title')}</b>
-          {WINGMAN_ORDERS.map((o, i) => <button key={o} className={sim.wingman?.order === o ? 'on' : ''} onClick={() => { sim.orderWingman(o); setRadioOpen(false); }}>{i + 1}. {t(`wingman.order.${o}`)}</button>)}
-          <small>{t('wingman.close')}</small>
-        </div>
-      )}
       {portrait && snap.mode === 'play' && <div className="overlay"><div className="card"><h1>↻</h1><p className="sub">{t('flight.rotate')}</p></div></div>}
       {atFarp && <FarpMenu world={sim} />}
       <div className="hint" ref={hintRef} />
@@ -356,7 +290,6 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
             {sim.fcr.unlocked && <button className="tbtn" onPointerDown={press(() => sim.fcrScan())}>{t('touch.fcr')}</button>}
             {sim.fcr.unlocked && <button className="tbtn" onPointerDown={press(() => sim.nextFcrTarget())}>{t('touch.target')}</button>}
             <button className="tbtn" onPointerDown={press(() => sim.nextWeapon())}>{t(`touch.weapon.${sim.arms.selected}`)}</button>
-            {sim.wingman && sim.wingmanMenu && <button className="tbtn" onPointerDown={press(() => setRadioOpen(v => !v))}>{t('touch.radio')}</button>}
           </div>
           <div className="tcm">
             <button className="tbtn" onPointerDown={press(() => sim.dropFlare())}>{t('touch.flare')}</button>
@@ -377,21 +310,14 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
       {snap.mode === 'brief' && (
         <div className="overlay">
           <div className="card wide">
-            <h1>{mission ? mission.title : t('hud.practice')}</h1>
-            {mission && !training ? (
-              <ul className="objs">{runtime!.mission.objectives.filter(o => !runtime!.mission.initialObjectives || runtime!.mission.initialObjectives.includes(o.id)).map(o => <li key={o.id} className={o.primary ? 'primary' : ''}>{o.primary ? '◆' : '◇'} {o.label}</li>)}</ul>
-            ) : (
-              <>
-                <p className="sub">{mission?.briefing.summary}<br />{t('brief.introCollective')}</p>
-                <div className="keys">
-                  {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').filter(([k]) => touch || !hasString(`brief.keysFor.${missionId}`) || tList(`brief.keysFor.${missionId}`).includes(k)).map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
-                </div>
-                <ul className="rules">
-                  {tList('brief.rules', { fpm: Math.round(LAND_DESCENT * MS_TO_FPM) }).map(r => <li key={r}>{r}</li>)}
-                </ul>
-              </>
-            )}
-            <button className="go" onClick={begin}>{t('brief.start')}</button> <button className="go secondary" onClick={onExit}>{t(mission?.kind === 'instant' ? 'instant.back' : mission && !training ? 'pause.toBriefing' : 'brief.toList')}</button>
+            <h1>{t('hud.practice')}</h1>
+            <div className="keys">
+              {tPairs(touch ? 'brief.keysTouch' : 'brief.keysKeyboard').map(([k, d]) => <Fragment key={k}><b>{k}</b><span>{d}</span></Fragment>)}
+            </div>
+            <ul className="rules">
+              {tList('brief.rules', { fpm: Math.round(LAND_DESCENT * MS_TO_FPM) }).map(r => <li key={r}>{r}</li>)}
+            </ul>
+            <button className="go" onClick={begin}>{t('brief.start')}</button> <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button>
           </div>
         </div>
       )}
@@ -407,8 +333,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
               {touch && <button className="go secondary" onClick={() => sim.toggleEngine()}>{t(sim.player.engineOn ? 'pause.engineOff' : 'pause.engineOn')}</button>}
               <button className="go secondary" onClick={toggleVoice}>{t(voiceOn ? 'brief.voiceOff' : 'brief.voiceOn')}</button>
               <button className="go secondary" onClick={() => { setHelp(false); begin(); }}>{t('brief.restart')}</button>
-              {runtime && !training && <button className="go secondary" onClick={() => { setHelp(false); runtime.endNow(); }}>{t('pause.endMission')}</button>}
-              {(!runtime || training) && <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button>}
+              <button className="go secondary" onClick={onExit}>{t('brief.toList')}</button>
             </div>
             {showSettings && <SettingsPanel settings={settings} onChange={s2 => onSettings?.(s2)} />}
             {showKeys && (
@@ -420,7 +345,7 @@ export function Flight({ missionId, mission: given, touch, loadout, settings = f
         </div>
       )}
 
-      {snap.mode === 'over' && !help && !runtime && (
+      {snap.mode === 'over' && !help && (
         <div className="overlay">
           <div className="card">
             <h1>{t(snap.failure ? 'fail.title' : 'crash.title')}</h1>

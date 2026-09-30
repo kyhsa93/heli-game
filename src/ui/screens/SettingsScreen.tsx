@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { t } from '../../content/strings';
-import { RANGES, type Quality, type Settings, type StickSize } from '../../save/campaign';
+import { RANGES, type Quality, type Settings, type StickSize } from '../../save/save';
 import { DIFFICULTY_LEVELS } from '../../sim/difficulty';
 
 type Update = (s: Settings) => void;

@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MissionRuntime, missionTerrain } from '../mission/runtime';
-import type { MissionDef } from '../mission/schema';
-import { FlightSession } from '../session';
-import { STEP } from '../world';
-import { ARRIVE, CONVOY_SPACING, MAX_SLOPE_COS, RoadGraph } from './movement';
+import { STEP, World } from '../world';
+import { ARRIVE, CONVOY_SPACING, MAX_SLOPE_COS, RoadGraph, type GroupState } from './movement';
 
 describe('road graph and A* (06 6.1)', () => {
   it('merges points within 2 m, including T-junctions', () => {
@@ -31,32 +28,29 @@ describe('road graph and A* (06 6.1)', () => {
 
 const ROAD: [number, number][] = [[-1500, -1400], [-800, -900], [-100, -300], [600, 200], [1300, 700]];
 
-function mission(groups: MissionDef['groups'], units: MissionDef['units'], triggers: MissionDef['triggers'] = []): MissionDef {
-  return {
-    id: 'mv', title: '이동', act: 1, kind: 'escort',
-    briefing: { summary: '-', situation: [], threats: [], recommendedLoadout: { pylons: { L2: 'empty', L1: 'empty', R1: 'empty', R2: 'empty' }, stingers: false, gunRounds: 0, fuel: 50 } },
-    environment: { seed: 7, time: 'day', fog: false, wind: { dirDeg: 0, speed: 2, gust: 0 } },
-    terrain: { size: 4000, features: [], roads: [ROAD] },
-    start: { kind: 'farp_cold', position: [1500, -1500], headingDeg: 0 },
-    farps: [{ id: 'farp_a', position: [1500, -1500], services: ['fuel'] }],
-    waypoints: [], units, groups,
-    objectives: [{ id: 'o', kind: 'survive', seconds: 9999, primary: true, label: '-' }],
-    triggers, par: 1, parTimeSec: 1, wingman: false,
-  };
-}
+interface GroupSpec { id: string; behavior: GroupState['behavior']; route: [number, number][]; started?: boolean }
+interface UnitSpec { id: string; type: string; position: [number, number]; group: string }
 
-function run(m: MissionDef) {
-  const rt = new MissionRuntime(m);
-  const s = new FlightSession(7, rt, missionTerrain(m));
-  s.start();
-  for (const u of s.world.units) u.passive = true;
-  return { s, w: s.world, rt };
+function run(groups: GroupSpec[], units: UnitSpec[]) {
+  const w = new World({ seed: 7, terrain: { size: 4000, features: [], roads: [ROAD] } });
+  w.active = true;
+  w.player.pos.set(1500, w.terrain.surfaceAt(1500, -1500), -1500);
+  for (const g of groups) w.groups.set(g.id, { id: g.id, behavior: g.behavior, path: w.roads.route(g.route), loop: false, speedScale: 1, started: g.started ?? true, members: [] });
+  const ids = new Map<string, number>();
+  for (const u of units) {
+    const unit = w.spawnUnit(u.type, u.position[0], u.position[1], 0, { group: u.group, passive: true });
+    ids.set(u.id, unit.id);
+    w.groups.get(u.group)!.members.push({ unit: unit.id, leg: 0, dir: 1, arrived: false });
+  }
+  const s = { step: (dt: number) => w.step(dt) };
+  const rt = { unit: (id: string) => w.unit(ids.get(id)!) };
+  return { s, w, rt };
 }
 
 describe('group movement (05 5.5)', () => {
   it('a convoy drives the road to the end of its route and keeps its spacing', () => {
     const units = [0, 1, 2].map(i => ({ id: `c${i}`, type: 'c_truck', position: [ROAD[0][0] - i * 30, ROAD[0][1] - i * 20] as [number, number], group: 'convoy' }));
-    const { s, w, rt } = run(mission([{ id: 'convoy', behavior: 'convoy', route: [ROAD[0], ROAD[4]] }], units));
+    const { s, w, rt } = run([{ id: 'convoy', behavior: 'convoy', route: [ROAD[0], ROAD[4]] }], units);
     let minGap = Infinity;
     for (let i = 0; i < 120 * 260; i++) {
       s.step(STEP);
@@ -73,24 +67,24 @@ describe('group movement (05 5.5)', () => {
     expect(minGap).toBeGreaterThan(CONVOY_SPACING * 0.5);
   });
 
-  it('waits for its start trigger', () => {
-    const { s, rt } = run(mission(
-      [{ id: 'g', behavior: 'advance', route: [ROAD[0], ROAD[2]], startTrigger: 'go' }],
+  it('stays put until the group is started', () => {
+    const { s, rt, w } = run(
+      [{ id: 'g', behavior: 'advance', route: [ROAD[0], ROAD[2]], started: false }],
       [{ id: 'a', type: 'apc', position: ROAD[0], group: 'g' }],
-      [{ id: 'go', once: true, when: { kind: 'time', afterSec: 10 }, then: [{ kind: 'radio', from: 'control', text: '출발' }] }],
-    ));
+    );
     const start = rt.unit('a')!.pos.clone();
     for (let i = 0; i < 120 * 9; i++) s.step(STEP);
     expect(rt.unit('a')!.pos.distanceTo(start)).toBeLessThan(1);
+    w.groups.get('g')!.started = true;
     for (let i = 0; i < 120 * 10; i++) s.step(STEP);
     expect(rt.unit('a')!.pos.distanceTo(start)).toBeGreaterThan(50);
   });
 
   it('patrols back and forth', () => {
-    const { s, rt, w } = run(mission(
+    const { s, rt, w } = run(
       [{ id: 'p', behavior: 'patrol', route: [ROAD[1], ROAD[2]] }],
       [{ id: 't', type: 'technical', position: ROAD[1], group: 'p' }],
-    ));
+    );
     let farthest = 0, back = false;
     for (let i = 0; i < 120 * 200; i++) {
       s.step(STEP);
@@ -104,10 +98,10 @@ describe('group movement (05 5.5)', () => {
   });
 
   it('keeps off-road units off slopes steeper than 20 degrees', () => {
-    const { s, rt, w } = run(mission(
+    const { s, rt, w } = run(
       [{ id: 'x', behavior: 'advance', route: [[-1200, 1200], [1200, 1200]] }],
       [{ id: 'i', type: 'inf', position: [-1200, 1200], group: 'x' }],
-    ));
+    );
     w.terrain.roads.length = 0;
     let worst = 1;
     for (let i = 0; i < 120 * 120; i++) {
@@ -119,10 +113,10 @@ describe('group movement (05 5.5)', () => {
   });
 
   it('an advancing unit halts while engaging', () => {
-    const { s, rt } = run(mission(
+    const { s, rt } = run(
       [{ id: 'g', behavior: 'advance', route: [ROAD[0], ROAD[3]] }],
       [{ id: 'a', type: 'apc', position: ROAD[0], group: 'g' }],
-    ));
+    );
     for (let i = 0; i < 120 * 5; i++) s.step(STEP);
     const u = rt.unit('a')!;
     u.ai.state = 'engage';

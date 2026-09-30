@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-브라우저 AH-64 아파치 1인칭 조종 시뮬레이터. 아파치 조종사로 전쟁을 수행하는 게임("아파치: 카르다 전선")으로 확장하는 중이다.
+브라우저 3D 전쟁 게임. 기존 AH-64 아파치 조종 콘텐츠(캠페인·훈련·즉시 출격)는 2026-09-30 제거했고, 봇과 함께 혼자 하는 배틀필드식 **"전장"** 모드로 다시 만드는 중이다. 새 기획은 저장소 위키(https://github.com/kyhsa93/heli-game/wiki), 기획 작업은 `.claude/agents/game-designer.md` 에이전트.
 
 ## 먼저 읽을 것
 
 - 기획 전체: [docs/design/README.md](docs/design/README.md) — 읽는 순서와 문서 사용 규칙
 - 코드 작업 전 필수: [docs/design/08-technical-architecture.md](docs/design/08-technical-architecture.md) — 현재 코드 지도, 목표 구조, 의존 규칙, 테스트 방법
-- 할 일 고르기: GitHub 이슈(마일스톤 M0~M7, 작업 ID `[M0-1]` 형식) 또는 [docs/design/09-roadmap.md](docs/design/09-roadmap.md). 마일스톤 순서대로, 이슈의 "선행 이슈"가 닫힌 것부터. 끝나면 커밋에 `Closes #번호`
+- 할 일 고르기: 위키의 전장 로드맵(작업 ID `B…`)과 그것을 옮긴 GitHub 이슈. M0~M7 로드맵(`docs/design/09-roadmap.md`)은 완료·종료된 옛 기록이다. 끝나면 커밋에 `Closes #번호`
 
 ## 명령
 
