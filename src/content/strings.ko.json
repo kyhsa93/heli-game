@@ -438,6 +438,16 @@
       "title": "타이틀",
       "ticketsWon": "적 티켓이 바닥났습니다",
       "ticketsLost": "우리 티켓이 바닥났습니다"
+    },
+    "hud": {
+      "you": "나",
+      "tickets": "티켓 {n} 남음 — 거점을 되찾아야 한다",
+      "point": {
+        "captured": "거점 {id} 점령",
+        "lost": "거점 {id} 상실",
+        "neutral": "거점 {id} 중립화",
+        "enemy": "적이 거점 {id}를 점령했다"
+      }
     }
   }
 }

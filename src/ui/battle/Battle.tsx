@@ -6,6 +6,8 @@ import type { FlightSession } from '../../sim/session';
 import { Flight } from '../screens/Flight';
 import type { BattleChoice } from './BattleSetup';
 import { loadBattle } from './loadBattle';
+import { BattleHud } from './hud/BattleHud';
+import type { FlightRenderer } from '../../render/renderer';
 
 type BattleModule = Awaited<ReturnType<typeof loadBattle>>;
 type Runtime = ReturnType<BattleModule['createBattleSession']>['runtime'];
@@ -21,6 +23,7 @@ export function Battle({ choice, touch, settings, onSettings, onSetup, onTitle }
 }) {
   const [game, setGame] = useState<{ mod: BattleModule; session: FlightSession; runtime: Runtime } | null>(null);
   const [round, setRound] = useState(0);
+  const [renderer, setRenderer] = useState<FlightRenderer | null>(null);
   useEffect(() => {
     let alive = true;
     void (async () => {
@@ -37,7 +40,8 @@ export function Battle({ choice, touch, settings, onSettings, onSetup, onTitle }
   }, [choice, round]);
   if (!game) return <div className="menu"><div className="card"><p className="sub">{t('battle.deploy.loading')}</p></div></div>;
   return (
-    <Flight key={round} session={game.session} touch={touch} settings={settings} onSettings={onSettings} onExit={onSetup}>
+    <Flight key={round} session={game.session} touch={touch} settings={settings} onSettings={onSettings} onExit={onSetup} onRenderer={setRenderer}>
+      <BattleHud session={game.session} runtime={game.runtime} side={choice.side} renderer={renderer} touch={touch} />
       <BattleOverlays game={game} side={choice.side} onAgain={() => setRound(r => r + 1)} onSetup={onSetup} onTitle={onTitle} />
     </Flight>
   );

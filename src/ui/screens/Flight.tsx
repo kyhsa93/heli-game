@@ -26,9 +26,11 @@ import { watchViewport } from '../../core/viewport';
 
 const STICK_RADIUS = { S: 46, M: 56, L: 70 } as const;
 
-interface FlightProps { session: FlightSession; touch: boolean; settings?: Settings; onSettings?: (s: Settings) => void; onExit: () => void; children?: ReactNode }
+interface FlightProps { session: FlightSession; touch: boolean; settings?: Settings; onSettings?: (s: Settings) => void; onExit: () => void; children?: ReactNode; onRenderer?: (r: FlightRenderer | null) => void }
 
-export function Flight({ session, touch, settings = freshSave().settings, onSettings, onExit, children }: FlightProps) {
+export function Flight({ session, touch, settings = freshSave().settings, onSettings, onExit, children, onRenderer }: FlightProps) {
+  const onRendererRef = useRef(onRenderer);
+  onRendererRef.current = onRenderer;
   const mountRef = useRef<HTMLDivElement>(null);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
@@ -200,12 +202,14 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
       },
     });
     rendererRef.current = r;
+    onRendererRef.current?.(r);
     r.applySettings(settingsRef.current);
     if (new URLSearchParams(location.search).has('fps')) { r.showFps = true; r.logStats = true; }
     input.onCommand = cmd => runCommandRef.current(cmd);
     if (new URLSearchParams(location.search).has('debug')) Object.assign(window, { __flight: { session, world: sim, input, renderer: r, model: r.model, weapons: { rocketSolution, sightPoint, hellfireSolution } } });
     return () => {
       offEvents();
+      onRendererRef.current?.(null);
       r.dispose();
       rendererRef.current = null;
       audioRef.current?.dispose();
@@ -262,7 +266,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
   });
 
   return (
-    <div className={touch ? 'flight3d touch' : 'flight3d'}>
+    <div className={`flight3d${touch ? ' touch' : ''}${session.respawns ? ' battle' : ''}`}>
       <div
         ref={mountRef}
         className="viewport"

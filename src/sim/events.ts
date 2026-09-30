@@ -17,7 +17,7 @@ export type SimEvent =
   | { t: 'boundary' }
   | { t: 'objective'; id: string; state: 'done' | 'failed'; reason?: string }
   | { t: 'missileLost'; id: number; owner: number; reason: 'spotLost' | 'noLock' }
-  | { t: 'unitDestroyed'; id: number; defId: string; side: Side; byPlayer: boolean }
+  | { t: 'unitDestroyed'; id: number; defId: string; side: Side; byPlayer: boolean; by?: number }
   | { t: 'explosion'; pos: Vector3; size: number }
   | { t: 'fire'; weapon: string; pos: Vector3; dir: Vector3; owner: number; tracer: boolean }
   | { t: 'impact'; weapon: string; pos: Vector3; unit?: number; ground: boolean; missile?: number }

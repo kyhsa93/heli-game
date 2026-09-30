@@ -383,14 +383,14 @@ export class World {
     return this.units.find(u => u.id === id);
   }
 
-  damageUnit(u: Unit, amount: number, byPlayer: boolean) {
+  damageUnit(u: Unit, amount: number, byPlayer: boolean, by?: number) {
     if (!u.alive || u.def.indestructible || amount <= 0) return;
     u.hp = Math.max(0, u.hp - amount);
     if (u.hp === 0) {
       u.alive = false;
       u.diedAt = this.time;
       if (!u.def.move?.air) u.vel.set(0, 0, 0);
-      this.emit({ t: 'unitDestroyed', id: u.id, defId: u.defId, side: u.side, byPlayer });
+      this.emit({ t: 'unitDestroyed', id: u.id, defId: u.defId, side: u.side, byPlayer, by });
       const sec = u.def.secondaryExplosion;
       if (sec) {
         explode(this, u.pos.clone().setY(u.pos.y + u.def.size[1] / 2), sec.damage, sec.radius, WEAPONS.secondary.penetration, byPlayer, u);

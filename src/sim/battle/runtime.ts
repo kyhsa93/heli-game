@@ -12,6 +12,7 @@ import { brainSystems, composeHooks } from './index';
 import { conquestRules, type ConquestRules } from './modes';
 import { buildRoster } from './roster';
 import { Spawner } from './spawner';
+import { PlayerSpotting } from './spotting';
 import { insidePolygon, modeZone, type BattleMapDef, type BattleSide } from './schema';
 import { battleTerrainOptions } from './terrain';
 
@@ -33,6 +34,7 @@ export class BattleRuntime implements Objective {
   spawner!: Spawner;
   commanders: Commander[] = [];
   intel = new Intel();
+  spotting = new PlayerSpotting();
   outside = 0;
 
   constructor(readonly map: BattleMapDef, readonly mode: 'conquest' | 'quick', readonly opts: BattleOptions) {
@@ -55,7 +57,8 @@ export class BattleRuntime implements Objective {
     });
     this.spawner.threatened = (side, p) => this.commanders.find(c => c.side === side)!.knownEnemy(world, p, this.conquest.elapsed) > 0;
     const brains = brainSystems(this.intel, this.rules.botLethality);
-    world.battleHooks = composeHooks({ tick10Hz: brains.tick10Hz, tick1Hz: [...brains.tick1Hz, this.conquest.step, this.spawner.step, this.command] });
+    this.spotting = new PlayerSpotting();
+    world.battleHooks = composeHooks({ tick10Hz: [...brains.tick10Hz, this.spotting.step], tick1Hz: [...brains.tick1Hz, this.conquest.step, this.spawner.step, this.command] });
     this.state = 'active';
     this.result = {};
     for (const f of this.map.fixed) {
@@ -108,6 +111,7 @@ export class BattleRuntime implements Objective {
 
   onEvent(e: SimEvent, world: World) {
     if (e.t === 'crash') this.conquest.playerDied(this.opts.side, 'attackHeli');
+    else if (e.t === 'identified') this.spotting.identified(e.id, world.time);
     else if (e.t === 'battleEnd') this.end(world, e.winner);
   }
 
