@@ -19,6 +19,15 @@
     "guidance": "radar", "ammoPerLauncher": 4, "minRange": 500, "maxRange": 8000,
     "speed": 400, "damage": 400, "splashRadius": 6, "splashDamage": 50, "penetration": 5, "minInterval": 0.8
   },
+  "rifle": {
+    "guidance": "ballistic", "minRange": 0, "maxRange": 600, "speed": 850, "drag": 0.0006,
+    "damage": 25, "splashRadius": 0, "splashDamage": 0, "penetration": 0, "squadScale": 12.5,
+    "falloff": { "near": 50, "far": 300, "min": 18 }
+  },
+  "grenade": {
+    "guidance": "ballistic", "minRange": 10, "maxRange": 350, "speed": 75, "drag": 0,
+    "damage": 100, "splashRadius": 5, "splashDamage": 100, "penetration": 2, "squadScale": 12.5
+  },
   "stinger": {
     "guidance": "ir", "ammo": [2], "minRange": 300, "maxRange": 5000,
     "speed": 750, "damage": 260, "splashRadius": 3, "splashDamage": 40, "penetration": 3, "minInterval": 1,

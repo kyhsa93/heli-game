@@ -10,7 +10,9 @@ import { agl, createHeli, toWorld, updateQ, type Controls, type HeliState } from
 import type { Avatar, AvatarSpawn, PlayerBody } from './avatar';
 import type { Obstacle } from './obstacles';
 import { createSoldier, createSoldierCommands, SOLDIER_RADIUS, type SoldierCommands, type SoldierState, type Stance } from './infantry/soldier';
-import { createMotion, setStance, stepSoldier, type SoldierMotion } from './infantry/movement';
+import { createMotion, setStance, sprinting, stepSoldier, type SoldierMotion } from './infantry/movement';
+import { createArms as createSoldierArms, select, startReload, stepArms, type InfantryWeaponId, type SoldierArms } from './infantry/arms';
+import { soldierEye } from './infantry/soldier';
 import { toggleEngine } from './heli/systems';
 import { blastShares, DAMAGED, hitSystem, randomHitPoint, ROTOR_FAIL_SECONDS, systemAt, type SystemId } from './heli/damage';
 import type { CrashReason } from './events';
@@ -62,6 +64,8 @@ export class World {
   soldier: SoldierState | null = null;
   soldierCommands: SoldierCommands = createSoldierCommands();
   soldierMotion: SoldierMotion = createMotion();
+  soldierArms: SoldierArms = createSoldierArms('assault');
+  private tmpEye = new Vector3();
   private body: PlayerBody = { kind: 'heli', pos: new Vector3(), vel: new Vector3(), alive: false, agl: 0, heat: 1, radius: PLAYER_RADIUS };
   controls: Controls = { cyclicX: 0, cyclicY: 0, pedal: 0, collective: 0 };
   wind = new Vector3();
@@ -139,6 +143,7 @@ export class World {
       this.soldierCommands = createSoldierCommands();
       this.soldierCommands.yaw = this.soldier.yaw;
       this.soldierMotion = createMotion();
+      this.soldierArms = createSoldierArms(s.cls);
       this.commands.fire = false;
       this.avatar = { kind: 'soldier' };
       return;
@@ -159,12 +164,31 @@ export class World {
     this.avatar = { kind: 'heli' };
   }
 
+  reloadSoldier() {
+    if (this.soldier?.alive) startReload(this.soldierArms);
+  }
+
+  selectSoldierWeapon(id: InfantryWeaponId) {
+    if (this.soldier?.alive) select(this.soldierArms, id);
+  }
+
   setStance(next: Stance) {
     if (this.soldier?.alive) setStance(this.soldier, this.soldierMotion, next);
   }
 
   private stepSoldier(s: SoldierState, dt: number) {
-    const out = stepSoldier(s, this.soldierCommands, this.soldierMotion, this.terrain, this.units, dt, this.obstacles);
+    const c = this.soldierCommands, a = this.soldierArms;
+    const out = stepSoldier(s, c, this.soldierMotion, this.terrain, this.units, dt, this.obstacles);
+    s.yaw = c.yaw + a.recoilYaw;
+    s.pitch = c.pitch + a.recoilPitch;
+    const canFire = s.alive && !sprinting(s, c, this.soldierMotion) && this.soldierMotion.stanceTimer === 0 && !this.soldierMotion.vault;
+    const shots = stepArms(s, a, c.fire, soldierEye(s, this.tmpEye), { rng: this.rng, nextId: () => this.nextProjectileId++, ads: c.ads, canFire }, dt);
+    for (const p of shots) {
+      this.projectiles.push(p);
+      this.emit({ t: 'fire', weapon: p.weapon, pos: p.pos.clone(), dir: p.vel.clone().normalize(), owner: PLAYER_OWNER, tracer: p.tracer });
+    }
+    s.yaw = c.yaw + a.recoilYaw;
+    s.pitch = c.pitch + a.recoilPitch;
     if (out?.t === 'runOver') this.killPlayer('killed');
     else if (out?.t === 'fall') {
       s.hp = Math.max(0, s.hp - out.damage);
@@ -797,7 +821,7 @@ export class World {
         const w = WEAPONS[p.weapon];
         const byPlayer = p.owner === PLAYER_OWNER;
         if (at.distanceTo(p.origin) >= w.minRange) {
-          hitUnit(this, bestUnit, w, byPlayer);
+          hitUnit(this, bestUnit, w, byPlayer, at.distanceTo(p.origin));
           explodeWeapon(this, at, w, byPlayer, bestUnit);
         }
         this.emit({ t: 'impact', weapon: p.weapon, pos: at, unit: bestUnit.id, ground: false });

@@ -1,0 +1,9 @@
+{
+  "weapons": {
+    "rifle": { "projectile": "rifle", "mag": 30, "reserve": 150, "rate": 10, "reload": 2.2, "spreadHipDeg": 2.5, "spreadAdsDeg": 0.3, "recoilDeg": 0.4, "recoilAdsDeg": 0.25, "recoilYawDeg": 0.15, "bloomMax": 1.8, "bloomPerShot": 0.08, "auto": true },
+    "grenade": { "projectile": "grenade", "mag": 1, "reserve": 5, "rate": 1, "reload": 1.5, "spreadHipDeg": 0.5, "spreadAdsDeg": 0.2, "recoilDeg": 1.5, "recoilAdsDeg": 1, "recoilYawDeg": 0.3, "bloomMax": 1, "bloomPerShot": 0, "auto": false }
+  },
+  "classes": {
+    "assault": { "primary": "rifle", "gear": ["grenade"] }
+  }
+}

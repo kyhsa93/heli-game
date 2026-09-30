@@ -12,6 +12,8 @@ export interface WeaponDef {
   splashRadius: number;
   splashDamage: number;
   penetration: number;
+  squadScale?: number;
+  falloff?: { near: number; far: number; min: number };
   effectiveRange?: number;
   drag?: number;
   rate?: number;
@@ -62,19 +64,27 @@ export function distanceToUnit(u: Unit, p: Vector3) {
   return Math.max(0, Math.hypot(Math.max(0, Math.hypot(dx, dz) - r), dy));
 }
 
-export function hitUnit(world: World, u: Unit, w: WeaponDef, byPlayer: boolean) {
-  world.damageUnit(u, directDamage(w, u.def.armor), byPlayer);
+export function falloffDamage(w: WeaponDef, dist: number) {
+  const f = w.falloff;
+  if (!f) return w.damage;
+  const k = Math.max(0, Math.min(1, (dist - f.near) / (f.far - f.near)));
+  return w.damage + (f.min - w.damage) * k;
 }
 
-export function explode(world: World, at: Vector3, damage: number, radius: number, penetration: number, byPlayer: boolean, skip?: Unit) {
+export function hitUnit(world: World, u: Unit, w: WeaponDef, byPlayer: boolean, dist = 0) {
+  const raw = falloffDamage(w, dist) * armorMultiplier(w.penetration, u.def.armor);
+  world.damageUnit(u, u.def.squad && w.squadScale ? raw / w.squadScale : raw, byPlayer);
+}
+
+export function explode(world: World, at: Vector3, damage: number, radius: number, penetration: number, byPlayer: boolean, skip?: Unit, squadScale?: number) {
   world.emit({ t: 'explosion', pos: at.clone(), size: radius });
   for (const u of world.units) {
     if (!u.alive || u === skip) continue;
     const dmg = splashDamage(damage, radius, penetration, distanceToUnit(u, at), u.def.armor);
-    if (dmg > 0) world.damageUnit(u, dmg, byPlayer);
+    if (dmg > 0) world.damageUnit(u, u.def.squad && squadScale ? dmg / squadScale : dmg, byPlayer);
   }
 }
 
 export function explodeWeapon(world: World, at: Vector3, w: WeaponDef, byPlayer: boolean, skip?: Unit) {
-  explode(world, at, w.splashDamage, w.splashRadius, w.penetration, byPlayer, skip);
+  explode(world, at, w.splashDamage, w.splashRadius, w.penetration, byPlayer, skip, w.squadScale);
 }

@@ -81,8 +81,9 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
   const runCommand = (cmd: Command) => {
     switch (cmd) {
       case 'engine': sim.toggleEngine(); break;
-      case 'weapon1': sim.selectWeapon(1); break;
-      case 'weapon2': sim.selectWeapon(2); break;
+      case 'weapon1': if (sim.avatar.kind === 'soldier') sim.selectSoldierWeapon('rifle'); else sim.selectWeapon(1); break;
+      case 'weapon2': if (sim.avatar.kind === 'soldier') sim.selectSoldierWeapon('grenade'); else sim.selectWeapon(2); break;
+      case 'reload': sim.reloadSoldier(); break;
       case 'weapon3': sim.selectWeapon(3); break;
       case 'weapon4': sim.selectWeapon(4); break;
       case 'weaponNext': sim.nextWeapon(); break;
