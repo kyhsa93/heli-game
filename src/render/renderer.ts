@@ -350,6 +350,7 @@ export class FlightRenderer {
       ir: h.alive && world.arms.selected === 'stinger' ? (world.stinger.locked ? 'lock' : world.stinger.unitId !== null ? 'seek' : 'none') : 'none',
       rwr: h.alive && session.mode === 'play' ? rwrLevel(aseThreats(world)) : 'none',
       fuel: h.fuel, aglFt: agl * M_TO_FT, vsFpm: h.vel.y * MS_TO_FPM, flying: h.alive && !h.landed && session.mode === 'play',
+      soldier: soldier?.alive && session.mode === 'play' ? { dt: steps * STEP, speed: Math.hypot(soldier.vel.x, soldier.vel.z), stance: soldier.stance, onGround: soldier.onGround, reloading: world.soldierArms.reloading > 0 } : null,
     });
 
     this.opts.onFrame?.({ simDt: steps * STEP, cockpit, agl });

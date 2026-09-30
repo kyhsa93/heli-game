@@ -11,6 +11,8 @@ export const SOUND_SPEED = 340;
 
 export type SampleId = 'gun_shot' | 'rocket_launch' | 'hellfire_launch' | 'hit_metal_0' | 'hit_metal_1' | 'hit_metal_2' | 'radio_squelch' | 'impact_metal' | 'impact_ground' | 'explosion_near' | 'explosion_fire';
 
+export interface ClipOptions { gain: number; length: number; rate?: number; delay?: number; lowpass?: number; highpass?: number }
+
 export class SfxPlayer {
   private lastGun = -1;
   private voices = 0;
@@ -42,7 +44,7 @@ export class SfxPlayer {
           this.play('hellfire_launch', 0.75, 1, 0, 20000, 1.2);
         } else if (e.owner === 0 && e.weapon === 'hydra70') {
           this.play('rocket_launch', 0.6, 1.25 + this.rnd() * 0.1, 0, 20000, 0.5);
-        } else if (e.owner === 0) {
+        } else if (e.owner === 0 && e.weapon === 'gun30') {
           if (this.ctx.currentTime - this.lastGun < 0.085) return;
           this.lastGun = this.ctx.currentTime;
           this.play('gun_shot', 0.35, 0.95 + this.rnd() * 0.1, 0, 20000, 0.12);
@@ -73,8 +75,12 @@ export class SfxPlayer {
     this.play('radio_squelch', 0.5, 1, 0, 20000, 0.15, this.radioOut ?? this.out);
   }
 
-  private play(id: SampleId, gain: number, rate: number, delay: number, lowpass: number, synthLength: number, dest: AudioNode = this.out) {
-    if (this.voices >= this.maxVoices || gain < 0.01) return;
+  clip(id: SampleId, o: ClipOptions) {
+    return this.play(id, o.gain, o.rate ?? 1, o.delay ?? 0, o.lowpass ?? 20000, o.length, this.out, true, o.highpass ?? 0);
+  }
+
+  private play(id: SampleId, gain: number, rate: number, delay: number, lowpass: number, synthLength: number, dest: AudioNode = this.out, cut = false, highpass = 0) {
+    if (this.voices >= this.maxVoices || gain < 0.01) return false;
     const buffer = this.samples[id];
     const src = this.ctx.createBufferSource();
     src.buffer = buffer ?? this.noise;
@@ -82,16 +88,25 @@ export class SfxPlayer {
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.value = Math.max(200, lowpass);
+    let chain: AudioNode = src.connect(filter);
+    if (highpass > 0) {
+      const hp = this.ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = highpass;
+      chain = chain.connect(hp);
+    }
     const g = this.ctx.createGain();
     const at = this.ctx.currentTime + delay;
+    const shaped = !buffer || cut;
     g.gain.value = gain;
-    if (!buffer) {
+    if (shaped) {
       g.gain.setValueAtTime(gain, at);
       g.gain.exponentialRampToValueAtTime(0.001, at + synthLength);
     }
-    src.connect(filter).connect(g).connect(dest);
+    chain.connect(g).connect(dest);
     this.voices++;
     src.onended = () => { this.voices--; };
-    src.start(at, 0, buffer ? undefined : synthLength);
+    src.start(at, 0, shaped ? synthLength : undefined);
+    return true;
   }
 }

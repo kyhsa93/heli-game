@@ -1,6 +1,7 @@
 import type { Vector3 } from 'three';
 import type { SimEvent } from '../sim/events';
 import { RotorAudio, type AudioState } from './rotor';
+import { InfantryAudio, type FootState } from './infantry';
 import { SfxPlayer, type SampleId } from './sfx';
 import { speechBackend, VoiceWarnings, type VoiceBackend, type VoiceLine } from './voice';
 
@@ -44,6 +45,8 @@ export class GameAudio {
   readonly rotor: RotorAudio;
   readonly sfx: SfxPlayer;
   readonly voice: VoiceWarnings;
+  readonly infantry: InfantryAudio;
+  private foot = false;
   private bingoSaid = false;
   private buffers: Record<string, AudioBuffer> = {};
 
@@ -51,6 +54,7 @@ export class GameAudio {
     this.rotor = new RotorAudio(ctx);
     this.sfx = new SfxPlayer(this.rotor.context, this.rotor.output);
     this.sfx.radioOut = this.rotor.radioOutput;
+    this.infantry = new InfantryAudio(this.sfx, () => this.rotor.context.currentTime);
     this.voice = new VoiceWarnings(voice === undefined ? speechBackend() : voice, () => this.rotor.beep(), () => this.rotor.context.currentTime);
   }
 
@@ -72,13 +76,16 @@ export class GameAudio {
       if (e.on) this.rotor.playEngineStart(this.buffers.engine_start);
       else this.rotor.stopEngineStart();
     }
-    this.sfx.onEvent(e, listener);
+    this.infantry.onEvent(e, listener, this.foot);
+    if (!(this.foot && e.t === 'playerHit')) this.sfx.onEvent(e, listener);
     if (e.t === 'radio') { this.sfx.radio(); this.rotor.duckFor(RADIO_DUCK); }
     const line = voiceFor(e);
     if (line && this.voice.say(line)) this.rotor.duckFor(VOICE_DUCK);
   }
 
-  update(s: AudioState & { fuel?: number; aglFt?: number; vsFpm?: number; flying?: boolean }) {
+  update(s: AudioState & { fuel?: number; aglFt?: number; vsFpm?: number; flying?: boolean; soldier?: FootState | null }) {
+    this.foot = !!s.soldier;
+    this.infantry.update(s.soldier ?? null);
     this.rotor.update(s);
     if (s.fuel !== undefined) {
       if (s.fuel < BINGO && !this.bingoSaid) { this.bingoSaid = this.voice.say('bingoFuel'); }
