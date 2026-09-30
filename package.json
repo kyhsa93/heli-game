@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "check": "tsc && vitest run && vite build",
-    "battle:map": "node --experimental-transform-types --no-warnings --import ./scripts/lib/ts.mjs scripts/battle-map-gen.ts"
+    "battle:map": "node --experimental-transform-types --no-warnings --import ./scripts/lib/ts.mjs scripts/battle-map-gen.ts",
+    "battle:bench": "node --experimental-transform-types --no-warnings --import ./scripts/lib/ts.mjs scripts/battle-bench.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

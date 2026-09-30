@@ -48,3 +48,16 @@
 - 9.0 모듈 표의 제거·남음 목록은 코드와 일치한다.
 - `world.player`를 직접 읽는 적 AI는 `sim/ai/awareness.ts`·`brain.ts`·`air.ts`·`searchlight.ts`다. `sim/weapons/enemyMissile.ts`는 표적 위치·속도를 인자로 받으므로 B1-7(`PlayerBody`)의 교체 대상이 아니다. 플레이어 무장(`rockets`·`hellfire`·`ballistics`)은 헬기 아바타 전용이라 그대로 둔다.
 - `sim/objective.ts`의 `Objective` 인터페이스(`start`·`tick`·`onEvent`)는 남아 있고 구현체는 없다. `BattleRuntime`이 첫 구현이 된다.
+
+## 규모 측정 v1 (B1-14)
+
+`npm run battle:bench -- --map harek --mode quick --minutes 10` — 플레이어 없이(배치 화면 대기) 봇끼리 10분, 첫 5초는 제외. node 24, 이 개발 머신 기준.
+
+| 측정 (ms) | 평균 | p99 | 최악 | 예산 |
+| --- | --- | --- | --- | --- |
+| sim 한 프레임(60fps = 스텝 2번) | 0.066 | 0.340 | 1.985 | 평균 ≤ 1 |
+| 전장 10Hz 틱(표적·사격) | 0.110 | 0.288 | 1.291 | 최악 ≤ 2 |
+| 전장 1Hz 틱(점령·스폰·지휘) | 0.095 | 0.561 | 1.401 | 최악 ≤ 2 |
+
+- 유닛: 목록 최대 40, 살아 있는 최대 37, 잔해 은퇴 3. 잔해는 죽은 지 90초 뒤 `world.units`에서 빠진다(`world.retireAfter`, 전장만 켬). 유닛 500개를 만들고 죽여도 목록은 150을 넘지 않는다(`retire.test.ts`).
+- 참고로 점령전(대규모 편제, B5 대상)은 같은 조건에서 프레임 평균 0.165, 1Hz 틱 최악 **3.6ms** — 지휘관의 효용 계산(소대 × 거점 × 유닛)과 도로 A*가 한 틱에 몰린다. B5-7에서 줄일 것.

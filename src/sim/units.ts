@@ -78,6 +78,7 @@ export interface Unit {
   aam?: boolean;
   beam?: { yaw: number; pitch: number; lost: number; lit: boolean };
   battle?: BattleUnit;
+  diedAt?: number;
 }
 
 export type TargetRef = { kind: 'player' } | { kind: 'unit'; id: number };

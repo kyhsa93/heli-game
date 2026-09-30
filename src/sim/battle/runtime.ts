@@ -16,6 +16,7 @@ import { insidePolygon, modeZone, type BattleMapDef, type BattleSide } from './s
 import { battleTerrainOptions } from './terrain';
 
 export const AIR_SPAWN_AGL = 150;
+export const WRECK_SECONDS = 90;
 
 export interface BattleOptions { side: BattleSide; seed: number }
 
@@ -43,6 +44,7 @@ export class BattleRuntime implements Objective {
 
   start(world: World) {
     world.playerSide = this.opts.side;
+    world.retireAfter = WRECK_SECONDS;
     this.conquest = new Conquest(this.map, this.mode, this.rules);
     const roster = (side: BattleSide) => buildRoster({ scale: this.rules.forces, side, playerSide: this.opts.side, difficulty: world.difficulty.level });
     this.spawner = new Spawner(this.map, { coalition: roster('coalition'), veros: roster('veros') }, this.conquest, this.rules.botWaveSec);

@@ -87,6 +87,9 @@ export class World {
   readonly los: LosCache;
   private aiClock = 0;
   battleHooks: BattleHooks | null = null;
+  retireAfter: number | null = null;
+  retired: { id: number; defId: string; side: Side; diedAt: number }[] = [];
+  private retireClock = 0;
   private battleClock = 0;
   private battleSlowClock = 0;
   tads: Tads = createTads();
@@ -362,6 +365,8 @@ export class World {
     this.battleClock = 0;
     this.battleSlowClock = 0;
     this.units = [];
+    this.retired = [];
+    this.retireClock = 0;
     this.projectiles = [];
     this.missiles = [];
     this.enemyMissiles = [];
@@ -383,6 +388,7 @@ export class World {
     u.hp = Math.max(0, u.hp - amount);
     if (u.hp === 0) {
       u.alive = false;
+      u.diedAt = this.time;
       if (!u.def.move?.air) u.vel.set(0, 0, 0);
       this.emit({ t: 'unitDestroyed', id: u.id, defId: u.defId, side: u.side, byPlayer });
       const sec = u.def.secondaryExplosion;
@@ -447,7 +453,20 @@ export class World {
       while (this.aiClock >= AI_TICK - 1e-9) { this.aiClock -= AI_TICK; stepAwareness(this, this.los, this.conditions); stepBrains(this); }
     }
     if (this.battleHooks) this.stepBattle(this.battleHooks, dt);
+    if (this.retireAfter !== null) this.stepRetire(dt, this.retireAfter);
     this.events.flush();
+  }
+
+  private stepRetire(dt: number, after: number) {
+    this.retireClock += dt;
+    if (this.retireClock < 1 - 1e-9) return;
+    this.retireClock -= 1;
+    if (!this.units.some(u => !u.alive && u.diedAt !== undefined && this.time - u.diedAt >= after)) return;
+    this.units = this.units.filter(u => {
+      if (u.alive || u.diedAt === undefined || this.time - u.diedAt < after) return true;
+      this.retired.push({ id: u.id, defId: u.defId, side: u.side, diedAt: u.diedAt });
+      return false;
+    });
   }
 
   private stepBattle(hooks: BattleHooks, dt: number) {
