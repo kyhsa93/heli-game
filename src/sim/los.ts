@@ -62,7 +62,8 @@ export function radarSight(t: Terrain, a: Vector3, b: Vector3) {
 interface Entry { sight: Sight; radar: boolean; ox: number; oz: number; oy: number; tx: number; ty: number; tz: number; time: number }
 
 export const LOS_PAIR_BASE = 1_000_000;
-export const LOS_PRUNE_SECONDS = 5;
+export const LOS_PRUNE_SECONDS = 2;
+export const LOS_PRUNE_EVERY = 10;
 
 export function pairKey(observer: number, target: number) {
   return (observer + 1) * LOS_PAIR_BASE + target;

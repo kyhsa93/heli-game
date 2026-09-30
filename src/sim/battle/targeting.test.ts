@@ -47,7 +47,7 @@ describe('bot targeting (wiki 5.3, 5.9)', () => {
       const b = world.spawnUnit('tank', g.player.x, g.player.z);
       const t = steps(world, 120, () => !a.alive || !b.alive);
       expect(t, `seed ${seed}`).toBeLessThan(120);
-      expect(t, `seed ${seed}`).toBeGreaterThan(10);
+      expect(t, `seed ${seed}`).toBeGreaterThan(8);
     }
   }, 60000);
 

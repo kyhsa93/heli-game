@@ -114,7 +114,11 @@
         "damage": 250,
         "rate": 0.1,
         "vs": "air",
-        "penetration": 2
+        "penetration": 2,
+        "vsUnits": {
+          "rate": 0.05,
+          "accuracy": 0.5
+        }
       }
     ],
     "detect": "visual",
@@ -350,7 +354,13 @@
         "rate": 15,
         "accuracy": 0.22,
         "vs": "air",
-        "penetration": 2
+        "penetration": 2,
+        "vsUnits": {
+          "damage": 5,
+          "rate": 8,
+          "accuracy": 0.1,
+          "penetration": 3
+        }
       }
     ],
     "detect": "radar",
@@ -1197,7 +1207,11 @@
         "damage": 250,
         "rate": 0.1,
         "vs": "air",
-        "penetration": 2
+        "penetration": 2,
+        "vsUnits": {
+          "rate": 0.05,
+          "accuracy": 0.5
+        }
       }
     ],
     "detect": "visual",
@@ -1315,7 +1329,13 @@
         "rate": 15,
         "accuracy": 0.22,
         "vs": "air",
-        "penetration": 2
+        "penetration": 2,
+        "vsUnits": {
+          "damage": 5,
+          "rate": 8,
+          "accuracy": 0.1,
+          "penetration": 3
+        }
       }
     ],
     "detect": "radar",

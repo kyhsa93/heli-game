@@ -7,7 +7,9 @@ export type WeaponKind = 'bullet' | 'rocket' | 'shell' | 'atgm' | 'missileIR' | 
 export type Vs = 'air' | 'ground' | 'both';
 export type Detect = 'visual' | 'visualIR' | 'radar' | 'none';
 
-export interface UnitWeaponDef { id: string; kind: WeaponKind; vs: Vs; penetration: number; range: number; minRange: number; damage: number; rate: number; accuracy?: number }
+export interface BotFire { damage?: number; rate?: number; accuracy?: number; penetration?: number }
+
+export interface UnitWeaponDef { id: string; kind: WeaponKind; vs: Vs; penetration: number; range: number; minRange: number; damage: number; rate: number; accuracy?: number; vsUnits?: BotFire }
 
 export const hitsAir = (w: UnitWeaponDef) => w.vs !== 'ground';
 export const hitsGround = (w: UnitWeaponDef) => w.vs !== 'air';
@@ -123,6 +125,8 @@ export function validateUnitDefs(defs: Record<string, UnitDef>): string[] {
       if (!Number.isInteger(w.penetration) || w.penetration < 0 || w.penetration > 5) e(`${w.id} penetration ${w.penetration} not 0..5`);
       if (!(w.range > w.minRange && w.minRange >= 0)) e(`${w.id} range`);
       if (!(w.damage > 0 && w.rate > 0)) e(`${w.id} damage/rate`);
+      const v = w.vsUnits;
+      if (v && ((v.damage !== undefined && !(v.damage > 0)) || (v.rate !== undefined && !(v.rate > 0)) || (v.accuracy !== undefined && !(v.accuracy > 0 && v.accuracy <= 1)) || (v.penetration !== undefined && !(Number.isInteger(v.penetration) && v.penetration >= 0 && v.penetration <= 5)))) e(`${w.id} vsUnits`);
       if (AIMED.has(w.kind) && !(w.accuracy !== undefined && w.accuracy > 0 && w.accuracy <= 1)) e(`${w.id} accuracy`);
     }
   }

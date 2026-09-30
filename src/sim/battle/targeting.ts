@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 import { Grid } from '../../core/grid';
 import { eyeOf } from '../ai/awareness';
 import { REACTION } from '../ai/brain';
-import { pairKey } from '../los';
+import { LOS_PRUNE_EVERY, pairKey } from '../los';
 import { hitsAir, hitsGround, hostile, type TargetRef, type Unit, type UnitDef, type UnitWeaponDef } from '../units';
 import type { World } from '../world';
 
@@ -56,8 +56,10 @@ export function canHit(w: UnitWeaponDef, cls: TargetClass) {
   return cls === 'air' ? hitsAir(w) : hitsGround(w);
 }
 
+const SOFT = new Set<TargetClass>(['inf', 'atInf', 'air']);
+
 export function usableWeapons(u: Unit, cls: TargetClass, dist: number) {
-  return u.def.weapons.filter(w => canHit(w, cls) && dist <= w.range && dist >= w.minRange && w.kind !== 'missileIR' && w.kind !== 'missileRadar');
+  return u.def.weapons.filter(w => canHit(w, cls) && dist <= w.range && dist >= w.minRange && !(w.kind === 'atgm' && SOFT.has(cls)));
 }
 
 function reach(u: Unit) {
@@ -84,7 +86,7 @@ export class Targeting {
       if (u.id % TARGET_SLICES === slice) this.choose(world, u);
       else if (b.target && !this.valid(world, u, b.target)) b.target = null;
     }
-    if (slice === 0) world.los.prune(world.time);
+    if (this.tick % (LOS_PRUNE_EVERY * TARGET_SLICES) === 0) world.los.prune(world.time);
   };
 
   private valid(world: World, u: Unit, t: TargetRef) {
