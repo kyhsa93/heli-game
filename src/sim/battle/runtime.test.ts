@@ -25,7 +25,7 @@ describe('battle runtime (B1-7)', () => {
     const { world } = battle();
     expect(world.terrain.size).toBe(harek.terrain.size);
     expect(world.terrain.bridges.length).toBe(2);
-    expect(world.units.map(u => u.defId).sort()).toEqual(['aaa_light', 'aaa_light', 'c_aaa', 'c_aaa']);
+    expect(world.units.filter(u => !u.def.move).map(u => u.defId).sort()).toEqual(['aaa_light', 'aaa_light', 'c_aaa', 'c_aaa']);
     expect(world.battleHooks).not.toBe(null);
   });
 

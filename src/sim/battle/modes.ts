@@ -14,7 +14,7 @@ export interface ConquestRules {
   botWaveSec: number;
   playerRespawnSec: number;
   boundaryGraceSec: number;
-  rosterScale: number;
+  forces: 'large' | 'quick';
 }
 
 type Raw = Record<string, Partial<ConquestRules> & { extends?: string }>;
@@ -28,9 +28,10 @@ export function conquestRules(mode: 'conquest' | 'quick', raw: Raw = modesJson a
 
 export function validateRules(r: ConquestRules): string[] {
   const errors: string[] = [];
-  const positive = ['tickets', 'bleedPerPointPerSec', 'timeLimitSec', 'captureRatePerSec', 'captureCap', 'botWaveSec', 'rosterScale'] as const;
+  const positive = ['tickets', 'bleedPerPointPerSec', 'timeLimitSec', 'captureRatePerSec', 'captureCap', 'botWaveSec'] as const;
   for (const k of positive) if (!(r[k] > 0)) errors.push(`${k} must be > 0`);
   if (!(r.contestedBelow >= 0)) errors.push('contestedBelow must be ≥ 0');
+  if (r.forces !== 'large' && r.forces !== 'quick') errors.push(`forces ${r.forces} is not a roster scale`);
   for (const k of ['person', 'light', 'apc', 'airDefense', 'tank', 'transportHeli', 'attackHeli', 'jet'] as const) if (!(r.ticketCost?.[k] > 0)) errors.push(`ticketCost.${k} must be > 0`);
   return errors;
 }

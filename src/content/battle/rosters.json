@@ -1,0 +1,15 @@
+{
+  "units": {
+    "rifle": ["c_inf", "inf"], "at": ["c_inf_at", "inf_at"], "mg": ["c_inf_mg", "inf_mg"], "aa": ["c_manpads", "manpads"], "sniper": ["c_sniper", "sniper"],
+    "tank": ["c_tank", "tank"], "apc": ["c_apc", "apc"], "light": ["c_technical", "technical"], "truck": ["c_truck", "truck"], "spaag": ["c_spaag", "spaag"],
+    "attackHeli": ["c_apache", "heli_attack"], "transportHeli": ["c_heli_transport", "heli_transport"], "jet": ["c_jet", "jet"]
+  },
+  "respawnSec": { "tank": 90, "apc": 60, "light": 30, "truck": 30, "spaag": 90, "attackHeli": 120, "transportHeli": 90, "jet": 120 },
+  "forces": {
+    "large": { "rifle": 10, "at": 4, "mg": 3, "aa": 2, "sniper": 2, "tank": 4, "apc": 4, "light": 3, "truck": 2, "spaag": 2, "attackHeli": 2, "transportHeli": 2, "jet": 2 },
+    "quick": { "rifle": 5, "at": 2, "mg": 1, "aa": 1, "sniper": 1, "tank": 2, "apc": 2, "light": 1, "truck": 1, "spaag": 1, "attackHeli": 1, "jet": 1 }
+  },
+  "playerSide": { "large": { "rifle": -2 }, "quick": { "rifle": -1 } },
+  "enemyScale": { "easy": 0.85, "normal": 1, "hard": 1.15 },
+  "available": ["rifle", "at", "mg", "aa", "sniper", "tank", "apc", "light", "truck", "spaag"]
+}

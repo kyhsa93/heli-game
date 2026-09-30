@@ -7,6 +7,8 @@ import type { World } from '../world';
 import { Conquest, type Winner } from './conquest';
 import { brainSystems, composeHooks } from './index';
 import { conquestRules, type ConquestRules } from './modes';
+import { buildRoster } from './roster';
+import { Spawner } from './spawner';
 import { insidePolygon, modeZone, type BattleMapDef, type BattleSide } from './schema';
 import { battleTerrainOptions } from './terrain';
 
@@ -24,6 +26,7 @@ export class BattleRuntime implements Objective {
   readonly rules: ConquestRules;
   readonly zone;
   conquest!: Conquest;
+  spawner!: Spawner;
   outside = 0;
 
   constructor(readonly map: BattleMapDef, readonly mode: 'conquest' | 'quick', readonly opts: BattleOptions) {
@@ -36,14 +39,17 @@ export class BattleRuntime implements Objective {
   start(world: World) {
     world.playerSide = this.opts.side;
     this.conquest = new Conquest(this.map, this.mode, this.rules);
+    const roster = (side: BattleSide) => buildRoster({ scale: this.rules.forces, side, playerSide: this.opts.side, difficulty: world.difficulty.level });
+    this.spawner = new Spawner(this.map, { coalition: roster('coalition'), veros: roster('veros') }, this.conquest, this.rules.botWaveSec);
     const brains = brainSystems();
-    world.battleHooks = composeHooks({ tick10Hz: brains.tick10Hz, tick1Hz: [...brains.tick1Hz, this.conquest.step] });
+    world.battleHooks = composeHooks({ tick10Hz: brains.tick10Hz, tick1Hz: [...brains.tick1Hz, this.conquest.step, this.spawner.step] });
     this.state = 'active';
     this.result = {};
     for (const f of this.map.fixed) {
       if (f.modes && !f.modes.includes(this.mode)) continue;
       world.spawnUnit(f.unit, f.position[0], f.position[1], -(f.yawDeg * Math.PI) / 180);
     }
+    this.spawner.wave(world);
     this.outside = 0;
   }
 
