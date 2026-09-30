@@ -105,7 +105,7 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
     if (!u.alive || !world.huntsPlayer(u) || u.def.detect === 'none' || u.passive) continue;
     eyeOf(u, eye);
     const dist = eye.distanceTo(h.pos);
-    if (u.def.detect === 'radar' && u.def.radar) {
+    if (u.def.detect === 'radar' && u.def.radar && h.kind !== 'soldier') {
       const r = u.def.radar;
       if (u.ai.jammed > 0) { u.ai.jammed = Math.max(0, u.ai.jammed - dt); setRadar(world, u, 'search'); continue; }
       const link = u.defId.endsWith('sam_short') ? linkedRadars(world, u) : [];

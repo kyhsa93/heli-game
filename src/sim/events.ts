@@ -4,7 +4,7 @@ import type { Side } from './units';
 
 export type CrashReason =
   | 'rotorStrike' | 'terrain' | 'water' | 'tree' | 'building'
-  | 'ditched' | 'hardLanding' | 'slideLanding' | 'tiltLanding' | 'slope' | 'rotorLoss' | 'crewKilled' | 'outOfBounds';
+  | 'ditched' | 'hardLanding' | 'slideLanding' | 'tiltLanding' | 'slope' | 'rotorLoss' | 'crewKilled' | 'outOfBounds' | 'killed' | 'fall';
 
 export type SimEvent =
   | { t: 'crash'; reason: CrashReason; value?: number }

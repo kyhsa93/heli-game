@@ -2,6 +2,7 @@ import { clamp } from '../core/math';
 import { slewTads, type Tads } from '../sim/sensors/tads';
 import type { World } from '../sim/world';
 import { FLIGHT_KEYS, GAMEPAD_BUTTONS, KEY_COMMANDS, PAD_HEAD_LOOK, PAD_HEAD_RATE, type Command } from './bindings';
+import { SOLDIER_KEYS } from './roles';
 
 export interface PadLike { connected: boolean; axes: readonly number[]; buttons: readonly { pressed: boolean }[] }
 
@@ -37,7 +38,21 @@ export class FlightInput {
     return keys.some(k => this.keys.has(k));
   }
 
+  mouseFire = false;
+  mouseAds = false;
+  soldierYaw = 0;
+  soldierPitch = 0;
+  private role: 'heli' | 'soldier' | 'none' = 'heli';
+
   update(world: World, dt: number) {
+    const kind = world.avatar.kind;
+    if (kind === 'soldier') {
+      if (this.role !== 'soldier' && world.soldier) { this.soldierYaw = world.soldier.yaw; this.soldierPitch = 0; }
+      this.role = 'soldier';
+      this.updateSoldier(world);
+      return;
+    }
+    this.role = kind === 'heli' ? 'heli' : 'none';
     const c = world.controls, K = FLIGHT_KEYS;
     const tx = (this.heldKeys(K.cyclicRight) ? 1 : 0) - (this.heldKeys(K.cyclicLeft) ? 1 : 0);
     const ty = (this.heldKeys(K.cyclicForward) ? 1 : 0) - (this.heldKeys(K.cyclicBack) ? 1 : 0);
@@ -90,8 +105,25 @@ export class FlightInput {
     }
   }
 
+  private updateSoldier(world: World) {
+    const k = SOLDIER_KEYS, c = world.soldierCommands;
+    c.forward = clamp((this.heldKeys(k.forward) ? 1 : 0) - (this.heldKeys(k.back) ? 1 : 0) - this.touch.ly, -1, 1);
+    c.right = clamp((this.heldKeys(k.right) ? 1 : 0) - (this.heldKeys(k.left) ? 1 : 0) + this.touch.lx, -1, 1);
+    c.sprint = this.heldKeys(k.sprint) || Math.hypot(this.touch.lx, this.touch.ly) > 0.95;
+    c.jump = this.heldKeys(k.jump);
+    c.fire = this.mouseFire || this.touchFire;
+    c.ads = this.mouseAds;
+    c.yaw = this.soldierYaw;
+    c.pitch = this.soldierPitch;
+  }
+
   look(dx: number, dy: number) {
     const sy = this.invertY ? -dy : dy;
+    if (this.role === 'soldier') {
+      this.soldierYaw -= dx * 0.0035 * this.lookScale;
+      this.soldierPitch = clamp(this.soldierPitch - sy * 0.0035 * this.lookScale, -1.4, 1.4);
+      return;
+    }
     if (this.tads?.active) { slewTads(this.tads, -dx * 0.004 * this.tadsScale, -sy * 0.004 * this.tadsScale); return; }
     this.headYaw = clamp(this.headYaw - dx * 0.005 * this.lookScale, -2.2, 2.2);
     this.headPitch = clamp(this.headPitch - sy * 0.005 * this.lookScale, -1.1, 0.7);

@@ -8,6 +8,7 @@ import { clampToArea, collide, stepFlight } from './heli/flight';
 import { createLoadout, grossWeight, hoverCollective, STANDARD_LOADOUT, thrustScale, type Loadout, type LoadoutDef } from './heli/loadout';
 import { agl, createHeli, toWorld, updateQ, type Controls, type HeliState } from './heli/state';
 import type { Avatar, AvatarSpawn, PlayerBody } from './avatar';
+import { createSoldier, createSoldierCommands, SOLDIER_RADIUS, type SoldierCommands, type SoldierState } from './infantry/soldier';
 import { toggleEngine } from './heli/systems';
 import { blastShares, DAMAGED, hitSystem, randomHitPoint, ROTOR_FAIL_SECONDS, systemAt, type SystemId } from './heli/damage';
 import type { CrashReason } from './events';
@@ -38,6 +39,7 @@ import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SAL
 
 export const STEP = 1 / 120;
 export const PLAYER_RADIUS = 8;
+export const SOLDIER_DAMAGE_SCALE = 12.5;
 
 export const BATTLE_TICK = 0.1;
 export const BATTLE_SLOW_TICK = 1;
@@ -55,6 +57,8 @@ export class World {
   readonly terrain: Terrain;
   player!: HeliState;
   avatar: Avatar = { kind: 'heli' };
+  soldier: SoldierState | null = null;
+  soldierCommands: SoldierCommands = createSoldierCommands();
   private body: PlayerBody = { kind: 'heli', pos: new Vector3(), vel: new Vector3(), alive: false, agl: 0, heat: 1, radius: PLAYER_RADIUS };
   controls: Controls = { cyclicX: 0, cyclicY: 0, pedal: 0, collective: 0 };
   wind = new Vector3();
@@ -111,16 +115,29 @@ export class World {
   get pads() { return this.terrain.pads; }
 
   playerBody(): PlayerBody {
-    const b = this.body, h = this.player;
+    const b = this.body, h = this.player, s = this.soldier;
     b.kind = this.avatar.kind;
+    if (this.avatar.kind === 'soldier' && s) {
+      b.pos = s.pos; b.vel = s.vel; b.alive = s.alive; b.agl = 0; b.radius = SOLDIER_RADIUS; b.heat = 0.7;
+      return b;
+    }
     b.pos = h.pos;
     b.vel = h.vel;
     b.alive = this.avatar.kind === 'heli' && h.alive;
     b.agl = agl(h, this.terrain);
+    b.radius = PLAYER_RADIUS; b.heat = 1;
     return b;
   }
 
   spawnAvatar(s: AvatarSpawn) {
+    if (s.kind === 'soldier') {
+      this.soldier = createSoldier(new Vector3(s.x, this.terrain.surfaceAt(s.x, s.z), s.z), -(s.headingDeg * Math.PI) / 180, s.cls);
+      this.soldierCommands = createSoldierCommands();
+      this.soldierCommands.yaw = this.soldier.yaw;
+      this.commands.fire = false;
+      this.avatar = { kind: 'soldier' };
+      return;
+    }
     this.loadoutDef = s.kit;
     this.resetPlayer(s.at === 'pad' ? s.pad : 0);
     const h = this.player;
@@ -135,6 +152,13 @@ export class World {
     if (s.at === 'air' || s.running) { h.engineOn = true; h.rpm = 1; h.landed = s.at === 'pad'; }
     if (s.at === 'air') { h.collective = this.controls.collective = hoverCollective(this.grossWeight); }
     this.avatar = { kind: 'heli' };
+  }
+
+  damageSoldier(amount: number) {
+    const s = this.soldier;
+    if (!s || !s.alive || amount <= 0) return;
+    s.hp = Math.max(0, s.hp - amount * this.difficulty.damageTaken);
+    if (s.hp === 0) this.killPlayer('killed');
   }
 
   killAvatar() {
@@ -310,6 +334,8 @@ export class World {
   }
 
   hitPlayer(byUnit: number, amount: number) {
+    if (this.avatar.kind === 'soldier') { this.damageSoldier(amount * SOLDIER_DAMAGE_SCALE); return; }
+    if (this.avatar.kind !== 'heli') return;
     const h = this.player;
     if (!h.alive || amount <= 0) return;
     const u = this.unit(byUnit);
@@ -341,6 +367,12 @@ export class World {
   }
 
   killPlayer(reason: CrashReason) {
+    if (this.avatar.kind === 'soldier' && this.soldier) {
+      if (!this.soldier.alive) return;
+      this.soldier.alive = false; this.soldier.hp = 0;
+      this.emit({ t: 'crash', reason });
+      return;
+    }
     const h = this.player;
     if (!h.alive) return;
     h.alive = false; h.engineOn = false;

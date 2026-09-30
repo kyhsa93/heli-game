@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
 import { clamp } from '../../core/math';
-import { hitsAir, type Unit, type UnitWeaponDef } from '../units';
+import { hitsAir, hitsGround, type Unit, type UnitWeaponDef } from '../units';
 import type { World } from '../world';
 import { AI_TICK, eyeOf, SUSPECT } from './awareness';
 
@@ -20,8 +20,16 @@ export function reactionTime(u: Unit) {
   return REACTION[u.def.category] ?? 1.5;
 }
 
-export function directWeapons(u: Unit) {
-  return u.def.weapons.filter(w => hitsAir(w) && (w.kind === 'bullet' || w.kind === 'rocket'));
+export function onFoot(world?: World) {
+  return world?.avatar.kind === 'soldier';
+}
+
+export function hitsPlayer(w: UnitWeaponDef, world?: World) {
+  return onFoot(world) ? hitsGround(w) && w.kind === 'bullet' : hitsAir(w);
+}
+
+export function directWeapons(u: Unit, world?: World) {
+  return u.def.weapons.filter(w => hitsPlayer(w, world) && (w.kind === 'bullet' || w.kind === 'rocket'));
 }
 
 export function hitChance(world: World, w: UnitWeaponDef, dist: number) {
@@ -34,13 +42,13 @@ export function unitHitChance(world: World, u: Unit, w: UnitWeaponDef, dist: num
   return clamp(hitChance(world, w, dist) * (u.skill ?? 1), 0, 1);
 }
 
-function inRange(u: Unit, dist: number) {
-  return u.def.weapons.some(w => hitsAir(w) && dist <= w.range && dist >= w.minRange);
+function inRange(world: World, u: Unit, dist: number) {
+  return u.def.weapons.some(w => hitsPlayer(w, world) && (!onFoot(world) || w.kind === 'bullet') && dist <= w.range && dist >= w.minRange);
 }
 
 function sees(world: World, u: Unit, eye: Vector3) {
   const p = world.playerBody().pos;
-  return u.def.detect === 'radar' ? world.los.radar(u.id, eye, p, world.time) : world.los.visual(u.id, eye, p, world.time).clear;
+  return u.def.detect === 'radar' && !onFoot(world) ? world.los.radar(u.id, eye, p, world.time) : world.los.visual(u.id, eye, p, world.time).clear;
 }
 
 function nearestCover(world: World, u: Unit): Vector3 | null {
@@ -79,7 +87,7 @@ function enter(u: Unit, state: Unit['ai']['state']) {
 
 function fire(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
   const range = dist;
-  for (const w of directWeapons(u)) {
+  for (const w of directWeapons(u, world)) {
     if (range > w.range || range < w.minRange) continue;
     u.ai.fireAcc += w.rate * dt;
     while (u.ai.fireAcc >= 1) {
@@ -95,14 +103,15 @@ function fire(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
   }
 }
 
-export function missileWeapons(u: Unit) {
+export function missileWeapons(u: Unit, world?: World) {
+  if (onFoot(world)) return [];
   return u.def.weapons.filter(w => hitsAir(w) && (w.kind === 'missileIR' || w.kind === 'missileRadar'));
 }
 
 function launchMissiles(world: World, u: Unit, dist: number, dt: number) {
   u.weaponCooldown = Math.max(0, u.weaponCooldown - dt);
   if (u.weaponCooldown > 0) return;
-  for (const w of missileWeapons(u)) {
+  for (const w of missileWeapons(u, world)) {
     if (dist > w.range || dist < w.minRange) continue;
     if (w.kind === 'missileRadar' && u.ai.radar !== 'track') continue;
     if (w.kind === 'missileIR' && u.def.move?.air && !u.aam) continue;
@@ -127,11 +136,11 @@ export function stepBrain(world: World, u: Unit, dt = AI_TICK) {
       if (ai.awareness >= SUSPECT) enter(u, 'alert');
       break;
     case 'alert':
-      if (ai.detected && h.alive && inRange(u, dist)) { enter(u, 'engage'); ai.aimTimer = reactionTime(u) * world.difficulty.enemyReaction / (u.skill ?? 1); }
+      if (ai.detected && h.alive && inRange(world, u, dist)) { enter(u, 'engage'); ai.aimTimer = reactionTime(u) * world.difficulty.enemyReaction / (u.skill ?? 1); }
       else if (ai.awareness < SUSPECT && (!ai.lastSeen || world.time - ai.lastSeenAt > ALERT_FORGET) && ai.stateTimer > ALERT_FORGET) enter(u, 'idle');
       break;
     case 'engage': {
-      const visible = h.alive && sees(world, u, eye) && inRange(u, dist);
+      const visible = h.alive && sees(world, u, eye) && inRange(world, u, dist);
       if (!visible) {
         ai.blindTimer += dt;
         if (ai.blindTimer >= LOS_LOST_SECONDS) enter(u, 'search');
@@ -144,12 +153,12 @@ export function stepBrain(world: World, u: Unit, dt = AI_TICK) {
       break;
     }
     case 'search':
-      if (ai.detected && h.alive && inRange(u, dist) && sees(world, u, eye)) { enter(u, 'engage'); ai.aimTimer = reactionTime(u) * world.difficulty.enemyReaction * 0.5; }
+      if (ai.detected && h.alive && inRange(world, u, dist) && sees(world, u, eye)) { enter(u, 'engage'); ai.aimTimer = reactionTime(u) * world.difficulty.enemyReaction * 0.5; }
       else if (ai.stateTimer >= SEARCH_SECONDS) enter(u, ai.awareness >= SUSPECT ? 'alert' : 'idle');
       break;
     case 'retreat':
       if (ai.cover) moveToward(world, u, ai.cover, dt);
-      if (ai.detected && h.alive && sees(world, u, eye) && inRange(u, dist)) fire(world, u, eye, dist, dt);
+      if (ai.detected && h.alive && sees(world, u, eye) && inRange(world, u, dist)) fire(world, u, eye, dist, dt);
       break;
   }
 }

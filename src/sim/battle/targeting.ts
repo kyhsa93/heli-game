@@ -123,11 +123,13 @@ export class Targeting {
       if (this.intel && (u.side === 'coalition' || u.side === 'veros')) this.intel.spot(u.side, c.u.id, world.time);
       best = { kind: 'unit', id: c.u.id }; bestScore = score;
     }
-    const h = world.player;
-    if (h.alive && world.huntsPlayer(u) && u.ai.detected) {
-      const d = this.eye.distanceTo(h.pos);
-      const m = table.air ?? 0;
-      if (m > 0 && u.def.weapons.some(w => hitsAir(w) && d <= w.range && d >= w.minRange) && m / Math.max(d, 1) > bestScore) best = { kind: 'player' };
+    const body = world.playerBody();
+    if (body.alive && world.huntsPlayer(u) && u.ai.detected) {
+      const d = this.eye.distanceTo(body.pos);
+      const foot = body.kind === 'soldier';
+      const m = (foot ? table.inf : table.air) ?? 0;
+      const can = (w: UnitWeaponDef) => (foot ? hitsGround(w) && w.kind === 'bullet' : hitsAir(w)) && d <= w.range && d >= w.minRange;
+      if (m > 0 && u.def.weapons.some(can) && m / Math.max(d, 1) > bestScore) best = { kind: 'player' };
     }
     if (!same(best, b.target)) {
       b.target = best;

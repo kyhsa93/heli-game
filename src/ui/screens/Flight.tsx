@@ -16,7 +16,8 @@ import { zoomTads } from '../../sim/sensors/tads';
 import { sightPoint } from '../../sim/weapons/ballistics';
 import { hellfireSolution } from '../../sim/weapons/hellfire';
 import { rocketSolution } from '../../sim/weapons/rockets';
-import { commandForKey, PREVENT_DEFAULT, type Command } from '../../input/bindings';
+import { PREVENT_DEFAULT, type Command } from '../../input/bindings';
+import { roleCommand, roleOf, wantsPointerLock } from '../../input/roles';
 import { FlightInput } from '../../input/input';
 import { SettingsPanel } from './SettingsScreen';
 import { crashText, eventMessage, MessageLog } from '../flight/messages';
@@ -105,6 +106,8 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
       case 'toggleHud': setHud(v => !v); break;
       case 'help': case 'pause': if (session.mode === 'play') setHelp(v => !v); break;
       case 'mute': if (audioRef.current) setMuted(audioRef.current.toggleMute()); break;
+      case 'crouch': if (sim.soldier) sim.soldier.stance = sim.soldier.stance === 'crouch' ? 'stand' : 'crouch'; break;
+      case 'prone': if (sim.soldier) sim.soldier.stance = sim.soldier.stance === 'prone' ? 'stand' : 'prone'; break;
       default: break;
     }
   };
@@ -133,6 +136,8 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
 
   useEffect(() => {
     if (snap.mode === 'play') { ensureAudio(); input.centerView(); }
+    else if (document.pointerLockElement) document.exitPointerLock();
+    input.mouseFire = false; input.mouseAds = false;
   }, [snap.mode]);
 
   useEffect(() => {
@@ -223,7 +228,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
       input.keys.add(e.code);
       if (e.repeat) return;
       if (e.code === 'Enter' && (session.mode === 'brief' || session.mode === 'over')) { begin(); return; }
-      const cmd = commandForKey(e.code);
+      const cmd = roleCommand(e.code, roleOf(sim));
       if (cmd) runCommand(cmd);
     };
     const up = (e: KeyboardEvent) => { input.keys.delete(e.code); };
@@ -240,11 +245,19 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
 
   const drag = useRef<{ id: number; x: number; y: number; sx: number; sy: number } | null>(null);
   const pinch = useRef(new Pinch());
+  const locked = () => document.pointerLockElement === mountRef.current;
   const onPointerDown = (e: RPointerEvent) => {
+    if (wantsPointerLock(roleOf(sim), touch) && e.pointerType === 'mouse') {
+      if (!locked()) { mountRef.current?.requestPointerLock?.(); return; }
+      if (e.button === 0) input.mouseFire = true;
+      if (e.button === 2) input.mouseAds = true;
+      return;
+    }
     if (pinch.current.down(e.pointerId, e.clientX, e.clientY)) { drag.current = null; return; }
     drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY };
   };
   const onPointerMove = (e: RPointerEvent) => {
+    if (locked()) { input.look(e.movementX, e.movementY); return; }
     const step = pinch.current.move(e.pointerId, e.clientX, e.clientY);
     if (step) { if (sim.tads.active) zoomTads(sim.tads, step); return; }
     const d = drag.current;
@@ -253,6 +266,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
     d.x = e.clientX; d.y = e.clientY;
   };
   const onPointerUp = (e: RPointerEvent) => {
+    if (locked()) { if (e.button === 0) input.mouseFire = false; if (e.button === 2) input.mouseAds = false; return; }
     pinch.current.up(e.pointerId);
     const d = drag.current;
     if (d?.id !== e.pointerId) return;
@@ -275,6 +289,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
         onPointerUp={onPointerUp}
         onPointerCancel={e => { drag.current = null; pinch.current.up(e.pointerId); }}
         onDoubleClick={() => input.centerView()}
+        onContextMenu={e => e.preventDefault()}
         onWheel={e => { if (sim.tads.active) zoomTads(sim.tads, e.deltaY < 0 ? 1 : -1); }}
       />
       <canvas className="ihadss" ref={ihadssRef} />

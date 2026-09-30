@@ -93,8 +93,8 @@ export class BattleRuntime implements Objective {
   }
 
   tick(world: World, dt: number) {
-    const h = world.player;
-    if (world.avatar.kind !== 'heli' || !h.alive) { this.outside = 0; return; }
+    const h = world.playerBody();
+    if (!h.alive) { this.outside = 0; return; }
     const inside = insidePolygon(this.zone, h.pos.x, h.pos.z);
     if (inside) {
       if (this.outside > 0) world.emit({ t: 'zone', inside: true, seconds: 0 });
@@ -111,7 +111,7 @@ export class BattleRuntime implements Objective {
   }
 
   onEvent(e: SimEvent, world: World) {
-    if (e.t === 'crash') this.conquest.playerDied(this.opts.side, 'attackHeli');
+    if (e.t === 'crash') this.conquest.playerDied(this.opts.side, world.avatar.kind === 'heli' ? 'attackHeli' : null);
     else if (e.t === 'identified') this.spotting.identified(e.id, world.time);
     else if (e.t === 'battleEnd') this.end(world, e.winner);
   }
