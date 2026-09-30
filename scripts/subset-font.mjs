@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { args, requireTool, run } from './lib/tools.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const a = args(process.argv.slice(2), { ascii: 'flag', strings: 'flag', extra: 'value', rename: 'value' });
 const [input, output] = a._;
-if (!input || !output) {
+if (a._.length !== 2 || !output.endsWith('.woff2') || resolve(input) === resolve(output)) {
   console.error('usage: node scripts/subset-font.mjs <input.ttf|otf|woff2> <output.woff2> [--ascii] [--strings] [--extra "°±"] [--rename "New Family"]');
+  console.error('one input and one .woff2 output per run (run once per weight); the output must differ from the input');
   process.exit(1);
 }
 
