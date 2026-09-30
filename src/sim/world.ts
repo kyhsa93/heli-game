@@ -37,6 +37,14 @@ import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SAL
 
 export const STEP = 1 / 120;
 
+export const BATTLE_TICK = 0.1;
+export const BATTLE_SLOW_TICK = 1;
+
+export interface BattleHooks {
+  tick10Hz(world: World, dt: number): void;
+  tick1Hz(world: World, dt: number): void;
+}
+
 export interface NavTarget { x: number; y: number; z: number; name: string; area?: boolean; raw?: boolean }
 
 export class World {
@@ -73,6 +81,9 @@ export class World {
   difficulty: Difficulty = DIFFICULTIES.normal;
   readonly los: LosCache;
   private aiClock = 0;
+  battleHooks: BattleHooks | null = null;
+  private battleClock = 0;
+  private battleSlowClock = 0;
   tads: Tads = createTads();
   hold: Hold | null = null;
   private nextUnitId = 1;
@@ -313,6 +324,8 @@ export class World {
     this.groups.clear();
     this.los.clear();
     this.aiClock = 0;
+    this.battleClock = 0;
+    this.battleSlowClock = 0;
     this.units = [];
     this.projectiles = [];
     this.missiles = [];
@@ -394,7 +407,15 @@ export class World {
       this.aiClock += dt;
       while (this.aiClock >= AI_TICK - 1e-9) { this.aiClock -= AI_TICK; stepAwareness(this, this.los, this.conditions); stepBrains(this); }
     }
+    if (this.battleHooks) this.stepBattle(this.battleHooks, dt);
     this.events.flush();
+  }
+
+  private stepBattle(hooks: BattleHooks, dt: number) {
+    this.battleClock += dt;
+    while (this.battleClock >= BATTLE_TICK - 1e-9) { this.battleClock -= BATTLE_TICK; hooks.tick10Hz(this, BATTLE_TICK); }
+    this.battleSlowClock += dt;
+    while (this.battleSlowClock >= BATTLE_SLOW_TICK - 1e-9) { this.battleSlowClock -= BATTLE_SLOW_TICK; hooks.tick1Hz(this, BATTLE_SLOW_TICK); }
   }
 
   private stepGun(dt: number) {

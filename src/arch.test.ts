@@ -13,6 +13,15 @@ const SIM_FORBIDDEN: [RegExp, string][] = [
   [/Math\.random\(/, 'uses Math.random instead of the world RNG'],
 ];
 
+function resolve(from: string, spec: string) {
+  const parts = from.split('/').slice(0, -1);
+  for (const seg of spec.split('/')) {
+    if (seg === '..') parts.pop();
+    else if (seg !== '.') parts.push(seg);
+  }
+  return parts.join('/');
+}
+
 const THREE_MATH = new Set(['Vector3', 'Vector2', 'Quaternion', 'Euler', 'Matrix4', 'MathUtils']);
 
 describe('architecture rules (08-technical-architecture.md 8.3)', () => {
@@ -51,6 +60,24 @@ describe('architecture rules (08-technical-architecture.md 8.3)', () => {
     for (const [file, code] of inDir('core')) {
       expect(/from ['"]\.\.\/(sim|render|ui|audio|input|content)\//.test(code), `${file} depends on another layer`).toBe(false);
     }
+  });
+
+  it('keeps the world loop from importing the battle code (wiki 9.1)', () => {
+    const world = all['./sim/world.ts'];
+    expect(world).toBeDefined();
+    expect(/from ['"]\.\/battle(\/|['"])/.test(world), 'sim/world.ts imports ./battle').toBe(false);
+  });
+
+  it('loads the battle code only as a lazy chunk (wiki 9.10)', () => {
+    const offenders: string[] = [];
+    for (const [file, code] of Object.entries(all)) {
+      if (file.startsWith('./sim/battle/')) continue;
+      for (const m of code.matchAll(/^import\s+(type\s+)?[^;]*?from\s+['"](\.[^'"]+)['"]/gm)) {
+        if (!m[1] && resolve(file, m[2]).startsWith('./sim/battle')) offenders.push(`${file} -> ${m[2]}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+    expect(resolve('./ui/battle/loadBattle.ts', '../../sim/battle')).toBe('./sim/battle');
   });
 
   it('keeps render from writing simulation state', () => {
