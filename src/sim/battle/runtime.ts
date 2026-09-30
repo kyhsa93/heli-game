@@ -105,9 +105,13 @@ export class BattleRuntime implements Objective {
     const quiet = world.units.filter(u => u.alive && u.side === side && u.members && !(u.battle?.firedAt !== undefined && world.time - u.battle.firedAt < SQUAD_QUIET)
       && !world.units.some(o => foe(o) && o.def.move && Math.hypot(o.pos.x - u.pos.x, o.pos.z - u.pos.z) <= SQUAD_CLEAR));
     quiet.sort((a, b) => Math.hypot(a.pos.x - enemy.position[0], a.pos.z - enemy.position[1]) - Math.hypot(b.pos.x - enemy.position[0], b.pos.z - enemy.position[1]) || a.id - b.id);
-    for (const u of quiet.slice(0, SQUAD_SPAWNS)) {
-      const near = [...this.conquest.points].sort((a, b) => Math.hypot(a.x - u.pos.x, a.z - u.pos.z) - Math.hypot(b.x - u.pos.x, b.z - u.pos.z))[0];
-      out.push({ id: `squad:${u.id}`, role: 'soldier', kind: 'ground', pad, x: u.pos.x + SQUAD_OFFSET, z: u.pos.z, headingDeg: (-u.yaw * 180) / Math.PI, label: `squad:${near.id}` });
+    const squads = quiet.slice(0, SQUAD_SPAWNS).map(u => ({ u, near: [...this.conquest.points].sort((a, b) => Math.hypot(a.x - u.pos.x, a.z - u.pos.z) - Math.hypot(b.x - u.pos.x, b.z - u.pos.z))[0].id }));
+    const shared = (id: string) => squads.filter(s => s.near === id).length > 1;
+    const seen = new Map<string, number>();
+    for (const { u, near } of squads) {
+      const n = (seen.get(near) ?? 0) + 1;
+      seen.set(near, n);
+      out.push({ id: `squad:${u.id}`, role: 'soldier', kind: 'ground', pad, x: u.pos.x + SQUAD_OFFSET, z: u.pos.z, headingDeg: (-u.yaw * 180) / Math.PI, label: shared(near) ? `squad:${near}:${n}` : `squad:${near}` });
     }
     return out;
   }

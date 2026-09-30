@@ -47,6 +47,14 @@ describe('infantry capture and spawning (wiki 3.3, B2-9)', () => {
     expect(ids()).not.toContain(`squad:${squad.id}`);
   });
 
+  it('numbers squad spawns that share a nearest point so every label differs', () => {
+    const { runtime, world } = battle();
+    for (const dx of [0, 40, 80]) world.spawnUnit('c_inf', dx, 3000);
+    world.spawnUnit('c_inf', 0, -900);
+    const labels = runtime.spawnPoints(world).filter(p => p.id.startsWith('squad:')).map(p => p.label);
+    expect(labels.sort()).toEqual(['squad:A:1', 'squad:A:2', 'squad:D']);
+  });
+
   it('spawns the soldier beside the chosen squad and charges one ticket per death', () => {
     const { session, runtime, world } = battle();
     const squad = world.spawnUnit('c_inf', 0, 3000);

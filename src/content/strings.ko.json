@@ -434,7 +434,8 @@
       "role": "역할",
       "spawnSoldierBase": "본진",
       "spawnPoint": "거점 {id}",
-      "spawnSquad": "분대 옆 ({id} 근처)"
+      "spawnSquad": "분대 옆 ({id} 근처)",
+      "spawnSquadN": "분대 {n} ({id} 근처)"
     },
     "kits": {
       "antiArmor": "대전차 — 헬파이어 16",

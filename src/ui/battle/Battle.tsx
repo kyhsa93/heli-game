@@ -51,6 +51,11 @@ export function Battle({ choice, touch, settings, onSettings, onSetup, onTitle, 
 
 const MISSILES = new Set(['sa_ir', 'sam_radar', 'heli_aam', 'jet_aam']);
 
+function squadLabel(label: string) {
+  const [, id, n] = label.split(':');
+  return n ? t('battle.deploy.spawnSquadN', { id, n }) : t('battle.deploy.spawnSquad', { id });
+}
+
 function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTitle }: { game: { mod: BattleModule; session: FlightSession; runtime: Runtime }; side: 'coalition' | 'veros'; touch: boolean; tips: readonly string[]; onTip: (id: string) => void; onAgain: () => void; onSetup: () => void; onTitle: () => void }) {
   const { session, runtime, mod } = game;
   const snap = useSyncExternalStore(session.subscribe, session.getSnapshot);
@@ -105,7 +110,7 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
   const all = runtime.spawnPoints(session.world);
   const points = all.filter(p => p.role === role);
   const chosen = points.find(p => p.id === spawnId) ?? points[0];
-  const spawnLabel = (p: typeof chosen) => p.role === 'heli' ? t(p.kind === 'pad' ? 'battle.deploy.spawnBase' : 'battle.deploy.spawnBaseAir') : p.label === 'base' ? t('battle.deploy.spawnSoldierBase') : p.label.startsWith('squad:') ? t('battle.deploy.spawnSquad', { id: p.label.slice(6) }) : t('battle.deploy.spawnPoint', { id: p.label });
+  const spawnLabel = (p: typeof chosen) => p.role === 'heli' ? t(p.kind === 'pad' ? 'battle.deploy.spawnBase' : 'battle.deploy.spawnBaseAir') : p.label === 'base' ? t('battle.deploy.spawnSoldierBase') : p.label.startsWith('squad:') ? squadLabel(p.label) : t('battle.deploy.spawnPoint', { id: p.label });
   if (snap.mode === 'deploy') {
     const wait = session.deployIn();
     return (
