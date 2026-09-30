@@ -10,13 +10,26 @@
     },
     "weapons": [
       {
+        "id": "g_rifle",
+        "kind": "bullet",
+        "range": 400,
+        "minRange": 0,
+        "damage": 1.5,
+        "rate": 2,
+        "accuracy": 0.15,
+        "vs": "ground",
+        "penetration": 0
+      },
+      {
         "id": "rifle",
         "kind": "bullet",
         "range": 800,
         "minRange": 0,
         "damage": 0.3,
         "rate": 2,
-          "accuracy": 0.06
+        "accuracy": 0.06,
+        "vs": "air",
+        "penetration": 0
       }
     ],
     "detect": "visual",
@@ -27,7 +40,7 @@
       6
     ],
     "heat": 0.7,
-    "squad": 6
+    "squad": 5
   },
   "inf_mg": {
     "side": "veros",
@@ -40,13 +53,26 @@
     },
     "weapons": [
       {
+        "id": "g_lmg",
+        "kind": "bullet",
+        "range": 700,
+        "minRange": 0,
+        "damage": 2,
+        "rate": 5,
+        "accuracy": 0.12,
+        "vs": "ground",
+        "penetration": 1
+      },
+      {
         "id": "lmg",
         "kind": "bullet",
         "range": 1000,
         "minRange": 0,
         "damage": 2.5,
         "rate": 5,
-          "accuracy": 0.15
+        "accuracy": 0.15,
+        "vs": "air",
+        "penetration": 1
       }
     ],
     "detect": "visual",
@@ -61,7 +87,7 @@
   },
   "manpads": {
     "side": "veros",
-    "hp": 30,
+    "hp": 24,
     "armor": 0,
     "category": "infantry",
     "move": {
@@ -70,12 +96,25 @@
     },
     "weapons": [
       {
+        "id": "g_rifle",
+        "kind": "bullet",
+        "range": 400,
+        "minRange": 0,
+        "damage": 1.5,
+        "rate": 2,
+        "accuracy": 0.15,
+        "vs": "ground",
+        "penetration": 0
+      },
+      {
         "id": "sa_ir",
         "kind": "missileIR",
         "range": 4500,
         "minRange": 500,
         "damage": 250,
-        "rate": 0.1
+        "rate": 0.1,
+        "vs": "air",
+        "penetration": 2
       }
     ],
     "detect": "visual",
@@ -86,7 +125,7 @@
       4
     ],
     "heat": 0.7,
-    "squad": 2
+    "squad": 3
   },
   "truck": {
     "side": "veros",
@@ -105,7 +144,8 @@
       3,
       7
     ],
-    "heat": 1.0
+    "heat": 1.0,
+    "carry": 1
   },
   "fuel_truck": {
     "side": "veros",
@@ -142,13 +182,26 @@
     },
     "weapons": [
       {
+        "id": "g_hmg",
+        "kind": "bullet",
+        "range": 1000,
+        "minRange": 0,
+        "damage": 3,
+        "rate": 6,
+        "accuracy": 0.12,
+        "vs": "ground",
+        "penetration": 1
+      },
+      {
         "id": "hmg",
         "kind": "bullet",
         "range": 1500,
         "minRange": 0,
         "damage": 10,
         "rate": 4,
-          "accuracy": 0.26
+        "accuracy": 0.26,
+        "vs": "air",
+        "penetration": 1
       }
     ],
     "detect": "visual",
@@ -171,13 +224,37 @@
     },
     "weapons": [
       {
+        "id": "g_ac30",
+        "kind": "bullet",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 8,
+        "rate": 3,
+        "accuracy": 0.2,
+        "vs": "ground",
+        "penetration": 3
+      },
+      {
+        "id": "g_atgm",
+        "kind": "atgm",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 250,
+        "rate": 0.05,
+        "accuracy": 0.5,
+        "vs": "ground",
+        "penetration": 5
+      },
+      {
         "id": "ac30",
         "kind": "bullet",
         "range": 2000,
         "minRange": 0,
         "damage": 6,
         "rate": 3,
-          "accuracy": 0.12
+        "accuracy": 0.12,
+        "vs": "air",
+        "penetration": 3
       }
     ],
     "detect": "visual",
@@ -187,7 +264,8 @@
       2.6,
       7
     ],
-    "heat": 1.0
+    "heat": 1.0,
+    "carry": 1
   },
   "tank": {
     "side": "veros",
@@ -200,13 +278,37 @@
     },
     "weapons": [
       {
+        "id": "g_main",
+        "kind": "shell",
+        "range": 2500,
+        "minRange": 0,
+        "damage": 180,
+        "rate": 0.14285714285714285,
+        "accuracy": 0.45,
+        "vs": "ground",
+        "penetration": 5
+      },
+      {
+        "id": "g_coax",
+        "kind": "bullet",
+        "range": 800,
+        "minRange": 0,
+        "damage": 2,
+        "rate": 5,
+        "accuracy": 0.15,
+        "vs": "ground",
+        "penetration": 1
+      },
+      {
         "id": "aa_mg",
         "kind": "bullet",
         "range": 1200,
         "minRange": 0,
         "damage": 2,
         "rate": 4,
-          "accuracy": 0.08
+        "accuracy": 0.08,
+        "vs": "air",
+        "penetration": 1
       }
     ],
     "detect": "visual",
@@ -229,13 +331,26 @@
     },
     "weapons": [
       {
+        "id": "g_aaa",
+        "kind": "bullet",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 5,
+        "rate": 8,
+        "accuracy": 0.1,
+        "vs": "ground",
+        "penetration": 2
+      },
+      {
         "id": "zu23x4",
         "kind": "bullet",
         "range": 2500,
         "minRange": 0,
         "damage": 20,
         "rate": 15,
-          "accuracy": 0.22
+        "accuracy": 0.22,
+        "vs": "air",
+        "penetration": 2
       }
     ],
     "detect": "radar",
@@ -265,10 +380,12 @@
       {
         "id": "sam_radar",
         "kind": "missileRadar",
-        "range": 10000,
-        "minRange": 1500,
+        "range": 3000,
+        "minRange": 500,
         "damage": 350,
-        "rate": 0.08
+        "rate": 0.08,
+        "vs": "air",
+        "penetration": 2
       }
     ],
     "detect": "radar",
@@ -280,8 +397,8 @@
     ],
     "heat": 1.0,
     "radar": {
-      "search": 15000,
-      "track": 10000
+      "search": 8000,
+      "track": 4000
     }
   },
   "sam_radar": {
@@ -319,7 +436,9 @@
         "minRange": 0,
         "damage": 16,
         "rate": 8,
-          "accuracy": 0.26
+        "accuracy": 0.26,
+        "vs": "air",
+        "penetration": 2
       }
     ],
     "detect": "visual",
@@ -334,7 +453,7 @@
   },
   "heli_attack": {
     "side": "veros",
-    "hp": 250,
+    "hp": 300,
     "armor": 2,
     "category": "air",
     "move": {
@@ -349,7 +468,9 @@
         "minRange": 0,
         "damage": 10,
         "rate": 5,
-          "accuracy": 0.22
+        "accuracy": 0.22,
+        "vs": "both",
+        "penetration": 2
       },
       {
         "id": "heli_rkt",
@@ -358,7 +479,20 @@
         "minRange": 0,
         "damage": 30,
         "rate": 1,
-          "accuracy": 0.15
+        "accuracy": 0.15,
+        "vs": "both",
+        "penetration": 3
+      },
+      {
+        "id": "heli_atgm",
+        "kind": "atgm",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 250,
+        "rate": 0.05,
+        "accuracy": 0.5,
+        "vs": "ground",
+        "penetration": 5
       },
       {
         "id": "heli_aam",
@@ -366,7 +500,9 @@
         "range": 3000,
         "minRange": 300,
         "damage": 200,
-        "rate": 0.05
+        "rate": 0.05,
+        "vs": "air",
+        "penetration": 2
       }
     ],
     "detect": "visualIR",
@@ -392,7 +528,9 @@
         "minRange": 0,
         "damage": 0.5,
         "rate": 5,
-          "accuracy": 0.08
+        "accuracy": 0.08,
+        "vs": "air",
+        "penetration": 1
       }
     ],
     "detect": "visual",
@@ -468,24 +606,37 @@
     },
     "weapons": [
       {
+        "id": "g_rifle",
+        "kind": "bullet",
+        "range": 400,
+        "minRange": 0,
+        "damage": 1.5,
+        "rate": 2,
+        "accuracy": 0.15,
+        "vs": "ground",
+        "penetration": 0
+      },
+      {
         "id": "rifle",
         "kind": "bullet",
         "range": 800,
         "minRange": 0,
         "damage": 0.3,
         "rate": 2,
-          "accuracy": 0.06
+        "accuracy": 0.06,
+        "vs": "air",
+        "penetration": 0
       }
     ],
     "detect": "visual",
-    "score": 0,
+    "score": 20,
     "size": [
       6,
       1.8,
       6
     ],
     "heat": 0.7,
-    "squad": 6
+    "squad": 5
   },
   "c_apc": {
     "side": "coalition",
@@ -498,23 +649,48 @@
     },
     "weapons": [
       {
+        "id": "g_ac30",
+        "kind": "bullet",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 8,
+        "rate": 3,
+        "accuracy": 0.2,
+        "vs": "ground",
+        "penetration": 3
+      },
+      {
+        "id": "g_atgm",
+        "kind": "atgm",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 250,
+        "rate": 0.05,
+        "accuracy": 0.5,
+        "vs": "ground",
+        "penetration": 5
+      },
+      {
         "id": "ac30",
         "kind": "bullet",
         "range": 2000,
         "minRange": 0,
         "damage": 6,
         "rate": 3,
-          "accuracy": 0.12
+        "accuracy": 0.12,
+        "vs": "air",
+        "penetration": 3
       }
     ],
     "detect": "visual",
-    "score": 0,
+    "score": 100,
     "size": [
       3.2,
       2.6,
       7
     ],
-    "heat": 1.0
+    "heat": 1.0,
+    "carry": 1
   },
   "c_tank": {
     "side": "coalition",
@@ -527,17 +703,41 @@
     },
     "weapons": [
       {
+        "id": "g_main",
+        "kind": "shell",
+        "range": 2500,
+        "minRange": 0,
+        "damage": 180,
+        "rate": 0.14285714285714285,
+        "accuracy": 0.45,
+        "vs": "ground",
+        "penetration": 5
+      },
+      {
+        "id": "g_coax",
+        "kind": "bullet",
+        "range": 800,
+        "minRange": 0,
+        "damage": 2,
+        "rate": 5,
+        "accuracy": 0.15,
+        "vs": "ground",
+        "penetration": 1
+      },
+      {
         "id": "aa_mg",
         "kind": "bullet",
         "range": 1200,
         "minRange": 0,
         "damage": 2,
         "rate": 4,
-          "accuracy": 0.08
+        "accuracy": 0.08,
+        "vs": "air",
+        "penetration": 1
       }
     ],
     "detect": "visual",
-    "score": 0,
+    "score": 150,
     "size": [
       3.6,
       2.4,
@@ -556,13 +756,14 @@
     },
     "weapons": [],
     "detect": "none",
-    "score": 0,
+    "score": 40,
     "size": [
       2.5,
       3,
       7
     ],
-    "heat": 1.0
+    "heat": 1.0,
+    "carry": 1
   },
   "c_heli_rescue": {
     "side": "coalition",
@@ -589,12 +790,56 @@
     "armor": 2,
     "category": "air",
     "move": {
-      "speed": 80,
+      "speed": 70,
       "air": true
     },
-    "weapons": [],
-    "detect": "none",
-    "score": 0,
+    "weapons": [
+      {
+        "id": "heli_gun",
+        "kind": "bullet",
+        "range": 1500,
+        "minRange": 0,
+        "damage": 10,
+        "rate": 5,
+        "accuracy": 0.22,
+        "vs": "both",
+        "penetration": 2
+      },
+      {
+        "id": "heli_rkt",
+        "kind": "rocket",
+        "range": 2500,
+        "minRange": 0,
+        "damage": 30,
+        "rate": 1,
+        "accuracy": 0.15,
+        "vs": "both",
+        "penetration": 3
+      },
+      {
+        "id": "heli_atgm",
+        "kind": "atgm",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 250,
+        "rate": 0.05,
+        "accuracy": 0.5,
+        "vs": "ground",
+        "penetration": 5
+      },
+      {
+        "id": "heli_aam",
+        "kind": "missileIR",
+        "range": 3000,
+        "minRange": 300,
+        "damage": 200,
+        "rate": 0.05,
+        "vs": "air",
+        "penetration": 2
+      }
+    ],
+    "detect": "visualIR",
+    "score": 400,
     "size": [
       5.2,
       4.6,
@@ -672,5 +917,554 @@
       7
     ],
     "heat": 0.2
+  },
+  "inf_at": {
+    "side": "veros",
+    "hp": 40,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "g_at",
+        "kind": "shell",
+        "range": 1500,
+        "minRange": 0,
+        "damage": 250,
+        "rate": 0.08333333333333333,
+        "accuracy": 0.45,
+        "vs": "ground",
+        "penetration": 5
+      },
+      {
+        "id": "g_rifle",
+        "kind": "bullet",
+        "range": 400,
+        "minRange": 0,
+        "damage": 1.5,
+        "rate": 2,
+        "accuracy": 0.15,
+        "vs": "ground",
+        "penetration": 0
+      }
+    ],
+    "detect": "visual",
+    "score": 60,
+    "size": [
+      6,
+      1.8,
+      6
+    ],
+    "heat": 0.7,
+    "squad": 5
+  },
+  "sniper": {
+    "side": "veros",
+    "hp": 16,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "g_sniper",
+        "kind": "bullet",
+        "range": 800,
+        "minRange": 0,
+        "damage": 3,
+        "rate": 0.25,
+        "accuracy": 0.35,
+        "vs": "ground",
+        "penetration": 0
+      }
+    ],
+    "detect": "visual",
+    "score": 40,
+    "size": [
+      3,
+      1.8,
+      3
+    ],
+    "heat": 0.7,
+    "squad": 2
+  },
+  "heli_transport": {
+    "side": "veros",
+    "hp": 150,
+    "armor": 1,
+    "category": "air",
+    "move": {
+      "speed": 60,
+      "air": true
+    },
+    "weapons": [],
+    "detect": "none",
+    "score": 150,
+    "size": [
+      3,
+      4,
+      16
+    ],
+    "heat": 1.0,
+    "carry": 2
+  },
+  "jet": {
+    "side": "veros",
+    "hp": 200,
+    "armor": 1,
+    "category": "air",
+    "move": {
+      "speed": 240,
+      "air": true
+    },
+    "weapons": [
+      {
+        "id": "jet_gun",
+        "kind": "bullet",
+        "range": 1000,
+        "minRange": 0,
+        "damage": 10,
+        "rate": 10,
+        "accuracy": 0.2,
+        "vs": "air",
+        "penetration": 2
+      },
+      {
+        "id": "jet_aam",
+        "kind": "missileIR",
+        "range": 5000,
+        "minRange": 500,
+        "damage": 260,
+        "rate": 0.05,
+        "vs": "air",
+        "penetration": 3
+      },
+      {
+        "id": "g_bomb",
+        "kind": "shell",
+        "range": 3000,
+        "minRange": 0,
+        "damage": 350,
+        "rate": 0.008333333333333333,
+        "accuracy": 0.6,
+        "vs": "ground",
+        "penetration": 4
+      }
+    ],
+    "detect": "visual",
+    "score": 300,
+    "size": [
+      10,
+      4,
+      15
+    ],
+    "heat": 1.0
+  },
+  "v_farp": {
+    "side": "veros",
+    "hp": 1,
+    "armor": 0,
+    "category": "structure",
+    "move": null,
+    "weapons": [],
+    "detect": "none",
+    "score": 0,
+    "size": [
+      24,
+      3,
+      24
+    ],
+    "heat": 0.2,
+    "indestructible": true
+  },
+  "c_inf_at": {
+    "side": "coalition",
+    "hp": 40,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "g_at",
+        "kind": "shell",
+        "range": 1500,
+        "minRange": 0,
+        "damage": 250,
+        "rate": 0.08333333333333333,
+        "accuracy": 0.45,
+        "vs": "ground",
+        "penetration": 5
+      },
+      {
+        "id": "g_rifle",
+        "kind": "bullet",
+        "range": 400,
+        "minRange": 0,
+        "damage": 1.5,
+        "rate": 2,
+        "accuracy": 0.15,
+        "vs": "ground",
+        "penetration": 0
+      }
+    ],
+    "detect": "visual",
+    "score": 60,
+    "size": [
+      6,
+      1.8,
+      6
+    ],
+    "heat": 0.7,
+    "squad": 5
+  },
+  "c_inf_mg": {
+    "side": "coalition",
+    "hp": 40,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "g_lmg",
+        "kind": "bullet",
+        "range": 700,
+        "minRange": 0,
+        "damage": 2,
+        "rate": 5,
+        "accuracy": 0.12,
+        "vs": "ground",
+        "penetration": 1
+      },
+      {
+        "id": "lmg",
+        "kind": "bullet",
+        "range": 1000,
+        "minRange": 0,
+        "damage": 2.5,
+        "rate": 5,
+        "accuracy": 0.15,
+        "vs": "air",
+        "penetration": 1
+      }
+    ],
+    "detect": "visual",
+    "score": 30,
+    "size": [
+      6,
+      1.8,
+      6
+    ],
+    "heat": 0.7,
+    "squad": 5
+  },
+  "c_manpads": {
+    "side": "coalition",
+    "hp": 24,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "g_rifle",
+        "kind": "bullet",
+        "range": 400,
+        "minRange": 0,
+        "damage": 1.5,
+        "rate": 2,
+        "accuracy": 0.15,
+        "vs": "ground",
+        "penetration": 0
+      },
+      {
+        "id": "sa_ir",
+        "kind": "missileIR",
+        "range": 4500,
+        "minRange": 500,
+        "damage": 250,
+        "rate": 0.1,
+        "vs": "air",
+        "penetration": 2
+      }
+    ],
+    "detect": "visual",
+    "score": 120,
+    "size": [
+      4,
+      1.8,
+      4
+    ],
+    "heat": 0.7,
+    "squad": 3
+  },
+  "c_sniper": {
+    "side": "coalition",
+    "hp": 16,
+    "armor": 0,
+    "category": "infantry",
+    "move": {
+      "speed": 1.5,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "g_sniper",
+        "kind": "bullet",
+        "range": 800,
+        "minRange": 0,
+        "damage": 3,
+        "rate": 0.25,
+        "accuracy": 0.35,
+        "vs": "ground",
+        "penetration": 0
+      }
+    ],
+    "detect": "visual",
+    "score": 40,
+    "size": [
+      3,
+      1.8,
+      3
+    ],
+    "heat": 0.7,
+    "squad": 2
+  },
+  "c_technical": {
+    "side": "coalition",
+    "hp": 60,
+    "armor": 1,
+    "category": "vehicle",
+    "move": {
+      "speed": 18,
+      "offroad": true,
+      "offroadSpeed": 10
+    },
+    "weapons": [
+      {
+        "id": "g_hmg",
+        "kind": "bullet",
+        "range": 1000,
+        "minRange": 0,
+        "damage": 3,
+        "rate": 6,
+        "accuracy": 0.12,
+        "vs": "ground",
+        "penetration": 1
+      },
+      {
+        "id": "hmg",
+        "kind": "bullet",
+        "range": 1500,
+        "minRange": 0,
+        "damage": 10,
+        "rate": 4,
+        "accuracy": 0.26,
+        "vs": "air",
+        "penetration": 1
+      }
+    ],
+    "detect": "visual",
+    "score": 50,
+    "size": [
+      2,
+      2.2,
+      5
+    ],
+    "heat": 1.0
+  },
+  "c_spaag": {
+    "side": "coalition",
+    "hp": 180,
+    "armor": 2,
+    "category": "airDefense",
+    "move": {
+      "speed": 10,
+      "offroad": true
+    },
+    "weapons": [
+      {
+        "id": "g_aaa",
+        "kind": "bullet",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 5,
+        "rate": 8,
+        "accuracy": 0.1,
+        "vs": "ground",
+        "penetration": 2
+      },
+      {
+        "id": "zu23x4",
+        "kind": "bullet",
+        "range": 2500,
+        "minRange": 0,
+        "damage": 20,
+        "rate": 15,
+        "accuracy": 0.22,
+        "vs": "air",
+        "penetration": 2
+      }
+    ],
+    "detect": "radar",
+    "score": 300,
+    "size": [
+      3.1,
+      3.8,
+      6.5
+    ],
+    "heat": 1.0,
+    "radar": {
+      "search": 8000,
+      "track": 4000
+    }
+  },
+  "c_heli_transport": {
+    "side": "coalition",
+    "hp": 150,
+    "armor": 1,
+    "category": "air",
+    "move": {
+      "speed": 60,
+      "air": true
+    },
+    "weapons": [],
+    "detect": "none",
+    "score": 150,
+    "size": [
+      3,
+      4,
+      16
+    ],
+    "heat": 1.0,
+    "carry": 2
+  },
+  "c_jet": {
+    "side": "coalition",
+    "hp": 200,
+    "armor": 1,
+    "category": "air",
+    "move": {
+      "speed": 240,
+      "air": true
+    },
+    "weapons": [
+      {
+        "id": "jet_gun",
+        "kind": "bullet",
+        "range": 1000,
+        "minRange": 0,
+        "damage": 10,
+        "rate": 10,
+        "accuracy": 0.2,
+        "vs": "air",
+        "penetration": 2
+      },
+      {
+        "id": "jet_aam",
+        "kind": "missileIR",
+        "range": 5000,
+        "minRange": 500,
+        "damage": 260,
+        "rate": 0.05,
+        "vs": "air",
+        "penetration": 3
+      },
+      {
+        "id": "g_bomb",
+        "kind": "shell",
+        "range": 3000,
+        "minRange": 0,
+        "damage": 350,
+        "rate": 0.008333333333333333,
+        "accuracy": 0.6,
+        "vs": "ground",
+        "penetration": 4
+      }
+    ],
+    "detect": "visual",
+    "score": 300,
+    "size": [
+      10,
+      4,
+      15
+    ],
+    "heat": 1.0
+  },
+  "c_aaa": {
+    "side": "coalition",
+    "hp": 100,
+    "armor": 1,
+    "category": "airDefense",
+    "move": null,
+    "weapons": [
+      {
+        "id": "zu23x2",
+        "kind": "bullet",
+        "range": 2000,
+        "minRange": 0,
+        "damage": 16,
+        "rate": 8,
+        "accuracy": 0.26,
+        "vs": "air",
+        "penetration": 2
+      }
+    ],
+    "detect": "visual",
+    "score": 150,
+    "size": [
+      4,
+      2,
+      4
+    ],
+    "heat": 0.5,
+    "searchlightAtNight": true
+  },
+  "c_sam_short": {
+    "side": "coalition",
+    "hp": 150,
+    "armor": 2,
+    "category": "airDefense",
+    "move": {
+      "speed": 10,
+      "offroad": true,
+      "stationaryToFire": true
+    },
+    "weapons": [
+      {
+        "id": "sam_radar",
+        "kind": "missileRadar",
+        "range": 3000,
+        "minRange": 500,
+        "damage": 350,
+        "rate": 0.08,
+        "vs": "air",
+        "penetration": 2
+      }
+    ],
+    "detect": "radar",
+    "score": 400,
+    "size": [
+      3,
+      4,
+      7.5
+    ],
+    "heat": 1.0,
+    "radar": {
+      "search": 8000,
+      "track": 4000
+    }
   }
 }

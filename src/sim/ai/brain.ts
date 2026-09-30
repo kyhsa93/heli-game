@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 import { clamp } from '../../core/math';
 import { airspeed } from '../heli/state';
-import type { Unit, UnitWeaponDef } from '../units';
+import { hitsAir, type Unit, type UnitWeaponDef } from '../units';
 import type { World } from '../world';
 import { AI_TICK, eyeOf, SUSPECT } from './awareness';
 
@@ -17,12 +17,12 @@ export const REACTION: Record<string, number> = { infantry: 2, vehicle: 1.5, tra
 export const SAM_REACTION = 3;
 
 export function reactionTime(u: Unit) {
-  if (u.def.weapons.some(w => w.kind === 'missileRadar' || w.kind === 'missileIR') && u.def.category === 'airDefense') return SAM_REACTION;
+  if (u.def.weapons.some(w => hitsAir(w) && (w.kind === 'missileRadar' || w.kind === 'missileIR')) && u.def.category === 'airDefense') return SAM_REACTION;
   return REACTION[u.def.category] ?? 1.5;
 }
 
 export function directWeapons(u: Unit) {
-  return u.def.weapons.filter(w => w.kind === 'bullet' || w.kind === 'rocket');
+  return u.def.weapons.filter(w => hitsAir(w) && (w.kind === 'bullet' || w.kind === 'rocket'));
 }
 
 export function hitChance(world: World, w: UnitWeaponDef, dist: number) {
@@ -35,7 +35,7 @@ export function unitHitChance(world: World, u: Unit, w: UnitWeaponDef, dist: num
 }
 
 function inRange(u: Unit, dist: number) {
-  return u.def.weapons.some(w => dist <= w.range && dist >= w.minRange);
+  return u.def.weapons.some(w => hitsAir(w) && dist <= w.range && dist >= w.minRange);
 }
 
 function sees(world: World, u: Unit, eye: Vector3) {
@@ -96,7 +96,7 @@ function fire(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
 }
 
 export function missileWeapons(u: Unit) {
-  return u.def.weapons.filter(w => w.kind === 'missileIR' || w.kind === 'missileRadar');
+  return u.def.weapons.filter(w => hitsAir(w) && (w.kind === 'missileIR' || w.kind === 'missileRadar'));
 }
 
 function launchMissiles(world: World, u: Unit, dist: number, dt: number) {

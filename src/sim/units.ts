@@ -3,10 +3,14 @@ import unitsJson from '../content/units.json';
 
 export type Side = 'coalition' | 'veros' | 'civilian';
 export type Category = 'infantry' | 'vehicle' | 'tracked' | 'airDefense' | 'air' | 'structure';
-export type WeaponKind = 'bullet' | 'rocket' | 'missileIR' | 'missileRadar';
+export type WeaponKind = 'bullet' | 'rocket' | 'shell' | 'atgm' | 'missileIR' | 'missileRadar';
+export type Vs = 'air' | 'ground' | 'both';
 export type Detect = 'visual' | 'visualIR' | 'radar' | 'none';
 
-export interface UnitWeaponDef { id: string; kind: WeaponKind; range: number; minRange: number; damage: number; rate: number; accuracy?: number }
+export interface UnitWeaponDef { id: string; kind: WeaponKind; vs: Vs; penetration: number; range: number; minRange: number; damage: number; rate: number; accuracy?: number }
+
+export const hitsAir = (w: UnitWeaponDef) => w.vs !== 'ground';
+export const hitsGround = (w: UnitWeaponDef) => w.vs !== 'air';
 
 export interface UnitDef {
   side: Side;
@@ -20,6 +24,7 @@ export interface UnitDef {
   size: [number, number, number];
   heat: number;
   squad?: number;
+  carry?: number;
   radar?: { search: number; track: number };
   secondaryExplosion?: { radius: number; damage: number; chain?: boolean };
   indestructible?: boolean;
@@ -79,7 +84,9 @@ export function squadMembers(u: Unit) {
 
 const SIDES = new Set<Side>(['coalition', 'veros', 'civilian']);
 const CATEGORIES = new Set<Category>(['infantry', 'vehicle', 'tracked', 'airDefense', 'air', 'structure']);
-const KINDS = new Set<WeaponKind>(['bullet', 'rocket', 'missileIR', 'missileRadar']);
+const KINDS = new Set<WeaponKind>(['bullet', 'rocket', 'shell', 'atgm', 'missileIR', 'missileRadar']);
+const VS = new Set<Vs>(['air', 'ground', 'both']);
+const AIMED = new Set<WeaponKind>(['bullet', 'rocket', 'shell', 'atgm']);
 const DETECTS = new Set<Detect>(['visual', 'visualIR', 'radar', 'none']);
 
 export function validateUnitDefs(defs: Record<string, UnitDef>): string[] {
@@ -95,11 +102,15 @@ export function validateUnitDefs(defs: Record<string, UnitDef>): string[] {
     if (d.size.length !== 3 || d.size.some(v => !(v > 0))) e('size');
     if (d.heat < 0 || d.heat > 1) e('heat not 0..1');
     if (d.move && !(d.move.speed > 0)) e('move speed');
+    if (d.squad !== undefined && !(Number.isInteger(d.squad) && d.squad >= 1)) e(`squad ${d.squad}`);
+    if (d.carry !== undefined && !(Number.isInteger(d.carry) && d.carry >= 1)) e(`carry ${d.carry}`);
     for (const w of d.weapons) {
       if (!KINDS.has(w.kind)) e(`${w.id} kind ${w.kind}`);
+      if (!VS.has(w.vs)) e(`${w.id} vs ${w.vs}`);
+      if (!Number.isInteger(w.penetration) || w.penetration < 0 || w.penetration > 5) e(`${w.id} penetration ${w.penetration} not 0..5`);
       if (!(w.range > w.minRange && w.minRange >= 0)) e(`${w.id} range`);
       if (!(w.damage > 0 && w.rate > 0)) e(`${w.id} damage/rate`);
-      if ((w.kind === 'bullet' || w.kind === 'rocket') && !(w.accuracy !== undefined && w.accuracy > 0 && w.accuracy <= 1)) e(`${w.id} accuracy`);
+      if (AIMED.has(w.kind) && !(w.accuracy !== undefined && w.accuracy > 0 && w.accuracy <= 1)) e(`${w.id} accuracy`);
     }
   }
   return errors;

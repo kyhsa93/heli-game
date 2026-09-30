@@ -26,10 +26,10 @@ describe('enemy missiles (05-enemies-and-ai.md 5.5)', () => {
     it(`${defId} hits a hovering helicopter and damages its systems`, () => {
       const { world, events } = makeWorld(7);
       world.clearCombat();
-      const g = openPair(world, defId === 'manpads' ? 2500 : 3000, 80);
+      const g = openPair(world, defId === 'manpads' ? 2500 : 2500, 80);
       const u = world.spawnUnit(defId, g.unit.x, g.unit.z, 0, { passive: true });
       airborneAt(world, g.player.x, g.player.z, world.terrain.surfaceAt(g.player.x, g.player.z) + 80);
-      world.launchEnemyMissile(u, u.def.weapons[0].id);
+      world.launchEnemyMissile(u, u.def.weapons.find(w => w.kind === 'missileIR' || w.kind === 'missileRadar')!.id);
       hold(world, 25);
       const ev = events as SimEvent[];
       expect(ev.some(e => e.t === 'missileWarning')).toBe(true);

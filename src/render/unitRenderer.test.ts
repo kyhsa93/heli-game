@@ -15,7 +15,7 @@ describe('UnitRenderer (M1-2)', () => {
     expect(r.drawCalls).toBeLessThanOrEqual(4);
     expect(r.drawCalls).toBeLessThanOrEqual(30);
     const soldiers = r.group.children.find(c => c.name === 'soldier') as THREE.InstancedMesh;
-    expect(soldiers.count).toBe(25 * 6);
+    expect(soldiers.count).toBe(25 * UNIT_DEFS.inf.squad!);
   });
 
   it('keeps wrecks on the same mesh but darkens them', () => {
