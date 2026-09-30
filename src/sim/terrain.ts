@@ -7,6 +7,8 @@ export const PAD_R = 10;
 export const ROAD_HALF_WIDTH = 4;
 export const ROAD_SHOULDER = 15;
 export const ROAD_FLAT = ROAD_HALF_WIDTH + CELL * 1.5;
+export const RIVER_BED = -3;
+export const RIVER_BANK = 45;
 
 export type Vec2 = [number, number];
 
@@ -15,12 +17,14 @@ export type TerrainFeature =
   | { kind: 'base'; center: Vec2; radius: number }
   | { kind: 'flatten'; center: Vec2; radius: number }
   | { kind: 'forest'; center: Vec2; radius: number; density?: number }
-  | { kind: 'bridge'; from: Vec2; to: Vec2 };
+  | { kind: 'bridge'; from: Vec2; to: Vec2 }
+  | { kind: 'river'; path: Vec2[]; width: number };
 
 export interface TerrainOptions {
   size?: number;
   features?: readonly TerrainFeature[];
   roads?: readonly Vec2[][];
+  lift?: number;
   pads?: readonly { x: number; z: number; name: string; base?: boolean }[];
 }
 
@@ -96,11 +100,12 @@ export class Terrain {
         const ridge = 1 - Math.abs(fbm(n2, x / 650, z / 650, 4) * 2 - 1);
         let h = (base - 0.42) * 560 + ridge ** 3 * 190 * base;
         const d = Math.max(Math.abs(x), Math.abs(z)) / HALF;
-        h += smooth(clamp((d - 0.74) / 0.26, 0, 1)) * 480;
+        h += smooth(clamp((d - 0.74) / 0.26, 0, 1)) * 480 + (opts.lift ?? 0);
         this.heights[j * (N + 1) + i] = h;
       }
     }
 
+    for (const f of opts.features ?? []) if (f.kind === 'river') this.carveRiver(f.path, f.width);
     for (const f of opts.features ?? []) {
       if (f.kind === 'flatten' || f.kind === 'base' || f.kind === 'village') {
         const y = Math.max(4, this.meanHeight(f.center[0], f.center[1], f.radius * 0.5));
@@ -206,7 +211,7 @@ export class Terrain {
           const x = -HALF + i * CELL, z = -HALF + j * CELL;
           const t = len2 > 0 ? clamp(((x - a.x) * dx + (z - a.z) * dz) / len2, 0, 1) : 0;
           const d = Math.hypot(x - (a.x + dx * t), z - (a.z + dz * t));
-          if (d >= reach || this.onBridge(x, z, 14)) continue;
+          if (d >= reach || this.onBridge(x, z, reach)) continue;
           const y = ya + (yb - ya) * t;
           const w = d <= ROAD_FLAT ? 1 : 1 - smooth((d - ROAD_FLAT) / (reach - ROAD_FLAT));
           const idx = j * (N + 1) + i;
@@ -251,6 +256,27 @@ export class Terrain {
       for (let dz = -12; dz <= 12; dz += 4) for (let dx = -12; dx <= 12; dx += 4) { sum += this.heightAt(p.x + dx, p.z + dz); cnt++; }
       p.y = Math.max(4, sum / cnt);
       this.flatten(p.x, p.z, p.y, 22, 70);
+    }
+  }
+
+  private carveRiver(path: readonly Vec2[], width: number) {
+    const N = this.n, HALF = this.half, inner = width / 2, outer = inner + RIVER_BANK;
+    for (let k = 0; k + 1 < path.length; k++) {
+      const [ax, az] = path[k], [bx, bz] = path[k + 1];
+      const dx = bx - ax, dz = bz - az, len2 = dx * dx + dz * dz;
+      const i0 = Math.floor((Math.min(ax, bx) - outer + HALF) / CELL), i1 = Math.ceil((Math.max(ax, bx) + outer + HALF) / CELL);
+      const j0 = Math.floor((Math.min(az, bz) - outer + HALF) / CELL), j1 = Math.ceil((Math.max(az, bz) + outer + HALF) / CELL);
+      for (let j = Math.max(0, j0); j <= Math.min(N, j1); j++) {
+        for (let i = Math.max(0, i0); i <= Math.min(N, i1); i++) {
+          const x = -HALF + i * CELL, z = -HALF + j * CELL;
+          const t = len2 > 0 ? clamp(((x - ax) * dx + (z - az) * dz) / len2, 0, 1) : 0;
+          const d = Math.hypot(x - (ax + dx * t), z - (az + dz * t));
+          if (d >= outer) continue;
+          const w = d <= inner ? 1 : 1 - smooth((d - inner) / (outer - inner));
+          const idx = j * (N + 1) + i;
+          this.heights[idx] = Math.min(this.heights[idx], this.heights[idx] * (1 - w) + RIVER_BED * w);
+        }
+      }
     }
   }
 
