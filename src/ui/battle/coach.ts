@@ -8,18 +8,30 @@ export interface CoachFacts {
   flips: number;
   detected: number;
   deaths: number;
-  flying: boolean;
+  playing: boolean;
+  foot: boolean;
+  walked: number;
+  shots: number;
+  inPoint: boolean;
 }
 
 export interface CoachStep { id: string; ready: (f: CoachFacts, start: CoachFacts) => boolean; done: (f: CoachFacts, start: CoachFacts) => boolean }
 
+export const WALK_STEP = 10;
+
+const flying = (f: CoachFacts) => f.playing && !f.foot;
+const walking = (f: CoachFacts) => f.playing && f.foot;
+
 export const COACH_STEPS: CoachStep[] = [
-  { id: 'rules.points', ready: f => f.flying, done: () => false },
-  { id: 'apache.collective', ready: f => f.flying, done: (f, s) => Math.abs(f.agl - s.agl) > 15 },
-  { id: 'apache.tads', ready: f => f.flying, done: f => f.tads },
-  { id: 'apache.identify', ready: f => f.flying, done: (f, s) => f.identified > s.identified },
-  { id: 'rules.tickets', ready: f => f.flying && f.flips > 0, done: () => false },
-  { id: 'apache.popup', ready: f => f.flying && f.detected > 0, done: () => false },
+  { id: 'rules.points', ready: f => f.playing, done: () => false },
+  { id: 'soldier.move', ready: walking, done: (f, s) => f.walked - s.walked >= WALK_STEP },
+  { id: 'soldier.shoot', ready: walking, done: (f, s) => f.shots > s.shots },
+  { id: 'soldier.capture', ready: walking, done: f => f.inPoint },
+  { id: 'apache.collective', ready: flying, done: (f, s) => Math.abs(f.agl - s.agl) > 15 },
+  { id: 'apache.tads', ready: flying, done: f => f.tads },
+  { id: 'apache.identify', ready: flying, done: (f, s) => f.identified > s.identified },
+  { id: 'rules.tickets', ready: f => f.playing && f.flips > 0, done: () => false },
+  { id: 'apache.popup', ready: f => flying(f) && f.detected > 0, done: () => false },
 ];
 
 export class Coach {

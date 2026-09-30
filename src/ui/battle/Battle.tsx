@@ -55,7 +55,7 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
   const { session, runtime, mod } = game;
   const snap = useSyncExternalStore(session.subscribe, session.getSnapshot);
   const [, tick] = useState(0);
-  const tally = useRef({ kills: 0, deaths: 0, identified: 0, flips: 0, detected: 0, missileAt: -99, reason: undefined as string | undefined, missile: false });
+  const tally = useRef({ kills: 0, deaths: 0, identified: 0, flips: 0, detected: 0, missileAt: -99, reason: undefined as string | undefined, missile: false, walked: 0, shots: 0, lastShot: -Infinity, at: null as { x: number; z: number } | null });
   useEffect(() => session.world.events.onAny(e => {
     const T = tally.current, now = session.world.time;
     if (e.t === 'unitDestroyed' && e.byPlayer) T.kills++;
@@ -70,22 +70,36 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
   const [coach] = useState(() => new Coach(new Set(tips), undefined, onTip));
   const [line, setLine] = useState<string | null>(null);
   useEffect(() => {
+    let last = session.world.time;
     const id = setInterval(() => {
-      const w = session.world, T = tally.current;
-      const facts: CoachFacts = { agl: w.playerBody().agl, tads: w.tads.active, identified: T.identified, flips: T.flips, detected: T.detected, deaths: T.deaths, flying: session.mode === 'play' && w.playerBody().alive && !session.paused };
-      setLine(coach.update(facts, facts.flying ? 0.1 : 0));
+      const w = session.world, T = tally.current, body = w.playerBody();
+      const dt = Math.max(0, w.time - last);
+      last = w.time;
+      const foot = body.kind === 'soldier';
+      if (foot && body.alive) {
+        if (T.at) T.walked += Math.hypot(body.pos.x - T.at.x, body.pos.z - T.at.z);
+        T.at = { x: body.pos.x, z: body.pos.z };
+      } else T.at = null;
+      if (w.soldierLastShot > T.lastShot) { T.lastShot = w.soldierLastShot; T.shots++; }
+      const inPoint = foot && runtime.conquest.points.some(p => Math.hypot(body.pos.x - p.x, body.pos.z - p.z) <= p.radius);
+      const facts: CoachFacts = { agl: body.agl, tads: w.tads.active, identified: T.identified, flips: T.flips, detected: T.detected, deaths: T.deaths, playing: session.mode === 'play' && body.alive && !session.paused, foot, walked: T.walked, shots: T.shots, inPoint };
+      setLine(coach.update(facts, facts.playing ? dt : 0));
     }, 100);
     return () => clearInterval(id);
-  }, [session, coach]);
+  }, [session, runtime, coach]);
   useEffect(() => {
     if (snap.mode !== 'deploy') return;
     const id = setInterval(() => tick(n => n + 1), 250);
     return () => clearInterval(id);
   }, [snap.mode]);
   const firstSortie = !tips.includes('card.apache');
+  const firstFoot = !tips.includes('card.soldier');
   const heliReady = side === 'coalition';
-  const [role, setRole] = useState<'heli' | 'soldier'>(heliReady ? 'heli' : 'soldier');
-  const [spawnId, setSpawnId] = useState(heliReady ? (firstSortie ? 'baseAir' : 'base') : 'soldierBase');
+  const [role, setRole] = useState<'heli' | 'soldier'>(heliReady && !firstFoot ? 'heli' : 'soldier');
+  const heliSpawn = firstSortie ? 'baseAir' : 'base';
+  const home = runtime.conquest.points.find(p => p.owner === side);
+  const soldierSpawn = firstFoot && home ? `point:${home.id}` : 'soldierBase';
+  const [spawnId, setSpawnId] = useState(role === 'heli' ? heliSpawn : soldierSpawn);
   const [kit, setKit] = useState<KitId>('closeSupport');
   const c = runtime.conquest;
   const all = runtime.spawnPoints(session.world);
@@ -101,7 +115,7 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
           <p className="sub">{t('battle.deploy.tickets', { c: Math.floor(c.tickets.coalition), v: Math.floor(c.tickets.veros) })} · {t('battle.deploy.elapsed', { t: clock(c.elapsed), limit: clock(runtime.rules.timeLimitSec) })}</p>
           <p className="sub">{t('battle.deploy.points', { list: c.points.map(p => `${p.id}${p.owner === 'coalition' ? '■' : p.owner === 'veros' ? '▲' : '○'}`).join(' ') })}</p>
           <div className="setting-row"><span>{t('battle.deploy.role')}</span>
-            <div className="choice">{(['soldier', 'heli'] as const).map(r => <button key={r} className={r === role ? 'on' : ''} disabled={r === 'heli' && !heliReady} onClick={() => { setRole(r); setSpawnId(r === 'heli' ? 'base' : 'soldierBase'); }}>{t(r === 'heli' && side === 'veros' ? 'battle.roles.vpaHeli' : `battle.roles.${r}`)}{r === 'heli' && !heliReady && <small>{t('battle.setup.soon')}</small>}</button>)}</div>
+            <div className="choice">{(['soldier', 'heli'] as const).map(r => <button key={r} className={r === role ? 'on' : ''} disabled={r === 'heli' && !heliReady} onClick={() => { setRole(r); setSpawnId(r === 'heli' ? heliSpawn : soldierSpawn); }}>{t(r === 'heli' && side === 'veros' ? 'battle.roles.vpaHeli' : `battle.roles.${r}`)}{r === 'heli' && !heliReady && <small>{t('battle.setup.soon')}</small>}</button>)}</div>
           </div>
           <div className="setting-row"><span>{t('battle.deploy.spawn')}</span>
             <div className="choice">{points.map(p => <button key={p.id} className={p === chosen ? 'on' : ''} onClick={() => setSpawnId(p.id)}>{spawnLabel(p)}</button>)}</div>
@@ -111,17 +125,17 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
               <div className="choice">{mod.KIT_IDS.map(k => <button key={k} className={k === kit ? 'on' : ''} onClick={() => setKit(k)}>{t(`battle.kits.${k}`)}</button>)}</div>
             </div>
           )}
-          {firstSortie && role === 'heli' && (
+          {(role === 'heli' ? firstSortie : firstFoot) && (
             <div className="control-card">
-              <b>{t('battle.card.title')}</b>
-              {tList(touch ? 'battle.card.touch' : 'battle.card.keyboard').map(l => <span key={l}>{l}</span>)}
+              <b>{t(`battle.card.${role === 'heli' ? 'apache' : 'soldier'}.title`)}</b>
+              {tList(`battle.card.${role === 'heli' ? 'apache' : 'soldier'}.${touch ? 'touch' : 'keyboard'}`).map(l => <span key={l}>{l}</span>)}
             </div>
           )}
           {tally.current.deaths > 0 && <p className="sub tip">{t(deathTip(tally.current.reason, tally.current.missile))}</p>}
           {tally.current.deaths > 0 && !tips.includes('rules.dead') && <p className="sub tip">{t('battle.tips.dead')}</p>}
           <div className="pause-buttons">
             <button className="go secondary" onClick={onSetup}>{t('battle.deploy.quit')}</button>
-            <button className="go" disabled={wait > 0} onClick={() => { if (chosen && session.deploy(runtime.spawnFor(chosen, mod.KITS[kit]))) { if (firstSortie && role === 'heli') onTip('card.apache'); if (tally.current.deaths > 0 && !tips.includes('rules.dead')) onTip('rules.dead'); } }}>
+            <button className="go" disabled={wait > 0} onClick={() => { if (chosen && session.deploy(runtime.spawnFor(chosen, mod.KITS[kit]))) { if (role === 'heli' ? firstSortie : firstFoot) onTip(role === 'heli' ? 'card.apache' : 'card.soldier'); if (tally.current.deaths > 0 && !tips.includes('rules.dead')) onTip('rules.dead'); } }}>
               {wait > 0 ? t('battle.deploy.wait', { s: Math.ceil(wait) }) : `${t('battle.deploy.go')} ▶`}
             </button>
           </div>
