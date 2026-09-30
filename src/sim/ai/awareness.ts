@@ -1,4 +1,5 @@
 import { Vector3 } from 'three';
+import { detectRange, DETECT_RATE, revealedByFire, soldierTarget } from '../infantry/awareness';
 import { clamp } from '../../core/math';
 import type { LosCache } from '../los';
 import type { Terrain } from '../terrain';
@@ -105,6 +106,16 @@ export function stepAwareness(world: World, los: LosCache, cond: Conditions, dt 
     if (!u.alive || !world.huntsPlayer(u) || u.def.detect === 'none' || u.passive) continue;
     eyeOf(u, eye);
     const dist = eye.distanceTo(h.pos);
+    if (h.kind === 'soldier' && world.soldier) {
+      const target = soldierTarget(world.soldier);
+      const sight = los.visual(u.id, eye, target, world.time);
+      if (revealedByFire(world.soldierLastShot, world.time, dist)) detect(world, u, 'visual');
+      else if (sight.clear && dist <= detectRange(world.soldier, sight.occlusion > 0)) {
+        u.ai.awareness = Math.min(1, u.ai.awareness + DETECT_RATE * world.difficulty.detection * dt);
+        if (u.ai.awareness >= 1) detect(world, u, 'visual');
+      } else forget(world, u, dt);
+      continue;
+    }
     if (u.def.detect === 'radar' && u.def.radar && h.kind !== 'soldier') {
       const r = u.def.radar;
       if (u.ai.jammed > 0) { u.ai.jammed = Math.max(0, u.ai.jammed - dt); setRadar(world, u, 'search'); continue; }

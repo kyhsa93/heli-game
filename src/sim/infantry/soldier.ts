@@ -5,6 +5,9 @@ export type SoldierClass = 'assault' | 'engineer' | 'support' | 'recon';
 
 export const SOLDIER_HP = 100;
 export const SOLDIER_RADIUS = 0.35;
+export const SOLDIER_DAMAGE_SCALE = 12.5;
+export const REGEN_DELAY = 8;
+export const REGEN_RATE = 5;
 export const EYE_HEIGHT: Record<Stance, number> = { stand: 1.65, crouch: 1.1, prone: 0.35 };
 
 export interface SoldierCommands {

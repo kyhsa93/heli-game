@@ -10,7 +10,7 @@ import { agl, createHeli, toWorld, updateQ, type Controls, type HeliState } from
 import type { Avatar, AvatarSpawn, PlayerBody } from './avatar';
 import type { Obstacle } from './obstacles';
 import { createMembers, HEADSHOT, MEMBER_LOD, segmentHitsMember, syncMembers, type Member } from './infantry/squad';
-import { createSoldier, createSoldierCommands, SOLDIER_RADIUS, type SoldierCommands, type SoldierState, type Stance } from './infantry/soldier';
+import { createSoldier, createSoldierCommands, REGEN_DELAY, REGEN_RATE, SOLDIER_DAMAGE_SCALE, SOLDIER_HP, SOLDIER_RADIUS, type SoldierCommands, type SoldierState, type Stance } from './infantry/soldier';
 import { createMotion, setStance, sprinting, stepSoldier, type SoldierMotion } from './infantry/movement';
 import { createArms as createSoldierArms, select, startReload, stepArms, type InfantryWeaponId, type SoldierArms } from './infantry/arms';
 import { soldierEye } from './infantry/soldier';
@@ -44,7 +44,6 @@ import { boresight, HYDRA, nextPod, podMuzzle, rocketPods, rocketProjectile, SAL
 
 export const STEP = 1 / 120;
 export const PLAYER_RADIUS = 8;
-export const SOLDIER_DAMAGE_SCALE = 12.5;
 
 export const BATTLE_TICK = 0.1;
 export const BATTLE_SLOW_TICK = 1;
@@ -66,6 +65,8 @@ export class World {
   soldierCommands: SoldierCommands = createSoldierCommands();
   soldierMotion: SoldierMotion = createMotion();
   soldierArms: SoldierArms = createSoldierArms('assault');
+  soldierLastShot = -Infinity;
+  soldierHurtAt = -Infinity;
   private tmpEye = new Vector3();
   private body: PlayerBody = { kind: 'heli', pos: new Vector3(), vel: new Vector3(), alive: false, agl: 0, heat: 1, radius: PLAYER_RADIUS };
   controls: Controls = { cyclicX: 0, cyclicY: 0, pedal: 0, collective: 0 };
@@ -184,6 +185,8 @@ export class World {
     s.pitch = c.pitch + a.recoilPitch;
     const canFire = s.alive && !sprinting(s, c, this.soldierMotion) && this.soldierMotion.stanceTimer === 0 && !this.soldierMotion.vault;
     const shots = stepArms(s, a, c.fire, soldierEye(s, this.tmpEye), { rng: this.rng, nextId: () => this.nextProjectileId++, ads: c.ads, canFire }, dt);
+    if (shots.length) this.soldierLastShot = this.time;
+    if (s.alive && this.time - this.soldierHurtAt >= REGEN_DELAY) s.hp = Math.min(SOLDIER_HP, s.hp + REGEN_RATE * dt);
     for (const p of shots) {
       this.projectiles.push(p);
       this.emit({ t: 'fire', weapon: p.weapon, pos: p.pos.clone(), dir: p.vel.clone().normalize(), owner: PLAYER_OWNER, tracer: p.tracer });
@@ -200,7 +203,8 @@ export class World {
   damageSoldier(amount: number) {
     const s = this.soldier;
     if (!s || !s.alive || amount <= 0) return;
-    s.hp = Math.max(0, s.hp - amount * this.difficulty.damageTaken);
+    s.hp = Math.max(0, s.hp - amount);
+    this.soldierHurtAt = this.time;
     if (s.hp === 0) this.killPlayer('killed');
   }
 

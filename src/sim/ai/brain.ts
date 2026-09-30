@@ -1,5 +1,8 @@
 import { Vector3 } from 'three';
 import { clamp } from '../../core/math';
+import { soldierTarget } from '../infantry/awareness';
+import { scatter, volleyAt } from '../infantry/incoming';
+import { SOLDIER_DAMAGE_SCALE } from '../infantry/soldier';
 import { hitsAir, hitsGround, type Unit, type UnitWeaponDef } from '../units';
 import type { World } from '../world';
 import { AI_TICK, eyeOf, SUSPECT } from './awareness';
@@ -47,7 +50,7 @@ function inRange(world: World, u: Unit, dist: number) {
 }
 
 function sees(world: World, u: Unit, eye: Vector3) {
-  const p = world.playerBody().pos;
+  const p = onFoot(world) && world.soldier ? soldierTarget(world.soldier) : world.playerBody().pos;
   return u.def.detect === 'radar' && !onFoot(world) ? world.los.radar(u.id, eye, p, world.time) : world.los.visual(u.id, eye, p, world.time).clear;
 }
 
@@ -85,7 +88,26 @@ function enter(u: Unit, state: Unit['ai']['state']) {
   if (state === 'engage') { u.ai.blindTimer = 0; u.ai.fireAcc = 0; }
 }
 
+function fireAtSoldier(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
+  const s = world.soldier;
+  if (!s) return;
+  const target = soldierTarget(s);
+  const partial = world.los.visual(u.id, eye, target, world.time).occlusion > 0;
+  const w = u.def.squad ? null : directWeapons(u, world).find(x => dist <= x.range && dist >= x.minRange) ?? null;
+  const v = volleyAt(u, w, s, dist, partial, world.difficulty.enemyAccuracy * (u.skill ?? 1));
+  if (!v) return;
+  u.ai.fireAcc += v.rate * dt;
+  while (u.ai.fireAcc >= 1) {
+    u.ai.fireAcc -= 1;
+    const hit = world.rng() < v.p;
+    const to = hit ? target.clone() : scatter(target, dist, world.rng);
+    world.emit({ t: 'fire', weapon: w?.id ?? 'g_rifle', pos: eye.clone(), dir: to.sub(eye).normalize(), owner: u.id, tracer: true });
+    if (hit) world.emit({ t: 'playerHit', by: u.id, weapon: w?.id ?? 'g_rifle', damage: v.damage / SOLDIER_DAMAGE_SCALE });
+  }
+}
+
 function fire(world: World, u: Unit, eye: Vector3, dist: number, dt: number) {
+  if (onFoot(world)) { fireAtSoldier(world, u, eye, dist, dt); return; }
   const range = dist;
   for (const w of directWeapons(u, world)) {
     if (range > w.range || range < w.minRange) continue;
