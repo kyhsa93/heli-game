@@ -11,7 +11,7 @@ export interface Settings {
   difficulty: DifficultyLevel;
   voiceWarnings: boolean;
   assists: { autoIdentify: boolean; autoCountermeasures: boolean };
-  controls: { lookSensitivity: number; invertLookY: boolean; tadsSensitivity: number; touchStickSize: StickSize };
+  controls: { lookSensitivity: number; invertLookY: boolean; tadsSensitivity: number; touchStickSize: StickSize; aimAssist: boolean };
   display: { fov: number; ihadssBrightness: number; quality: Quality; showFps: boolean };
   audio: { master: number };
 }
@@ -23,7 +23,7 @@ const STICKS = new Set<StickSize>(['S', 'M', 'L']);
 export function defaultSettings(): Settings {
   return {
     difficulty: 'normal', voiceWarnings: true, assists: { autoIdentify: false, autoCountermeasures: false },
-    controls: { lookSensitivity: 1, invertLookY: false, tadsSensitivity: 1, touchStickSize: 'M' },
+    controls: { lookSensitivity: 1, invertLookY: false, tadsSensitivity: 1, touchStickSize: 'M', aimAssist: true },
     display: { fov: 72, ihadssBrightness: 1, quality: 'high', showFps: false },
     audio: { master: 1 },
   };
@@ -60,6 +60,7 @@ function sanitize(raw: unknown): GameSave | null {
       out.controls.lookSensitivity = inRange(c.lookSensitivity, RANGES.lookSensitivity) ?? out.controls.lookSensitivity;
       out.controls.tadsSensitivity = inRange(c.tadsSensitivity, RANGES.tadsSensitivity) ?? out.controls.tadsSensitivity;
       out.controls.invertLookY = c.invertLookY === true;
+      out.controls.aimAssist = c.aimAssist !== false;
       if (STICKS.has(c.touchStickSize)) out.controls.touchStickSize = c.touchStickSize;
     }
     if (d) {

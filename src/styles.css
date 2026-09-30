@@ -260,3 +260,8 @@ button.mode:disabled { opacity: .45; cursor: default; }
 .battle-hud .soldier-status b.low { color: #ef476f; }
 .battle-hud.touch .soldier-status { bottom: auto; top: calc(12px + env(safe-area-inset-top)); right: calc(180px + env(safe-area-inset-right)); flex-direction: row; gap: 10px; font-size: 13px; }
 .battle-hud.touch .soldier-status b { font-size: 14px; }
+.soldier-controls .soldier-gear { position: absolute; right: calc(12px + env(safe-area-inset-right)); top: calc(56px + env(safe-area-inset-top)); display: flex; gap: 8px; pointer-events: auto; }
+.soldier-controls .soldier-gear .tbtn { position: static; }
+.soldier-controls .tbtn.stance { left: 190px; bottom: calc(40px + env(safe-area-inset-bottom)); }
+.soldier-controls .tbtn.ads { right: 250px; bottom: calc(60px + env(safe-area-inset-bottom)); }
+.soldier-controls .tbtn.fire { right: calc(40px + env(safe-area-inset-right)); bottom: calc(60px + env(safe-area-inset-bottom)); width: 72px; height: 72px; }

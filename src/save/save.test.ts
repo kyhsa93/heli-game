@@ -6,7 +6,7 @@ describe('settings save', () => {
   it('stores and reloads every settings group, clamping bad values', () => {
     const store = memoryStorage();
     const s = freshSave();
-    s.settings.controls = { lookSensitivity: 1.6, invertLookY: true, tadsSensitivity: 0.6, touchStickSize: 'L' };
+    s.settings.controls = { lookSensitivity: 1.6, invertLookY: true, tadsSensitivity: 0.6, touchStickSize: 'L', aimAssist: false };
     s.settings.display = { fov: 84, ihadssBrightness: 0.7, quality: 'medium', showFps: true };
     s.settings.audio = { master: 0.4 };
     s.settings.difficulty = 'hard';
@@ -14,7 +14,7 @@ describe('settings save', () => {
     expect(loadSave(store)).toEqual(s);
     store.setItem(SAVE_KEY, JSON.stringify({ version: 1, settings: { controls: { lookSensitivity: 99, touchStickSize: 'XL' }, display: { fov: 10, quality: 'ultra' }, audio: { master: -3 } } }));
     const back = loadSave(store).settings;
-    expect(back.controls).toEqual({ lookSensitivity: 2, invertLookY: false, tadsSensitivity: 1, touchStickSize: 'M' });
+    expect(back.controls).toEqual({ lookSensitivity: 2, invertLookY: false, tadsSensitivity: 1, touchStickSize: 'M', aimAssist: true });
     expect(back.display).toMatchObject({ fov: 60, quality: 'high', showFps: false });
     expect(back.audio.master).toBe(0);
   });

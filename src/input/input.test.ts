@@ -119,3 +119,61 @@ describe('pinch zoom (07 7.6)', () => {
     expect(p.move(1, 0, 0)).toBe(0);
   });
 });
+
+describe('soldier aim assist and gamepad (B2-11)', () => {
+  it('pulls the aim toward an enemy near the crosshair only when enabled and on touch or pad', async () => {
+    const { World } = await import('../sim/world');
+    const { FlightInput } = await import('./input');
+    const w = new World({ seed: 3, terrain: { features: [{ kind: 'flatten', center: [0, 0], radius: 600 }], pads: [{ x: -1500, z: -1500, name: 'H' }] } });
+    w.active = true;
+    w.spawnAvatar({ kind: 'soldier', x: 0, z: 0, headingDeg: 0, cls: 'assault' });
+    const e = w.spawnUnit('inf', 3, -100);
+    void e;
+    const input = new FlightInput();
+    input.gamepads = () => [];
+    input.touchUsed = true;
+    input.update(w, 0.1);
+    const yaw0 = input.soldierYaw;
+    for (let i = 0; i < 20; i++) input.update(w, 0.05);
+    expect(input.assistActive).toBe(true);
+    expect(input.soldierYaw).toBeLessThan(yaw0);
+    const off = new FlightInput();
+    off.gamepads = () => [];
+    off.touchUsed = true;
+    off.aimAssist = false;
+    off.update(w, 0.1);
+    const y1 = off.soldierYaw;
+    for (let i = 0; i < 20; i++) off.update(w, 0.05);
+    expect(off.soldierYaw).toBe(y1);
+    const mouse = new FlightInput();
+    mouse.gamepads = () => [];
+    mouse.update(w, 0.1);
+    const y2 = mouse.soldierYaw;
+    for (let i = 0; i < 20; i++) mouse.update(w, 0.05);
+    expect(mouse.soldierYaw).toBe(y2);
+  });
+
+  it('moves, looks and fires with a gamepad on foot', async () => {
+    const { World } = await import('../sim/world');
+    const { FlightInput } = await import('./input');
+    const w = new World({ seed: 3 });
+    w.active = true;
+    w.spawnAvatar({ kind: 'soldier', x: 0, z: 0, headingDeg: 0, cls: 'assault' });
+    const input = new FlightInput();
+    const buttons = Array.from({ length: 16 }, () => ({ pressed: false }));
+    buttons[7].pressed = true; buttons[6].pressed = true;
+    input.gamepads = () => [{ connected: true, axes: [0.8, -1, 0.5, 0], buttons }];
+    const cmds: string[] = [];
+    input.onCommand = c => cmds.push(c);
+    input.update(w, 0.1);
+    const y0 = input.soldierYaw;
+    input.update(w, 0.1);
+    expect(w.soldierCommands).toMatchObject({ fire: true, ads: true });
+    expect(w.soldierCommands.forward).toBeGreaterThan(0.9);
+    expect(w.soldierCommands.right).toBeGreaterThan(0.5);
+    expect(input.soldierYaw).toBeLessThan(y0);
+    buttons[2].pressed = true;
+    input.update(w, 0.1);
+    expect(cmds).toContain('reload');
+  });
+});

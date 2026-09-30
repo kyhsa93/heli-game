@@ -56,6 +56,8 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
     input.lookScale = settings.controls.lookSensitivity;
     input.tadsScale = settings.controls.tadsSensitivity;
     input.invertY = settings.controls.invertLookY;
+    input.aimAssist = settings.controls.aimAssist;
+    input.touchUsed = touch;
     audioRef.current?.setVolume(settings.audio.master);
     if (audioRef.current) audioRef.current.voice.enabled = settings.voiceWarnings;
   }, [settings]);
@@ -276,6 +278,22 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
     if (Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 6) rendererRef.current?.clickAt(e.clientX, e.clientY);
   };
   const press = (fn: () => void) => (e: RPointerEvent) => { e.preventDefault(); e.stopPropagation(); fn(); };
+  const stanceTimer = useRef<number | null>(null);
+  const stanceHold = () => ({
+    onPointerDown: (e: RPointerEvent) => {
+      e.preventDefault(); e.stopPropagation();
+      stanceTimer.current = window.setTimeout(() => { stanceTimer.current = null; runCommand('prone'); }, 450);
+    },
+    onPointerUp: () => { if (stanceTimer.current !== null) { clearTimeout(stanceTimer.current); stanceTimer.current = null; runCommand('crouch'); } },
+    onPointerCancel: () => { if (stanceTimer.current !== null) { clearTimeout(stanceTimer.current); stanceTimer.current = null; } },
+  });
+  const fireAt = useRef<{ x: number; y: number } | null>(null);
+  const fireDrag = () => ({
+    onPointerDown: (e: RPointerEvent) => { e.preventDefault(); e.stopPropagation(); (e.target as Element).setPointerCapture?.(e.pointerId); fireAt.current = { x: e.clientX, y: e.clientY }; input.touchFire = true; },
+    onPointerMove: (e: RPointerEvent) => { const f = fireAt.current; if (!f) return; input.look(e.clientX - f.x, e.clientY - f.y); fireAt.current = { x: e.clientX, y: e.clientY }; },
+    onPointerUp: () => { fireAt.current = null; input.touchFire = false; },
+    onPointerCancel: () => { fireAt.current = null; input.touchFire = false; },
+  });
   const hold = (set: (on: boolean) => void) => ({
     onPointerDown: (e: RPointerEvent) => { e.preventDefault(); e.stopPropagation(); set(true); },
     onPointerUp: () => set(false), onPointerCancel: () => set(false), onPointerLeave: () => set(false),
@@ -308,7 +326,20 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
       {atFarp && <FarpMenu world={sim} />}
       <div className="hint" ref={hintRef} />
 
-      {touch && snap.mode === 'play' && (
+      {touch && snap.mode === 'play' && sim.avatar.kind === 'soldier' && (
+        <div className="sticks soldier-controls">
+          <VirtualStick className={`stick left size-${settings.controls.touchStickSize}`} radius={STICK_RADIUS[settings.controls.touchStickSize]} label={t('touch.moveStick')} onMove={(x, y) => { input.touch.lx = x; input.touch.ly = y; }} />
+          <button className="tbtn pause" aria-label={t('touch.pause')} onPointerDown={press(() => setHelp(true))}>≡</button>
+          <div className="soldier-gear">
+            <button className="tbtn" onPointerDown={press(() => runCommand(sim.soldierArms.selected === 'rifle' ? 'weapon2' : 'weapon1'))}>{t(sim.soldierArms.selected === 'rifle' ? 'touch.toGrenade' : 'touch.toRifle')}</button>
+            <button className="tbtn" onPointerDown={press(() => runCommand('reload'))}>{t('touch.reload')}</button>
+          </div>
+          <button className="tbtn stance" {...stanceHold()}>{t(`touch.stance.${sim.soldier?.stance ?? 'stand'}`)}</button>
+          <button className={`tbtn ads${input.touchAds ? ' on' : ''}`} onPointerDown={press(() => { input.touchAds = !input.touchAds; setTouchKey(k => k + 'a'); })}>{t('touch.ads')}</button>
+          <button className="tbtn fire" {...fireDrag()}>{t('touch.fire')}</button>
+        </div>
+      )}
+      {touch && snap.mode === 'play' && sim.avatar.kind === 'heli' && (
         <div className="sticks">
           <VirtualStick className={`stick left size-${settings.controls.touchStickSize}`} radius={STICK_RADIUS[settings.controls.touchStickSize]} label={t('touch.leftStick')} onMove={(x, y) => { input.touch.lx = x; input.touch.ly = y; }} />
           <VirtualStick className={`stick right size-${settings.controls.touchStickSize}`} radius={STICK_RADIUS[settings.controls.touchStickSize]} label={t('touch.rightStick')} onMove={(x, y) => { input.touch.rx = x; input.touch.ry = y; }} />

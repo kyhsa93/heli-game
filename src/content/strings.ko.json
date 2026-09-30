@@ -87,6 +87,16 @@
       "agm114k": "헬파이어",
       "agm114l": "헬파이어 L",
       "stinger": "스팅어"
+    },
+    "moveStick": "이동",
+    "toGrenade": "유탄",
+    "toRifle": "소총",
+    "reload": "재장전",
+    "ads": "조준",
+    "stance": {
+      "stand": "서기",
+      "crouch": "앉음",
+      "prone": "엎드림"
     }
   },
   "brief": {
@@ -357,7 +367,8 @@
       "quality": "그래픽 품질",
       "showFps": "FPS 표시",
       "master": "전체 음량",
-      "voiceWarnings": "음성 경고"
+      "voiceWarnings": "음성 경고",
+      "aimAssist": "조준 보조 (터치·패드)"
     },
     "stick": {
       "S": "작게",

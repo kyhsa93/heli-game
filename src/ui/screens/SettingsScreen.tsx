@@ -32,6 +32,7 @@ export function SettingsPanel({ settings: s, onChange, onCredits }: { settings: 
     ['lookSensitivity', <Slider value={s.controls.lookSensitivity} range={RANGES.lookSensitivity} step={0.1} format={pct} onChange={v => set({ controls: { ...s.controls, lookSensitivity: v } })} />],
     ['invertLookY', <Toggle on={s.controls.invertLookY} onChange={v => set({ controls: { ...s.controls, invertLookY: v } })} />],
     ['tadsSensitivity', <Slider value={s.controls.tadsSensitivity} range={RANGES.tadsSensitivity} step={0.1} format={pct} onChange={v => set({ controls: { ...s.controls, tadsSensitivity: v } })} />],
+    ['aimAssist', <Toggle on={s.controls.aimAssist} onChange={v => set({ controls: { ...s.controls, aimAssist: v } })} />],
     ['touchStickSize', <Choice value={s.controls.touchStickSize} options={['S', 'M', 'L'] as StickSize[]} label={v => t(`settings.stick.${v}`)} onPick={v => set({ controls: { ...s.controls, touchStickSize: v } })} />],
     ['fov', <Slider value={s.display.fov} range={RANGES.fov} step={1} format={v => `${v}°`} onChange={v => set({ display: { ...s.display, fov: v } })} />],
     ['ihadssBrightness', <Slider value={s.display.ihadssBrightness} range={RANGES.ihadssBrightness} step={0.05} format={pct} onChange={v => set({ display: { ...s.display, ihadssBrightness: v } })} />],
@@ -42,7 +43,7 @@ export function SettingsPanel({ settings: s, onChange, onCredits }: { settings: 
   ];
   const sections: [string, string[]][] = [
     ['game', ['difficulty', 'autoIdentify', 'autoCountermeasures']],
-    ['controls', ['lookSensitivity', 'invertLookY', 'tadsSensitivity', 'touchStickSize']],
+    ['controls', ['lookSensitivity', 'invertLookY', 'tadsSensitivity', 'aimAssist', 'touchStickSize']],
     ['display', ['fov', 'ihadssBrightness', 'quality', 'showFps']],
     ['audio', ['master', 'voiceWarnings']],
   ];
