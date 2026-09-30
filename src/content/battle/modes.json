@@ -1,0 +1,11 @@
+{
+  "conquest": {
+    "tickets": 800, "bleedPerPointPerSec": 0.1, "timeLimitSec": 2100,
+    "captureRatePerSec": 4, "captureCap": 3, "contestedBelow": 0.3,
+    "strength": { "squadPerMember": 0.2, "player": 0.6, "groundVehicle": 0.5, "air": 0 },
+    "ticketCost": { "person": 1, "light": 2, "apc": 3, "airDefense": 3, "tank": 4, "transportHeli": 4, "attackHeli": 5, "jet": 5 },
+    "botWaveSec": 30, "playerRespawnSec": 10, "boundaryGraceSec": 10, "rosterScale": 1
+  },
+  "quick": { "extends": "conquest", "tickets": 300, "timeLimitSec": 900, "rosterScale": 0.5 },
+  "breakthrough": { "attackerTickets": 600, "sectorBonus": 200, "defenderWavesPerSector": 3 }
+}

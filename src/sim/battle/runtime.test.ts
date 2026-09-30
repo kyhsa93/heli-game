@@ -3,10 +3,12 @@ import harekRaw from '../../content/battle/maps/harek.json?raw';
 import type { SimEvent } from '../events';
 import { STANDARD_LOADOUT } from '../heli/loadout';
 import { STEP } from '../world';
-import { BOUNDARY_GRACE, createBattleSession, PLAYER_RESPAWN } from './runtime';
+import { conquestRules } from './modes';
+import { createBattleSession } from './runtime';
 import type { BattleMapDef } from './schema';
 
 const harek = JSON.parse(harekRaw) as BattleMapDef;
+const { boundaryGraceSec: BOUNDARY_GRACE, playerRespawnSec: PLAYER_RESPAWN } = conquestRules('quick');
 
 function battle(side: 'coalition' | 'veros' = 'coalition') {
   const { session, runtime } = createBattleSession(harek, 'quick', { side, seed: 42 });

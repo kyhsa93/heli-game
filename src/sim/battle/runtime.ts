@@ -4,12 +4,12 @@ import type { LoadoutDef } from '../heli/loadout';
 import type { Objective, ObjectiveState } from '../objective';
 import { FlightSession } from '../session';
 import type { World } from '../world';
+import { Conquest, type Winner } from './conquest';
 import { brainSystems, composeHooks } from './index';
-import { insidePolygon, modeZone, type BattleMapDef, type BattleSide, type ModeId } from './schema';
+import { conquestRules, type ConquestRules } from './modes';
+import { insidePolygon, modeZone, type BattleMapDef, type BattleSide } from './schema';
 import { battleTerrainOptions } from './terrain';
 
-export const PLAYER_RESPAWN = 10;
-export const BOUNDARY_GRACE = 10;
 export const AIR_SPAWN_AGL = 150;
 
 export interface BattleOptions { side: BattleSide; seed: number }
@@ -20,18 +20,26 @@ export class BattleRuntime implements Objective {
   readonly id: string;
   state: ObjectiveState = 'active';
   result: Record<string, number> = {};
-  readonly respawnDelay = PLAYER_RESPAWN;
+  readonly respawnDelay: number;
+  readonly rules: ConquestRules;
   readonly zone;
+  conquest!: Conquest;
   outside = 0;
 
-  constructor(readonly map: BattleMapDef, readonly mode: ModeId, readonly opts: BattleOptions) {
+  constructor(readonly map: BattleMapDef, readonly mode: 'conquest' | 'quick', readonly opts: BattleOptions) {
     this.id = `${map.id}:${mode}`;
     this.zone = modeZone(map, mode);
+    this.rules = conquestRules(mode);
+    this.respawnDelay = this.rules.playerRespawnSec;
   }
 
   start(world: World) {
     world.playerSide = this.opts.side;
-    world.battleHooks = composeHooks(brainSystems());
+    this.conquest = new Conquest(this.map, this.mode, this.rules);
+    const brains = brainSystems();
+    world.battleHooks = composeHooks({ tick10Hz: brains.tick10Hz, tick1Hz: [...brains.tick1Hz, this.conquest.step] });
+    this.state = 'active';
+    this.result = {};
     for (const f of this.map.fixed) {
       if (f.modes && !f.modes.includes(this.mode)) continue;
       world.spawnUnit(f.unit, f.position[0], f.position[1], -(f.yawDeg * Math.PI) / 180);
@@ -67,16 +75,32 @@ export class BattleRuntime implements Objective {
     }
     const before = this.outside;
     this.outside += dt;
-    if (before === 0 || Math.ceil(BOUNDARY_GRACE - before) !== Math.ceil(BOUNDARY_GRACE - this.outside)) {
-      world.emit({ t: 'zone', inside: false, seconds: Math.max(0, BOUNDARY_GRACE - this.outside) });
+    const grace = this.rules.boundaryGraceSec;
+    if (before === 0 || Math.ceil(grace - before) !== Math.ceil(grace - this.outside)) {
+      world.emit({ t: 'zone', inside: false, seconds: Math.max(0, grace - this.outside) });
     }
-    if (this.outside >= BOUNDARY_GRACE) { this.outside = 0; world.killPlayer('outOfBounds'); }
+    if (this.outside >= this.rules.boundaryGraceSec) { this.outside = 0; world.killPlayer('outOfBounds'); }
   }
 
-  onEvent(_e: SimEvent, _world: World) {}
+  onEvent(e: SimEvent, world: World) {
+    if (e.t === 'crash') this.conquest.playerDied(this.opts.side, 'attackHeli');
+    else if (e.t === 'battleEnd') this.end(world, e.winner);
+  }
+
+  private end(world: World, winner: Winner) {
+    if (this.state !== 'active') return;
+    this.state = 'done';
+    const c = this.conquest;
+    this.result = {
+      winner: winner === 'draw' ? 0 : winner === this.opts.side ? 1 : -1,
+      coalition: Math.floor(c.tickets.coalition), veros: Math.floor(c.tickets.veros),
+      seconds: Math.round(c.elapsed), byTime: c.endReason === 'time' ? 1 : 0,
+    };
+    world.emit({ t: 'objective', id: this.id, state: 'done' });
+  }
 }
 
-export function createBattleSession(map: BattleMapDef, mode: ModeId, opts: BattleOptions) {
+export function createBattleSession(map: BattleMapDef, mode: 'conquest' | 'quick', opts: BattleOptions) {
   const runtime = new BattleRuntime(map, mode, opts);
   const session = new FlightSession(opts.seed, runtime, battleTerrainOptions(map), map.environment.seed);
   return { session, runtime };

@@ -28,7 +28,7 @@ export class FlightSession {
     this.world = new World({ seed, terrain, terrainSeed });
     if (objective) this.world.events.onAny(e => objective.onEvent(e, this.world));
     this.world.events.on('objective', e => {
-      if (e.state === 'done' && this.mode === 'play') { this.doneTimer = 1.5; }
+      if (e.state === 'done' && (this.mode === 'play' || this.respawns)) { this.doneTimer = 1.5; }
       if (e.state === 'failed' && this.mode === 'play') { this.failure = e.reason ?? 'failed'; this.failTimer = 2; }
     });
     this.world.events.on('crash', e => {
@@ -94,7 +94,7 @@ export class FlightSession {
     if (this.paused || (this.mode === 'deploy' && this.frozen)) return;
     this.world.step(dt);
     if (this.mode === 'play') this.objective?.tick?.(this.world, dt);
-    if (this.doneTimer > 0 && this.mode === 'play') {
+    if (this.doneTimer > 0 && (this.mode === 'play' || this.respawns) && this.mode !== 'done') {
       this.doneTimer -= dt;
       if (this.doneTimer <= 0) { this.mode = 'done'; this.world.active = false; this.publish(); }
     }

@@ -9,6 +9,8 @@ export type CrashReason =
 export type SimEvent =
   | { t: 'crash'; reason: CrashReason; value?: number }
   | { t: 'zone'; inside: boolean; seconds: number }
+  | { t: 'pointOwner'; id: string; owner: 'coalition' | 'veros' | 'neutral'; from: 'coalition' | 'veros' | 'neutral' }
+  | { t: 'battleEnd'; winner: 'coalition' | 'veros' | 'draw'; reason: 'tickets' | 'time' }
   | { t: 'landed'; descent: number }
   | { t: 'engine'; on: boolean; cause?: 'fuel' | 'damage' }
   | { t: 'refuel' }
