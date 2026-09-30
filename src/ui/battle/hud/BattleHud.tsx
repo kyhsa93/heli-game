@@ -11,6 +11,7 @@ import type { FlightSession } from '../../../sim/session';
 import type { Unit } from '../../../sim/units';
 import { shadeTerrain } from './minimap';
 import { COLORS, pointColor, pointSymbol, sideSymbol } from './symbols';
+import { INFANTRY_WEAPONS } from '../../../sim/infantry/arms';
 
 type Side = 'coalition' | 'veros';
 
@@ -29,6 +30,9 @@ export const RADIO_SECONDS = 4;
 export const TICKET_WARN = [100, 50, 20];
 export const MINIMAP = { desktop: 180, touch: 110 } as const;
 export const MINIMAP_RANGE = 1500;
+export const MINIMAP_RANGE_FOOT = 150;
+export const HIT_MARK = 0.3;
+export const HURT_MARK = 1.5;
 export const ALLY_RANGE = 3000;
 export const ALLY_INFANTRY_RANGE = 200;
 
@@ -48,6 +52,8 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
   const feed = useRef<{ text: string; mine: boolean; until: number }[]>([]);
   const radio = useRef<{ text: string; until: number } | null>(null);
   const warned = useRef(new Set<number>());
+  const hitMark = useRef({ until: -1, kill: false });
+  const hurt = useRef<{ x: number; z: number; until: number }[]>([]);
 
   useEffect(() => {
     const id = setInterval(() => setTick(n => n + 1), 100);
@@ -56,6 +62,9 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
 
   useEffect(() => world.events.onAny((e: SimEvent) => {
     const now = world.time;
+    if (e.t === 'memberHit' && e.byPlayer) hitMark.current = { until: now + HIT_MARK, kill: e.killed || hitMark.current.kill && hitMark.current.until > now };
+    if (e.t === 'unitDestroyed' && e.byPlayer) hitMark.current = { until: now + HIT_MARK, kill: true };
+    if (e.t === 'playerHit' && world.avatar.kind === 'soldier') { const u = world.unit(e.by); if (u) hurt.current = [...hurt.current.filter(h => h.until > now), { x: u.pos.x, z: u.pos.z, until: now + HURT_MARK }].slice(-6); }
     if (e.t === 'unitDestroyed') {
       const victim = world.unit(e.id);
       const h = world.playerBody().pos;
@@ -147,7 +156,7 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
       const size = touch ? MINIMAP.touch : MINIMAP.desktop;
       const mx = touch ? 72 : 16, my = touch ? 12 : h - size - 16;
       const cx = mx + size / 2, cy = my + size / 2, r = size / 2;
-      const scale = r / MINIMAP_RANGE;
+      const scale = r / (world.avatar.kind === 'soldier' ? MINIMAP_RANGE_FOOT : MINIMAP_RANGE);
       const yaw = world.avatar.kind === 'soldier' && world.soldier ? world.soldier.yaw : world.player.yaw;
       g.save();
       g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.clip();
@@ -169,6 +178,24 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
       for (const u of world.units) if (u.alive && u.side === side && u.def.move) dot(u.pos.x, u.pos.z, '•', COLORS.friend);
       for (const u of runtime.spotting.markers(world)) dot(u.pos.x, u.pos.z, '◆', COLORS.enemy);
       g.restore();
+      const s = world.avatar.kind === 'soldier' ? world.soldier : null;
+      if (s && cam) {
+        const cx0 = w / 2, cy0 = h / 2, arms = world.soldierArms, wd = INFANTRY_WEAPONS[arms.selected];
+        const spread = ((world.soldierCommands.ads ? wd.spreadAdsDeg : wd.spreadHipDeg) * arms.bloom * Math.PI) / 180;
+        const gap = Math.max(3, (Math.tan(spread) / Math.tan(((cam as THREE.PerspectiveCamera).fov * Math.PI) / 360)) * (h / 2));
+        g.strokeStyle = 'rgba(232,238,247,.9)'; g.lineWidth = 2;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { g.beginPath(); g.moveTo(cx0 + dx * gap, cy0 + dy * gap); g.lineTo(cx0 + dx * (gap + 9), cy0 + dy * (gap + 9)); g.stroke(); }
+        if (hitMark.current.until > world.time) {
+          g.strokeStyle = hitMark.current.kill ? '#ff4d4d' : '#ffffff'; g.lineWidth = hitMark.current.kill ? 4 : 2;
+          for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) { g.beginPath(); g.moveTo(cx0 + dx * 6, cy0 + dy * 6); g.lineTo(cx0 + dx * 14, cy0 + dy * 14); g.stroke(); }
+        }
+        for (const hh of hurt.current) {
+          if (hh.until <= world.time) continue;
+          const bearing = Math.atan2(-(hh.x - s.pos.x), -(hh.z - s.pos.z)) - s.yaw;
+          g.strokeStyle = `rgba(239,71,111,${Math.min(1, (hh.until - world.time) / HURT_MARK) * 0.9})`; g.lineWidth = 6;
+          g.beginPath(); g.arc(cx0, cy0, Math.min(w, h) * 0.22, -Math.PI / 2 - bearing - 0.3, -Math.PI / 2 - bearing + 0.3); g.stroke();
+        }
+      }
       g.strokeStyle = 'rgba(232,238,247,.6)'; g.lineWidth = 1.5;
       g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
       g.fillStyle = COLORS.text;
@@ -204,6 +231,17 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
         </div>
         <div className="killfeed">{lines.map((l, i) => <div key={i} className={l.mine ? 'mine' : ''}>{l.text}</div>)}</div>
         {radio.current && radio.current.until > now && <div className="battle-radio">{radio.current.text}</div>}
+        {world.avatar.kind === 'soldier' && world.soldier && (() => {
+          const s = world.soldier, a = world.soldierArms, m = a.ammo[a.selected]!, g = a.ammo.grenade;
+          return (
+            <div className="soldier-status">
+              <b className={s.hp < 35 ? 'low' : ''}>{t('battle.hud.hp', { n: Math.ceil(s.hp) })}</b>
+              <span>{t(`battle.hud.weapon.${a.selected}`)} {a.reloading > 0 ? t('battle.hud.reloading') : `${m.mag} / ${m.reserve}`}</span>
+              {g && a.selected !== 'grenade' && <span>{t('battle.hud.weapon.grenade')} {g.mag + g.reserve}</span>}
+              <span>{t(`battle.hud.stance.${s.stance}`)}</span>
+            </div>
+          );
+        })()}
       </div>
     </>
   );

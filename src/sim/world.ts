@@ -67,6 +67,7 @@ export class World {
   soldierArms: SoldierArms = createSoldierArms('assault');
   soldierLastShot = -Infinity;
   soldierHurtAt = -Infinity;
+  spotRequest = false;
   private tmpEye = new Vector3();
   private body: PlayerBody = { kind: 'heli', pos: new Vector3(), vel: new Vector3(), alive: false, agl: 0, heat: 1, radius: PLAYER_RADIUS };
   controls: Controls = { cyclicX: 0, cyclicY: 0, pedal: 0, collective: 0 };

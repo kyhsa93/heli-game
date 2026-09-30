@@ -453,6 +453,17 @@
         "lost": "거점 {id} 상실",
         "neutral": "거점 {id} 중립화",
         "enemy": "적이 거점 {id}를 점령했다"
+      },
+      "hp": "체력 {n}",
+      "reloading": "재장전 중",
+      "weapon": {
+        "rifle": "소총",
+        "grenade": "유탄"
+      },
+      "stance": {
+        "stand": "서기",
+        "crouch": "앉기",
+        "prone": "엎드림"
       }
     },
     "coach": {

@@ -69,7 +69,7 @@ export class BattleRuntime implements Objective {
     });
     this.spawner.threatened = (side, p) => this.commanders.find(c => c.side === side)!.knownEnemy(world, p, this.conquest.elapsed) > 0;
     const brains = brainSystems(this.intel, this.rules.botLethality);
-    this.spotting = new PlayerSpotting();
+    this.spotting = new PlayerSpotting(this.intel);
     world.battleHooks = composeHooks({ tick10Hz: [...brains.tick10Hz, this.spotting.step], tick1Hz: [...brains.tick1Hz, this.conquest.step, this.spawner.step, this.command] });
     this.state = 'active';
     this.result = {};

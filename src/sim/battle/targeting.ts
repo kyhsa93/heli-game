@@ -10,6 +10,7 @@ import type { Intel } from './intel';
 export const MAX_CANDIDATES = 4;
 export const TARGET_SLICES = 10;
 export const GRID_CELL = 100;
+export const MARK_PULL = 0.5;
 
 export type TargetClass = 'air' | 'tank' | 'apc' | 'light' | 'inf' | 'atInf' | 'structure';
 export type Role = 'inf' | 'at' | 'sniper' | 'aa' | 'aaVehicle' | 'tank' | 'apc' | 'light' | 'heli' | 'jet' | 'none';
@@ -111,6 +112,14 @@ export class Targeting {
       .map(c => ({ u: c.u, d: Math.hypot(c.x - u.pos.x, c.z - u.pos.z) }))
       .sort((a, b2) => a.d - b2.d || a.u.id - b2.u.id)
       .slice(0, MAX_CANDIDATES);
+    if (this.intel && (u.side === 'coalition' || u.side === 'veros')) {
+      for (const id of this.intel.marked(u.side, world.time)) {
+        const m = world.unit(id);
+        if (!m || !m.alive || cands.some(c => c.u === m)) continue;
+        const d = Math.hypot(m.pos.x - u.pos.x, m.pos.z - u.pos.z);
+        if (d <= range) cands.push({ u: m, d: d * MARK_PULL });
+      }
+    }
     let best: TargetRef | null = null, bestScore = 0;
     for (const c of cands) {
       const cls = targetClass(c.u.def);
