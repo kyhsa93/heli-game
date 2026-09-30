@@ -18,7 +18,7 @@ npm test         # vitest만
 
 ## 반드시 지킬 것
 
-- `npm run check`가 통과해야 한다. 기존 테스트(`src/sim/sim.test.ts`, `src/sw.test.ts`)는 회귀 기준이다.
+- `npm run check`가 통과해야 한다. 회귀 기준 테스트 목록과 빌드 크기 기준선은 [docs/battle/baseline.md](docs/battle/baseline.md).
 - 게임 규칙(sim)은 렌더·DOM·React에 의존하지 않는다. 결정론 유지: sim 안에서 `Math.random` 금지, 월드 RNG만.
 - `public/sw.js`는 아무것도 캐시하지 않고 항상 `cache: 'no-store'`로 받는다. 이 정책을 바꾸지 않는다.
 - 외부 에셋은 [docs/design/10-external-assets.md](docs/design/10-external-assets.md)에서 **채택된 것만** 쓴다(권장안 전체 채택). 추가 시 상세 페이지에서 라이선스를 재확인하고 `public/assets/CREDITS.md`에 기재, 가공(압축·서브셋) 후 용량 예산 안에서, 로드 실패 시 코드 도형·합성음 폴백. 자기 기체 아파치 외형·조종석·계기는 계속 코드로 만든다.
