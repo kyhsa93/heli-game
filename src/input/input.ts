@@ -9,6 +9,7 @@ export interface PadLike { connected: boolean; axes: readonly number[]; buttons:
 export interface TouchSticks { lx: number; ly: number; rx: number; ry: number }
 
 const DEAD = 0.12;
+export const REST_PITCH = -0.05;
 const dz = (v: number) => (Math.abs(v) < DEAD ? 0 : (v - Math.sign(v) * DEAD) / (1 - DEAD));
 
 export class FlightInput {
@@ -47,7 +48,7 @@ export class FlightInput {
   update(world: World, dt: number) {
     const kind = world.avatar.kind;
     if (kind === 'soldier') {
-      if (this.role !== 'soldier' && world.soldier) { this.soldierYaw = world.soldier.yaw; this.soldierPitch = 0; }
+      if (this.role !== 'soldier' && world.soldier) { this.soldierYaw = world.soldier.yaw; this.soldierPitch = REST_PITCH; }
       this.role = 'soldier';
       this.updateSoldier(world);
       return;

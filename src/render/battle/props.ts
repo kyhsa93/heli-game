@@ -9,6 +9,19 @@ export const FALLBACK_COLOR: Record<BattlePropKind, number> = { sandbags: 0x9a8a
 
 export interface PlacedProp { kind: BattlePropKind; box: Obstacle }
 
+export function fitBox(geo: THREE.BufferGeometry, w: number, h: number, d: number) {
+  geo.computeBoundingBox();
+  let bb = geo.boundingBox!;
+  if ((bb.max.z - bb.min.z > bb.max.x - bb.min.x) !== (d > w)) { geo.rotateY(Math.PI / 2); geo.computeBoundingBox(); bb = geo.boundingBox!; }
+  geo.translate(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2);
+  geo.computeBoundingBox();
+  bb = geo.boundingBox!;
+  geo.scale(w / Math.max(1e-6, bb.max.x - bb.min.x), h / Math.max(1e-6, bb.max.y - bb.min.y), d / Math.max(1e-6, bb.max.z - bb.min.z));
+  geo.computeBoundingBox();
+  geo.computeBoundingSphere();
+  return geo;
+}
+
 export class BattleProps {
   readonly group = new THREE.Group();
   private meshes: THREE.InstancedMesh[] = [];
@@ -31,7 +44,7 @@ export class BattleProps {
       const list = this.props.filter(p => p.kind === kind);
       const scene = MODEL_FOR[kind] ? models[MODEL_FOR[kind]!] : undefined;
       const b = list[0].box;
-      const geo = scene ? bakeProp(scene, Math.max(b.w, b.d)) : new THREE.BoxGeometry(b.w, b.h, b.d).translate(0, b.h / 2, 0);
+      const geo = scene ? fitBox(bakeProp(scene, Math.max(b.w, b.d)), b.w, b.h, b.d) : new THREE.BoxGeometry(b.w, b.h, b.d).translate(0, b.h / 2, 0);
       const material = scene ? new THREE.MeshLambertMaterial({ vertexColors: true }) : new THREE.MeshLambertMaterial({ color: FALLBACK_COLOR[kind] });
       const inst = new THREE.InstancedMesh(geo, material, list.length);
       list.forEach((p, i) => {

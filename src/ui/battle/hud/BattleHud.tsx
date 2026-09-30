@@ -58,7 +58,7 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
     const now = world.time;
     if (e.t === 'unitDestroyed') {
       const victim = world.unit(e.id);
-      const h = world.player.pos;
+      const h = world.playerBody().pos;
       const near = victim && Math.hypot(victim.pos.x - h.x, victim.pos.z - h.z) <= FEED_RANGE;
       if (!e.byPlayer && !near) return;
       const killer = e.byPlayer ? t('battle.hud.you') : e.by !== undefined && world.unit(e.by) ? unitName(world.unit(e.by)!) : '?';
@@ -106,7 +106,7 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
       flagsRef.current?.update(runtime.conquest.points, (x, z) => world.terrain.surfaceAt(x, z), Math.atan2(world.wind.x, world.wind.z));
       if (session.mode !== 'play') return;
       const cam = renderer?.camera;
-      const me = world.player.pos;
+      const me = world.playerBody().pos;
       g.font = '600 13px "Karda Sans", sans-serif';
       g.textAlign = 'center';
       g.textBaseline = 'middle';
@@ -148,7 +148,7 @@ export function BattleHud({ session, runtime, side, renderer, touch }: { session
       const mx = touch ? 72 : 16, my = touch ? 12 : h - size - 16;
       const cx = mx + size / 2, cy = my + size / 2, r = size / 2;
       const scale = r / MINIMAP_RANGE;
-      const yaw = world.player.yaw;
+      const yaw = world.avatar.kind === 'soldier' && world.soldier ? world.soldier.yaw : world.player.yaw;
       g.save();
       g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.clip();
       g.fillStyle = 'rgba(6,12,22,.8)'; g.fillRect(mx, my, size, size);

@@ -6,6 +6,7 @@ import type { TimeOfDay } from '../sim/ai/awareness';
 import { starField, TIME_PRESETS } from './timeOfDay';
 import { treeOrder } from './quality';
 
+export const WATER_SEGMENTS = 96;
 export const SKY_HORIZON = new THREE.Color(0xbcd6ea);
 export const FOG_GREY = new THREE.Color(0xb4b8bc);
 export const FOG_BANK = { near: 60, far: 800 };
@@ -205,7 +206,7 @@ export function buildWorld(t: Terrain, detail: THREE.Texture | null = null): Wor
   if (t.roads.length) scene.add(roadMesh(t));
 
   const water = new THREE.Mesh(
-    new THREE.PlaneGeometry(t.size * 3, t.size * 3),
+    new THREE.PlaneGeometry(t.size * 3, t.size * 3, WATER_SEGMENTS, WATER_SEGMENTS),
     new THREE.MeshPhongMaterial({ color: 0x2d6d8e, specular: 0x9fc8e0, shininess: 80, transparent: true, opacity: 0.88 }),
   );
   water.rotation.x = -Math.PI / 2;

@@ -38,6 +38,8 @@ const MPD_TADS = 256;
 const MPD_TADS_MS = 200;
 import { drawTads } from './tadsHud';
 import { buildWorld, type WorldScene } from './scene';
+import { Viewmodel } from './battle/viewmodel';
+import { soldierEye } from '../sim/infantry/soldier';
 
 export type View = 'cockpit' | 'chase';
 
@@ -90,6 +92,8 @@ export class FlightRenderer {
   mpdVideo = true;
   private pixelCap = 2;
   private baseFov = 72;
+  readonly viewmodel = new Viewmodel();
+  private onFoot = false;
   ihadssAlpha = 1;
   showFps = false;
   logStats = false;
@@ -219,11 +223,22 @@ export class FlightRenderer {
     model.pedalL.position.z = -3.18 + c.pedal * 0.05;
     model.pedalR.position.z = -3.18 - c.pedal * 0.05;
 
-    const cockpit = this.view === 'cockpit' && !this.debugCamera;
+    const soldier = world.avatar.kind === 'soldier' ? world.soldier : null;
+    const foot = !!soldier && !this.debugCamera;
+    if (foot !== this.onFoot) { this.onFoot = foot; if (!foot) this.resize(); }
+    const cockpit = this.view === 'cockpit' && !this.debugCamera && !foot;
     model.cockpit.visible = cockpit;
+    if (soldier) model.root.visible = false;
     const speed = airspeed(h, world.wind);
     model.shell.visible = !cockpit;
-    if (this.debugCamera) {
+    if (foot && soldier) {
+      if (camera.parent !== scn.scene) scn.scene.add(camera);
+      soldierEye(soldier, camera.position);
+      camera.rotation.set(soldier.pitch, soldier.yaw, 0, 'YXZ');
+      this.viewmodel.update(dt, world.soldierCommands.ads, camera.aspect, Math.hypot(soldier.vel.x, soldier.vel.z), now * 0.001);
+      camera.fov = this.viewmodel.camera.fov;
+      camera.updateProjectionMatrix();
+    } else if (this.debugCamera) {
       if (camera.parent !== scn.scene) scn.scene.add(camera);
       camera.position.copy(this.debugCamera.pos);
       camera.lookAt(this.debugCamera.look);
@@ -296,6 +311,12 @@ export class FlightRenderer {
     if (tads) this.renderTads(now, flir);
     else {
       this.renderer.render(scn.scene, camera);
+      if (foot && soldier?.alive && this.hud) {
+        this.renderer.autoClear = false;
+        this.renderer.clearDepth();
+        this.renderer.render(this.viewmodel.scene, this.viewmodel.camera);
+        this.renderer.autoClear = true;
+      }
       if (this.pnvs && cockpit && h.alive && !this.debugCamera && h.damage.sensors > 0) this.renderPnvs(now);
     }
 
@@ -405,6 +426,7 @@ export class FlightRenderer {
   }
 
   dispose() {
+    this.viewmodel.dispose();
     cancelAnimationFrame(this.raf);
     this.tads.dispose();
     this.mpdTads.dispose();

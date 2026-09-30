@@ -169,7 +169,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
       onFrame: ({ simDt, cockpit, agl }) => {
         const h = sim.player, tp = sim.target;
         if (hudRef.current) {
-          hudRef.current.style.display = !cockpit && hudOnRef.current ? '' : 'none';
+          hudRef.current.style.display = !cockpit && hudOnRef.current && sim.avatar.kind === 'heli' ? '' : 'none';
           hudRef.current.textContent =
             `RAD ALT ${Math.round(Math.max(0, agl) * M_TO_FT)} ft · VS ${Math.round(h.vel.y * MS_TO_FPM)} fpm · ${Math.round(airspeed(h, sim.wind) * MS_TO_KT)} kt · COLL ${Math.round(h.collective * 100)}% · ROTOR ${Math.round(h.rpm * 100)}%`;
         }
@@ -185,7 +185,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
         log.tick(simDt);
         setTadsOn(sim.tads.active);
         if (touchRef.current) setTouchKey(`${sim.player.engineOn}|${sim.player.landed}|${sim.arms.selected}|${sim.fcr.unlocked}|${sim.cm.chaffUnlocked}`);
-        const farp = session.mode === 'play' && h.alive && h.landed && farpUnder(sim) >= 0;
+        const farp = session.mode === 'play' && sim.avatar.kind === 'heli' && h.alive && h.landed && farpUnder(sim) >= 0;
         setAtFarp(farp);
         if (farp) setFarpTick(n => (n + 1) % 1000);
         if (msgRef.current) {
@@ -197,7 +197,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
         }
         if (hintRef.current) {
           let hint = '';
-          if (session.mode === 'play' && h.alive) {
+          if (session.mode === 'play' && sim.avatar.kind === 'heli' && h.alive) {
             if (!h.engineOn && h.landed && h.fuel > 0) hint = t(touchRef.current ? 'hint.startEngineTouch' : 'hint.startEngineKey');
             else if (h.engineOn && h.rpm < 0.95 && h.landed) hint = t('hint.spooling', { pct: Math.round(h.rpm * 100) });
             else if (h.landed && h.rpm >= 0.95 && h.collective < 0.3) hint = t(touchRef.current ? 'hint.liftTouch' : 'hint.liftKey');
