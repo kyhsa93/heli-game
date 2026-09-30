@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { UNIFORM, type UniformSide } from './uniform';
 
 export const HIP_FOV = 80;
 export const ADS_FOV = 55;
@@ -14,19 +15,19 @@ function part(g: THREE.Group, w: number, h: number, d: number, color: number, x:
   return m;
 }
 
-export function rifleModel() {
+export function rifleModel(side: UniformSide = 'coalition') {
   const g = new THREE.Group();
-  const metal = 0x2b2e31, polymer = 0x3a3d35, skin = 0xb08a6e, glove = 0x4a4436;
+  const metal = 0x2b2e31, polymer = 0x3a3d35, { cloth: sleeve, gear: glove } = UNIFORM[side];
   part(g, 0.05, 0.07, 0.42, metal, 0, 0, 0);
   part(g, 0.022, 0.022, 0.3, metal, 0, 0.012, -0.36);
   part(g, 0.04, 0.12, 0.05, polymer, 0, -0.08, 0.02, 0.25);
   part(g, 0.045, 0.06, 0.2, polymer, 0, -0.01, 0.3);
   part(g, 0.035, 0.03, 0.1, metal, 0, 0.05, -0.02);
   part(g, 0.05, 0.05, 0.16, polymer, 0, -0.005, -0.2);
-  part(g, 0.07, 0.05, 0.1, glove, -0.015, -0.05, -0.2);
-  part(g, 0.06, 0.07, 0.09, glove, 0.01, -0.07, 0.07);
-  part(g, 0.05, 0.05, 0.25, skin, -0.07, -0.08, -0.05, -0.4);
-  part(g, 0.05, 0.05, 0.25, skin, 0.08, -0.11, 0.18, -0.3);
+  part(g, 0.07, 0.05, 0.1, glove, -0.015, -0.05, -0.2).name = 'gear';
+  part(g, 0.06, 0.07, 0.09, glove, 0.01, -0.07, 0.07).name = 'gear';
+  part(g, 0.05, 0.05, 0.25, sleeve, -0.07, -0.08, -0.05, -0.4).name = 'cloth';
+  part(g, 0.05, 0.05, 0.25, sleeve, 0.08, -0.11, 0.18, -0.3).name = 'cloth';
   return g;
 }
 
@@ -35,6 +36,7 @@ export class Viewmodel {
   readonly camera = new THREE.PerspectiveCamera(HIP_FOV, 1, 0.01, 10);
   readonly gun = rifleModel();
   aim = 0;
+  side: UniformSide = 'coalition';
 
   constructor() {
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
@@ -42,6 +44,15 @@ export class Viewmodel {
     sun.position.set(0.4, 1, 0.3);
     this.scene.add(sun);
     this.scene.add(this.gun);
+  }
+
+  wear(side: UniformSide) {
+    if (side === this.side) return;
+    this.side = side;
+    this.gun.traverse(o => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh && (m.name === 'cloth' || m.name === 'gear')) (m.material as THREE.MeshLambertMaterial).color.setHex(UNIFORM[side][m.name]);
+    });
   }
 
   update(dt: number, ads: boolean, aspect: number, speed: number, time: number) {

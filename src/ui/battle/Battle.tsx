@@ -8,6 +8,7 @@ import { Flight } from '../screens/Flight';
 import type { BattleChoice } from './BattleSetup';
 import { loadBattle } from './loadBattle';
 import { BattleHud } from './hud/BattleHud';
+import { sideSymbol } from './hud/symbols';
 import type { FlightRenderer } from '../../render/renderer';
 
 type BattleModule = Awaited<ReturnType<typeof loadBattle>>;
@@ -82,8 +83,9 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
     return () => clearInterval(id);
   }, [snap.mode]);
   const firstSortie = !tips.includes('card.apache');
-  const [role, setRole] = useState<'heli' | 'soldier'>('heli');
-  const [spawnId, setSpawnId] = useState(firstSortie ? 'baseAir' : 'base');
+  const heliReady = side === 'coalition';
+  const [role, setRole] = useState<'heli' | 'soldier'>(heliReady ? 'heli' : 'soldier');
+  const [spawnId, setSpawnId] = useState(heliReady ? (firstSortie ? 'baseAir' : 'base') : 'soldierBase');
   const [kit, setKit] = useState<KitId>('closeSupport');
   const c = runtime.conquest;
   const all = runtime.spawnPoints(session.world);
@@ -99,7 +101,7 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
           <p className="sub">{t('battle.deploy.tickets', { c: Math.floor(c.tickets.coalition), v: Math.floor(c.tickets.veros) })} · {t('battle.deploy.elapsed', { t: clock(c.elapsed), limit: clock(runtime.rules.timeLimitSec) })}</p>
           <p className="sub">{t('battle.deploy.points', { list: c.points.map(p => `${p.id}${p.owner === 'coalition' ? '■' : p.owner === 'veros' ? '▲' : '○'}`).join(' ') })}</p>
           <div className="setting-row"><span>{t('battle.deploy.role')}</span>
-            <div className="choice">{(['soldier', 'heli'] as const).map(r => <button key={r} className={r === role ? 'on' : ''} onClick={() => { setRole(r); setSpawnId(r === 'heli' ? 'base' : 'soldierBase'); }}>{t(`battle.roles.${r}`)}</button>)}</div>
+            <div className="choice">{(['soldier', 'heli'] as const).map(r => <button key={r} className={r === role ? 'on' : ''} disabled={r === 'heli' && !heliReady} onClick={() => { setRole(r); setSpawnId(r === 'heli' ? 'base' : 'soldierBase'); }}>{t(r === 'heli' && side === 'veros' ? 'battle.roles.vpaHeli' : `battle.roles.${r}`)}{r === 'heli' && !heliReady && <small>{t('battle.setup.soon')}</small>}</button>)}</div>
           </div>
           <div className="setting-row"><span>{t('battle.deploy.spawn')}</span>
             <div className="choice">{points.map(p => <button key={p.id} className={p === chosen ? 'on' : ''} onClick={() => setSpawnId(p.id)}>{spawnLabel(p)}</button>)}</div>
@@ -119,7 +121,7 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
           {tally.current.deaths > 0 && !tips.includes('rules.dead') && <p className="sub tip">{t('battle.tips.dead')}</p>}
           <div className="pause-buttons">
             <button className="go secondary" onClick={onSetup}>{t('battle.deploy.quit')}</button>
-            <button className="go" disabled={wait > 0} onClick={() => { if (chosen && session.deploy(runtime.spawnFor(chosen, mod.KITS[kit]))) { if (firstSortie) onTip('card.apache'); if (tally.current.deaths > 0 && !tips.includes('rules.dead')) onTip('rules.dead'); } }}>
+            <button className="go" disabled={wait > 0} onClick={() => { if (chosen && session.deploy(runtime.spawnFor(chosen, mod.KITS[kit]))) { if (firstSortie && role === 'heli') onTip('card.apache'); if (tally.current.deaths > 0 && !tips.includes('rules.dead')) onTip('rules.dead'); } }}>
               {wait > 0 ? t('battle.deploy.wait', { s: Math.ceil(wait) }) : `${t('battle.deploy.go')} ▶`}
             </button>
           </div>
@@ -147,5 +149,5 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
       </div>
     );
   }
-  return line && (snap.mode === 'play') ? <div className="coach">{t(`battle.coach.${line}`)}</div> : null;
+  return line && (snap.mode === 'play') ? <div className="coach">{t(`battle.coach.${line}`, { own: sideSymbol(side), enemy: sideSymbol(side === 'coalition' ? 'veros' : 'coalition') })}</div> : null;
 }

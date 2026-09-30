@@ -10,6 +10,7 @@ import type { Slot } from './roster';
 import { createBattleSession } from './runtime';
 import type { BattleMapDef } from './schema';
 import { battleTerrainOptions } from './terrain';
+import { ofSide, otherSide, SIDES } from '../testing';
 
 const harek = JSON.parse(harekRaw) as BattleMapDef;
 
@@ -64,22 +65,26 @@ describe('platoons and commanders (wiki 5.2, 5.9)', () => {
     expect(inside).toBeGreaterThan(staged);
   }, 120000);
 
-  it('5.9-5: sends the nearest reserve to a friendly point under attack within 10 s', () => {
+  it.each(SIDES)('5.9-5, 5.9-12: sends the nearest reserve to a friendly point under attack within 10 s (%s)', side => {
     const w = world();
-    const base = harek.bases[0].position;
+    w.playerSide = side;
+    const home = side === 'coalition' ? 0 : 1;
+    const base = harek.bases[home].position;
+    const toward = Math.sign(-base[1]) || 1;
     const intel = new Intel();
-    const slots = (k: string, dx: number) => [slot(w, `${k}a`, 'c_inf', base[0] + dx, base[1] - 100)];
-    const platoons = [new Platoon('coalition:0', 'coalition', slots('p', 0), base), new Platoon('coalition:1', 'coalition', slots('r', 40), base)];
-    const cmd = new Commander('coalition', platoons, intel);
+    const slots = (k: string, dx: number) => [slot(w, `${k}a`, ofSide('inf', side), base[0] + dx, base[1] + toward * 100)];
+    const platoons = [new Platoon(`${side}:0`, side, slots('p', 0), base), new Platoon(`${side}:1`, side, slots('r', 40), base)];
+    const cmd = new Commander(side, platoons, intel);
     const c = new Conquest(harek, 'quick', conquestRules('quick'));
     for (let t = 0; t <= 20; t++) { c.step(w, 1); cmd.step(w, c.points, t); }
     expect(cmd.reserve()!.order?.kind).toBe('reserve');
-    const a = c.points.find(p => p.id === 'A')!;
-    w.spawnUnit('inf', a.x, a.z);
+    const own = c.points.find(p => p.owner === side && p.id === (side === 'coalition' ? 'A' : 'G'))!;
+    w.spawnUnit(ofSide('inf', otherSide(side)), own.x, own.z);
     let at = -1;
     for (let t = 21; t <= 40 && at < 0; t++) { c.step(w, 1); cmd.step(w, c.points, t); if (cmd.reserve()!.order?.kind === 'defend') at = t; }
+    expect(at).toBeGreaterThan(0);
     expect(at - 21).toBeLessThanOrEqual(10);
-    expect(cmd.reserve()!.order?.point).toBe('A');
+    expect(cmd.reserve()!.order?.point).toBe(own.id);
   });
 
   it('knows only enemies its side has seen in the last 20 s', () => {

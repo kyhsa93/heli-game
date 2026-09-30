@@ -236,6 +236,7 @@ export class FlightRenderer {
       if (camera.parent !== scn.scene) scn.scene.add(camera);
       soldierEye(soldier, camera.position);
       camera.rotation.set(soldier.pitch, soldier.yaw, 0, 'YXZ');
+      this.viewmodel.wear(world.playerSide === 'veros' ? 'veros' : 'coalition');
       this.viewmodel.update(dt, world.soldierCommands.ads, camera.aspect, Math.hypot(soldier.vel.x, soldier.vel.z), now * 0.001);
       camera.fov = this.viewmodel.camera.fov;
       camera.updateProjectionMatrix();

@@ -10,8 +10,8 @@ import type { BattleMapDef } from './schema';
 const harek = JSON.parse(harekRaw) as BattleMapDef;
 const { boundaryGraceSec: BOUNDARY_GRACE, playerRespawnSec: PLAYER_RESPAWN } = conquestRules('quick');
 
-function battle(side: 'coalition' | 'veros' = 'coalition') {
-  const { session, runtime } = createBattleSession(harek, 'quick', { side, seed: 42 });
+function battle(side: 'coalition' | 'veros' = 'coalition', seed = 42) {
+  const { session, runtime } = createBattleSession(harek, 'quick', { side, seed });
   const events: SimEvent[] = [];
   session.world.events.onAny(e => events.push(e));
   session.start();
@@ -99,4 +99,21 @@ describe('battle runtime (B1-7)', () => {
     run(session, 5);
     expect(aaa.ai.detected).toBe(false);
   });
+
+  it.each(['coalition', 'veros'] as const)('5.9-11, 5.9-12: replays ten minutes to the same tickets and units with the player on %s', side => {
+    const hash = () => {
+      const { session, runtime, world } = battle(side, 23);
+      const home = runtime.spawnPoints(world).find(p => p.id === 'soldierBase')!;
+      expect(session.deploy(runtime.spawnFor(home, STANDARD_LOADOUT))).toBe(true);
+      expect(world.playerSide).toBe(side);
+      expect(Math.sign(world.playerBody().pos.z)).toBe(side === 'coalition' ? 1 : -1);
+      run(session, 600);
+      const c = runtime.conquest;
+      const units = world.units.map(u => `${u.id}:${u.defId}:${u.alive ? 1 : 0}:${u.hp.toFixed(3)}:${u.pos.x.toFixed(2)},${u.pos.z.toFixed(2)}`);
+      return JSON.stringify([c.tickets, c.points.map(p => [p.id, p.owner, p.v]), units]);
+    };
+    const a = hash();
+    expect(hash()).toBe(a);
+    expect(a.length).toBeGreaterThan(1000);
+  }, 300000);
 });

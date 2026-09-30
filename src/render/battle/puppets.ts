@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { memberPos } from '../../sim/infantry/squad';
 import type { Unit } from '../../sim/units';
+import { UNIFORM } from './uniform';
 
 export type PuppetLod = 'near' | 'mid' | 'far' | 'none';
 export const LOD_NEAR = 120;
@@ -22,8 +23,8 @@ export function puppetLod(distance: number, fovDeg: number): PuppetLod {
 }
 
 const COLORS = {
-  coalition: { cloth: new THREE.Color(0x5d6b3e), gear: new THREE.Color(0x3f4a2b) },
-  veros: { cloth: new THREE.Color(0x7a6a55), gear: new THREE.Color(0x4d4234) },
+  coalition: { cloth: new THREE.Color(UNIFORM.coalition.cloth), gear: new THREE.Color(UNIFORM.coalition.gear) },
+  veros: { cloth: new THREE.Color(UNIFORM.veros.cloth), gear: new THREE.Color(UNIFORM.veros.gear) },
 };
 const SKIN = new THREE.Color(0xb08a6e);
 const DARK = new THREE.Color(0x222222);

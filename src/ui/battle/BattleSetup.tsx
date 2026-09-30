@@ -6,7 +6,7 @@ import type { BattleMode } from '../state';
 export interface BattleChoice { mode: BattleMode; map: string; side: 'coalition' | 'veros'; time: 'day' | 'dusk' }
 
 export const DEFAULT_CHOICE: BattleChoice = { mode: 'quick', map: 'harek', side: 'coalition', time: 'day' };
-export const READY = { modes: ['quick'], maps: ['harek'], sides: ['coalition'] } as const;
+export const READY = { modes: ['quick'], maps: ['harek'], sides: ['coalition', 'veros'] } as const;
 const ESTIMATE = { quick: [8, 12, 10, 7] } as const;
 
 function Pick<T extends string>({ value, options, ready, label, onPick }: { value: T; options: readonly T[]; ready: readonly string[]; label: (v: T) => string; onPick: (v: T) => void }) {

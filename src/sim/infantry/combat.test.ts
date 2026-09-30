@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SimEvent } from '../events';
 import { DIFFICULTIES } from '../difficulty';
 import { visualSight } from '../los';
+import { ofSide, otherSide, SIDES } from '../testing';
 import { STEP, World } from '../world';
 import { detectRange } from './awareness';
 import { COVER_HIT, volleyAt } from './incoming';
@@ -9,9 +10,10 @@ import type { Stance } from './soldier';
 
 const SEEDS = Array.from({ length: 20 }, (_, i) => 31 + i * 13);
 
-function scene(seed: number, enemy: string, dist: number, stance: Stance = 'stand') {
+function scene(seed: number, enemy: string, dist: number, stance: Stance = 'stand', side: 'coalition' | 'veros' = 'coalition') {
   const world = new World({ seed, terrain: { features: [{ kind: 'flatten', center: [0, 0], radius: 700 }], pads: [{ x: -1500, z: -1500, name: 'H' }] } });
   world.active = true;
+  world.playerSide = side;
   world.difficulty = DIFFICULTIES.normal;
   const events: SimEvent[] = [];
   world.events.onAny(e => events.push(e));
@@ -43,13 +45,14 @@ function clearLine(seed: number, dist: number) {
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
 describe('bots against the player on foot (wiki 5.6, 5.9, 12.5)', () => {
-  it('5.9-8: misses a prone player at 200 m and spots one standing and running at 400 m', () => {
-    const a = scene(3, 'inf', 200, 'prone');
+  it.each(SIDES)('5.9-8, 5.9-12: misses a prone player at 200 m and spots one standing and running at 400 m (player %s)', side => {
+    const enemy = ofSide('inf', otherSide(side));
+    const a = scene(3, enemy, 200, 'prone', side);
     for (let i = 0; i < 120 * 10; i++) a.world.step(STEP);
     expect(a.u.ai.detected).toBe(false);
     let seed = 1;
     while (!clearLine(seed, 400)) seed++;
-    const b = scene(seed, 'inf', 399);
+    const b = scene(seed, enemy, 399, 'stand', side);
     b.world.soldierCommands.right = 1;
     for (let i = 0; i < 120 * 3; i++) b.world.step(STEP);
     expect(b.u.ai.detected).toBe(true);

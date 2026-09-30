@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import harekRaw from '../../content/battle/maps/harek.json?raw';
 import type { SimEvent } from '../events';
 import { STANDARD_LOADOUT } from '../heli/loadout';
-import { makeWorld } from '../testing';
+import { makeWorld, ofSide, otherSide, SIDES } from '../testing';
 import { UNIT_DEFS } from '../units';
 import { STEP, type World } from '../world';
 import { Conquest, ticketClass } from './conquest';
@@ -45,19 +45,21 @@ describe('conquest (wiki 3.3, 5.9-3)', () => {
     expect(c.tickets).toEqual({ coalition: 300, veros: 300 });
   });
 
-  it('5.9-3: a full five-man squad takes a neutral point in 25 s; one squad each freezes it', () => {
+  it.each(SIDES)('5.9-3, 5.9-12: a full five-man squad takes a neutral point in 25 s; one squad each freezes it (player %s)', side => {
     const { world, events, c } = setup();
-    world.spawnUnit('c_inf', 10, 10);
+    world.playerSide = side;
+    world.spawnUnit(ofSide('inf', side), 10, 10);
     let at = -1;
-    for (let s = 1; s <= 40 && at < 0; s++) { c.step(world, 1); world.events.flush(); if (pointD(c).owner === 'coalition') at = s; }
+    for (let s = 1; s <= 40 && at < 0; s++) { c.step(world, 1); world.events.flush(); if (pointD(c).owner === side) at = s; }
     expect(at).toBeGreaterThanOrEqual(24);
     expect(at).toBeLessThanOrEqual(26);
-    expect(events.some(e => e.t === 'pointOwner' && e.id === 'D' && e.owner === 'coalition')).toBe(true);
+    expect(events.some(e => e.t === 'pointOwner' && e.id === 'D' && e.owner === side)).toBe(true);
     const b = setup();
-    b.world.spawnUnit('c_inf', 10, 10);
+    b.world.playerSide = side;
+    b.world.spawnUnit(ofSide('inf', side), 10, 10);
     tick(b.world, b.c, 5);
     const v = pointD(b.c).v;
-    b.world.spawnUnit('inf', -10, -10);
+    b.world.spawnUnit(ofSide('inf', otherSide(side)), -10, -10);
     tick(b.world, b.c, 20);
     expect(pointD(b.c).contested).toBe(true);
     expect(pointD(b.c).v).toBe(v);

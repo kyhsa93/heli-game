@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type * as THREE from 'three';
+import { UNIFORM } from './uniform';
 import { ADS_FOV, ADS_POS, ADS_TIME, fovFor, HIP_FOV, HIP_POS, Viewmodel } from './viewmodel';
 
 describe('first-person viewmodel (wiki 12.6)', () => {
@@ -24,6 +26,15 @@ describe('first-person viewmodel (wiki 12.6)', () => {
     let meshes = 0;
     v.gun.traverse(o => { if ((o as { isMesh?: boolean }).isMesh) meshes++; });
     expect(meshes).toBeGreaterThan(4);
+    v.dispose();
+  });
+
+  it('wears the sleeves and gloves of the player\'s side', () => {
+    const v = new Viewmodel();
+    const colors = () => { const c: number[] = []; v.gun.traverse(o => { const m = o as THREE.Mesh; if (m.name) c.push((m.material as THREE.MeshLambertMaterial).color.getHex()); }); return c; };
+    expect(colors()).toEqual([UNIFORM.coalition.gear, UNIFORM.coalition.gear, UNIFORM.coalition.cloth, UNIFORM.coalition.cloth]);
+    v.wear('veros');
+    expect(colors()).toEqual([UNIFORM.veros.gear, UNIFORM.veros.gear, UNIFORM.veros.cloth, UNIFORM.veros.cloth]);
     v.dispose();
   });
 });

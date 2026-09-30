@@ -3,6 +3,7 @@ import { Vector3 } from 'three';
 import type { SimEvent } from '../events';
 import { squadMembers } from '../units';
 import { PLAYER_OWNER } from '../weapons/projectile';
+import { ofSide, otherSide, SIDES } from '../testing';
 import { STEP, World } from '../world';
 import { HEADSHOT, MEMBER_HEIGHT, MEMBER_LOD, memberPos, segmentHitsMember } from './squad';
 
@@ -12,12 +13,13 @@ function shootAt(world: World, from: Vector3, to: Vector3) {
   for (let i = 0; i < 60; i++) world.step(STEP);
 }
 
-function scene(dist = 40) {
+function scene(dist = 40, side: 'coalition' | 'veros' = 'coalition') {
   const world = new World({ seed: 3, terrain: { features: [{ kind: 'flatten', center: [0, 0], radius: 500 }] } });
   world.active = true;
+  world.playerSide = side;
   const events: SimEvent[] = [];
   world.events.onAny(e => events.push(e));
-  const squad = world.spawnUnit('inf', 0, 0);
+  const squad = world.spawnUnit(ofSide('inf', otherSide(side)), 0, 0);
   squad.yaw = 0;
   world.spawnAvatar({ kind: 'soldier', x: 0, z: dist, headingDeg: 0, cls: 'assault' });
   return { world, events, squad };
@@ -34,8 +36,8 @@ describe('individual squad members (wiki 12.5, 12.7, 5.9-10)', () => {
     expect(a.distanceTo(squad.pos)).toBeCloseTo(b.distanceTo(squad.pos), 5);
   });
 
-  it('5.9-10: two members downed by the player leave the squad at 24 HP with three figures', () => {
-    const { world, events, squad } = scene();
+  it.each(SIDES)('5.9-10, 5.9-12: two members downed by the player leave the squad at 24 HP with three figures (player %s)', side => {
+    const { world, events, squad } = scene(40, side);
     const eye = (m: number) => memberPos(squad, squad.members![m]).setY(squad.pos.y + 1.2);
     const from = world.soldier!.pos.clone().setY(world.soldier!.pos.y + 1.65);
     for (const m of [3, 4]) for (let k = 0; k < 4; k++) shootAt(world, from, eye(m));

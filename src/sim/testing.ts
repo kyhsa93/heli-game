@@ -148,3 +148,9 @@ export function skyPair(world: World, dist: number, playerAgl = 400) {
   }
   throw new Error('no sky pair');
 }
+
+export const SIDES = ['coalition', 'veros'] as const;
+
+export const ofSide = (vpaId: string, side: 'coalition' | 'veros') => side === 'veros' ? vpaId : `c_${vpaId}`;
+
+export const otherSide = (side: 'coalition' | 'veros') => side === 'veros' ? 'coalition' : 'veros';

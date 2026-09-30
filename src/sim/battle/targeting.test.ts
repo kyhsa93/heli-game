@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { pairKey } from '../los';
-import { hiddenPair, makeWorld, openPair, putPlayer } from '../testing';
+import { hiddenPair, makeWorld, ofSide, openPair, otherSide, putPlayer, SIDES } from '../testing';
 import { STEP, type World } from '../world';
 import { brainSystems, composeHooks } from './index';
 import { MAX_CANDIDATES, roleOf, targetClass, Targeting } from './targeting';
@@ -38,25 +38,27 @@ describe('bot targeting (wiki 5.3, 5.9)', () => {
     expect(targetClass(UNIT_DEFS.c_heli_transport)).toBe('air');
   });
 
-  it('5.9-1: one tank destroys the other across 1.5 km of open ground within 120 s', () => {
+  it.each(SIDES)('5.9-1, 5.9-12: one tank destroys the other across 1.5 km of open ground within 120 s (player %s)', side => {
     for (const seed of [7, 11, 23]) {
       const { world } = battle(seed);
+      world.playerSide = side;
       const g = openPair(world, 1500, 4.4);
       parkPlayer(world);
-      const a = world.spawnUnit('c_tank', g.unit.x, g.unit.z);
-      const b = world.spawnUnit('tank', g.player.x, g.player.z);
+      const a = world.spawnUnit(ofSide('tank', side), g.unit.x, g.unit.z);
+      const b = world.spawnUnit(ofSide('tank', otherSide(side)), g.player.x, g.player.z);
       const t = steps(world, 120, () => !a.alive || !b.alive);
       expect(t, `seed ${seed}`).toBeLessThan(120);
       expect(t, `seed ${seed}`).toBeGreaterThan(8);
     }
   }, 60000);
 
-  it('5.9-2: two tanks with a ridge between them never shoot at each other', () => {
+  it.each(SIDES)('5.9-2, 5.9-12: two tanks with a ridge between them never shoot at each other (player %s)', side => {
     const { world } = battle(5);
+    world.playerSide = side;
     const g = hiddenPair(world, 1500);
     parkPlayer(world);
-    const a = world.spawnUnit('c_tank', g.unit.x, g.unit.z);
-    const b = world.spawnUnit('tank', g.player.x, g.player.z);
+    const a = world.spawnUnit(ofSide('tank', side), g.unit.x, g.unit.z);
+    const b = world.spawnUnit(ofSide('tank', otherSide(side)), g.player.x, g.player.z);
     steps(world, 60);
     expect(a.hp).toBe(a.def.hp);
     expect(b.hp).toBe(b.def.hp);
@@ -64,10 +66,11 @@ describe('bot targeting (wiki 5.3, 5.9)', () => {
     expect(b.battle?.target ?? null).toBe(null);
   }, 60000);
 
-  it('5.9-7: an enemy bot does not consider the player until it has spotted the player', () => {
+  it.each(SIDES)('5.9-7, 5.9-12: an enemy bot does not consider the player until it has spotted the player (player %s)', side => {
     const { world } = battle(7);
+    world.playerSide = side;
     const g = openPair(world, 1200, 60);
-    const u = world.spawnUnit('spaag', g.unit.x, g.unit.z, 0, { passive: false });
+    const u = world.spawnUnit(ofSide('spaag', otherSide(side)), g.unit.x, g.unit.z, 0, { passive: false });
     putPlayer(world, g.player.x, g.player.z, 60);
     const t = new Targeting();
     u.ai.detected = false;
@@ -77,8 +80,7 @@ describe('bot targeting (wiki 5.3, 5.9)', () => {
     u.ai.detected = true;
     t.choose(world, u);
     expect(u.battle?.target).toEqual({ kind: 'player' });
-    world.playerSide = 'veros';
-    const friend = world.spawnUnit('spaag', g.unit.x + 20, g.unit.z);
+    const friend = world.spawnUnit(ofSide('spaag', side), g.unit.x + 20, g.unit.z, 0, { passive: false });
     friend.ai.detected = true;
     t.step(world);
     t.choose(world, friend);
