@@ -6,7 +6,8 @@
 
 - 기획 전체: [docs/design/README.md](docs/design/README.md) — 읽는 순서와 문서 사용 규칙
 - 코드 작업 전 필수: [docs/design/08-technical-architecture.md](docs/design/08-technical-architecture.md) — 현재 코드 지도, 목표 구조, 의존 규칙, 테스트 방법
-- 할 일 고르기: 위키의 전장 로드맵(작업 ID `B…`)과 그것을 옮긴 GitHub 이슈. M0~M7 로드맵(`docs/design/09-roadmap.md`)은 완료·종료된 옛 기록이다. 끝나면 커밋에 `Closes #번호`
+- 할 일 고르기: 위키의 전장 로드맵(작업 ID `B…`)과 그것을 옮긴 GitHub 이슈, 체크 목록은 [docs/design/09-roadmap.md](docs/design/09-roadmap.md). 끝나면 커밋에 `Closes #번호`하고 체크박스 갱신
+- 헤드리스 도구: `npm run battle:map` · `battle:bench` · `battle:harness` ([scripts/README.md](scripts/README.md))
 
 ## 명령
 

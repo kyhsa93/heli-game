@@ -4,5 +4,5 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   base: '/heli-game/',
   plugins: [react()],
-  build: { assetsDir: 'static' },
+  build: { assetsDir: 'static', manifest: true },
 });
