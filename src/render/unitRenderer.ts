@@ -4,6 +4,7 @@ import type { World } from '../sim/world';
 import { airDefenseModel, hasAirDefenseModel } from './airDefenseModels';
 import { buildHeliExterior } from './heliModel';
 import { bakeModel, bakeScene, fallbackModel, MODEL_FOR_UNIT } from './unitModels';
+import { Puppets, type PuppetView } from './battle/puppets';
 
 const APACHE_UNIT = 'c_apache';
 
@@ -32,6 +33,11 @@ export class UnitRenderer {
   private p = new THREE.Vector3();
   private up = new THREE.Vector3(0, 1, 0);
   private c = new THREE.Color();
+  readonly puppets = new Puppets();
+
+  constructor() {
+    this.group.add(this.puppets.group);
+  }
 
   keyFor(defId: string) {
     return MODEL_FOR_UNIT[defId] ?? `code:${defId}`;
@@ -92,10 +98,11 @@ export class UnitRenderer {
     v.mesh.setColorAt(i, this.c);
   }
 
-  update(world: World, heat = false) {
+  update(world: World, heat = false, view?: PuppetView, dt = 1 / 60) {
     this.heat = heat;
     const need = new Map<string, number>();
     for (const u of world.units) {
+      if (u.members) continue;
       const key = this.keyFor(u.defId);
       const n = key === 'soldier' ? Math.max(1, squadMembers(u) || (u.alive ? 1 : 0)) : 1;
       need.set(key, (need.get(key) ?? 0) + n);
@@ -106,6 +113,7 @@ export class UnitRenderer {
     }
     for (const v of this.visuals.values()) v.count = 0;
     for (const u of world.units) {
+      if (u.members) continue;
       const key = this.keyFor(u.defId);
       const v = this.visuals.get(key)!;
       if (key === 'soldier') {
@@ -120,6 +128,7 @@ export class UnitRenderer {
         this.place(v, u, u.pos.x, u.pos.z, u.yaw, u.pos.y);
       }
     }
+    this.puppets.update(world.units, (x, z) => world.terrain.surfaceAt(x, z), view ?? { pos: world.playerBody().pos, fovDeg: 72 }, dt, heat);
     for (const v of this.visuals.values()) {
       v.mesh.material = heat ? this.heatMaterial : this.material;
       v.mesh.count = v.count;
@@ -130,7 +139,7 @@ export class UnitRenderer {
   }
 
   get drawCalls() {
-    let n = 0;
+    let n = this.puppets.drawCalls;
     for (const v of this.visuals.values()) if (v.mesh.visible) n++;
     return n;
   }
@@ -139,5 +148,6 @@ export class UnitRenderer {
     for (const v of this.visuals.values()) { v.mesh.geometry.dispose(); v.mesh.dispose(); }
     this.material.dispose();
     this.heatMaterial.dispose();
+    this.puppets.dispose();
   }
 }

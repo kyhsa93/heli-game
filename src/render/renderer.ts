@@ -39,6 +39,7 @@ const MPD_TADS_MS = 200;
 import { drawTads } from './tadsHud';
 import { buildWorld, type WorldScene } from './scene';
 import { Viewmodel } from './battle/viewmodel';
+import { tadsFovDeg } from '../sim/sensors/tads';
 import { soldierEye } from '../sim/infantry/soldier';
 
 export type View = 'cockpit' | 'chase';
@@ -300,7 +301,7 @@ export class FlightRenderer {
     if (world.units.length && !this.unitAssetsRequested) this.loadUnitModels();
     const tads = world.tads.active && h.alive && !this.debugCamera;
     const flir = tads && world.tads.sensor === 'flir';
-    this.units.update(world, flir);
+    this.units.update(world, flir, { pos: this.camera.getWorldPosition(this.tmp2), fovDeg: tads ? tadsFovDeg(world.tads) : this.camera.fov }, steps * STEP);
     this.searchlights.update(world);
     this.effects.update(steps * STEP, world);
     if (!tads && this.mpdVideo && this.instruments.shows('TADS') && now - this.mpdVideoAt >= MPD_TADS_MS && h.alive) {
@@ -370,9 +371,9 @@ export class FlightRenderer {
 
   private renderMpdTads(now: number, flir: boolean) {
     const world = this.opts.session.world;
-    this.units.update(world, flir);
+    this.units.update(world, flir, { pos: world.player.pos, fovDeg: tadsFovDeg(world.tads) }, 0);
     this.renderTadsInto(this.mpdTads, now, flir, this.mpdTarget);
-    this.units.update(world, false);
+    this.units.update(world, false, { pos: this.camera.getWorldPosition(this.tmp2), fovDeg: this.camera.fov }, 0);
     this.renderer.readRenderTargetPixels(this.mpdTarget, 0, 0, MPD_TADS, MPD_TADS, this.mpdPixels);
     if (!this.mpdCanvas) { this.mpdCanvas = document.createElement('canvas'); this.mpdCanvas.width = this.mpdCanvas.height = MPD_TADS; }
     const g = this.mpdCanvas.getContext('2d')!;

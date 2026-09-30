@@ -11,11 +11,11 @@ describe('UnitRenderer (M1-2)', () => {
     const types = ['tank', 'truck', 'apc', 'inf'];
     for (let i = 0; i < 100; i++) w.spawnUnit(types[i % 4], (i % 10) * 30, Math.floor(i / 10) * 30);
     const r = new UnitRenderer();
-    r.update(w);
-    expect(r.drawCalls).toBeLessThanOrEqual(4);
-    expect(r.drawCalls).toBeLessThanOrEqual(30);
-    const soldiers = r.group.children.find(c => c.name === 'soldier') as THREE.InstancedMesh;
-    expect(soldiers.count).toBe(25 * UNIT_DEFS.inf.squad!);
+    r.update(w, false, { pos: new THREE.Vector3(135, 10, 135), fovDeg: 72 });
+    expect(r.drawCalls).toBeLessThanOrEqual(3 + 11);
+    const p = r.puppets;
+    expect(p.count('torso') + p.count('midBody') + p.count('far')).toBe(25 * UNIT_DEFS.inf.squad!);
+    expect(r.group.children.find(c => c.name === 'soldier')).toBeUndefined();
   });
 
   it('keeps wrecks on the same mesh but darkens them', () => {
