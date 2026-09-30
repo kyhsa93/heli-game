@@ -4,7 +4,10 @@ import type { LoadoutDef } from '../heli/loadout';
 import type { Objective, ObjectiveState } from '../objective';
 import { FlightSession } from '../session';
 import type { World } from '../world';
+import { Commander } from './commander';
 import { Conquest, type Winner } from './conquest';
+import { Intel } from './intel';
+import { buildPlatoons } from './platoon';
 import { brainSystems, composeHooks } from './index';
 import { conquestRules, type ConquestRules } from './modes';
 import { buildRoster } from './roster';
@@ -27,6 +30,8 @@ export class BattleRuntime implements Objective {
   readonly zone;
   conquest!: Conquest;
   spawner!: Spawner;
+  commanders: Commander[] = [];
+  intel = new Intel();
   outside = 0;
 
   constructor(readonly map: BattleMapDef, readonly mode: 'conquest' | 'quick', readonly opts: BattleOptions) {
@@ -41,8 +46,13 @@ export class BattleRuntime implements Objective {
     this.conquest = new Conquest(this.map, this.mode, this.rules);
     const roster = (side: BattleSide) => buildRoster({ scale: this.rules.forces, side, playerSide: this.opts.side, difficulty: world.difficulty.level });
     this.spawner = new Spawner(this.map, { coalition: roster('coalition'), veros: roster('veros') }, this.conquest, this.rules.botWaveSec);
-    const brains = brainSystems();
-    world.battleHooks = composeHooks({ tick10Hz: brains.tick10Hz, tick1Hz: [...brains.tick1Hz, this.conquest.step, this.spawner.step] });
+    this.intel = new Intel();
+    this.commanders = (['coalition', 'veros'] as const).map(side => {
+      const home = this.map.bases.find(b => b.side === side)!.position;
+      return new Commander(side, buildPlatoons(side, this.spawner.slots[side], home), this.intel);
+    });
+    const brains = brainSystems(this.intel);
+    world.battleHooks = composeHooks({ tick10Hz: brains.tick10Hz, tick1Hz: [...brains.tick1Hz, this.conquest.step, this.spawner.step, this.command] });
     this.state = 'active';
     this.result = {};
     for (const f of this.map.fixed) {
@@ -52,6 +62,11 @@ export class BattleRuntime implements Objective {
     this.spawner.wave(world);
     this.outside = 0;
   }
+
+  command = (world: World) => {
+    for (const c of this.commanders) c.step(world, this.conquest.points, this.conquest.elapsed);
+    for (const [id, g] of world.groups) if (g.members.every(m => !world.unit(m.unit)?.alive)) world.groups.delete(id);
+  };
 
   spawnPoints(world: World): SpawnPoint[] {
     const base = this.map.bases.find(b => b.side === this.opts.side)!;

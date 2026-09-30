@@ -5,6 +5,7 @@ import { REACTION } from '../ai/brain';
 import { LOS_PRUNE_EVERY, pairKey } from '../los';
 import { hitsAir, hitsGround, hostile, type TargetRef, type Unit, type UnitDef, type UnitWeaponDef } from '../units';
 import type { World } from '../world';
+import type { Intel } from './intel';
 
 export const MAX_CANDIDATES = 4;
 export const TARGET_SLICES = 10;
@@ -77,6 +78,8 @@ export class Targeting {
   private eye = new Vector3();
   private at = new Vector3();
 
+  constructor(readonly intel: Intel | null = null) {}
+
   step = (world: World) => {
     this.grid.rebuild(world.units.filter(u => u.alive && u.side !== 'civilian').map(u => ({ x: u.pos.x, z: u.pos.z, u })));
     const slice = this.tick++ % TARGET_SLICES;
@@ -86,7 +89,7 @@ export class Targeting {
       if (u.id % TARGET_SLICES === slice) this.choose(world, u);
       else if (b.target && !this.valid(world, u, b.target)) b.target = null;
     }
-    if (this.tick % (LOS_PRUNE_EVERY * TARGET_SLICES) === 0) world.los.prune(world.time);
+    if (this.tick % (LOS_PRUNE_EVERY * TARGET_SLICES) === 0) { world.los.prune(world.time); this.intel?.forget(world.time); }
   };
 
   private valid(world: World, u: Unit, t: TargetRef) {
@@ -117,6 +120,7 @@ export class Targeting {
       if (score <= bestScore) continue;
       eyeOf(c.u, this.at);
       if (!world.los.visual(pairKey(u.id, c.u.id), this.eye, this.at, world.time).clear) continue;
+      if (this.intel && (u.side === 'coalition' || u.side === 'veros')) this.intel.spot(u.side, c.u.id, world.time);
       best = { kind: 'unit', id: c.u.id }; bestScore = score;
     }
     const h = world.player;

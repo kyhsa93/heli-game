@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { STEP, World } from '../world';
-import { ARRIVE, CONVOY_SPACING, MAX_SLOPE_COS, RoadGraph, type GroupState } from './movement';
+import { ARRIVE, CONVOY_SPACING, INFANTRY_SLOPE_COS, RoadGraph, type GroupState } from './movement';
 
 describe('road graph and A* (06 6.1)', () => {
   it('merges points within 2 m, including T-junctions', () => {
@@ -97,7 +97,7 @@ describe('group movement (05 5.5)', () => {
     expect(w.groups.get('p')!.members[0].arrived).toBe(false);
   });
 
-  it('keeps off-road units off slopes steeper than 20 degrees', () => {
+  it('keeps off-road infantry off slopes steeper than 35 degrees (wiki 5.5)', () => {
     const { s, rt, w } = run(
       [{ id: 'x', behavior: 'advance', route: [[-1200, 1200], [1200, 1200]] }],
       [{ id: 'i', type: 'inf', position: [-1200, 1200], group: 'x' }],
@@ -109,7 +109,7 @@ describe('group movement (05 5.5)', () => {
       const u = rt.unit('i')!;
       if (i % 30 === 0) worst = Math.min(worst, w.terrain.normalAt(u.pos.x, u.pos.z).y);
     }
-    expect(worst).toBeGreaterThan(MAX_SLOPE_COS - 0.05);
+    expect(worst).toBeGreaterThan(INFANTRY_SLOPE_COS - 0.05);
   });
 
   it('an advancing unit halts while engaging', () => {

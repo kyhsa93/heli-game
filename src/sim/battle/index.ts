@@ -1,5 +1,6 @@
 import type { BattleHooks, World } from '../world';
 import { stepCombat } from './combat';
+import type { Intel } from './intel';
 import { Targeting } from './targeting';
 
 export type BattleSystem = (world: World, dt: number) => void;
@@ -16,7 +17,7 @@ export function composeHooks(systems: BattleSystems): BattleHooks {
   };
 }
 
-export function brainSystems(): BattleSystems {
-  const targeting = new Targeting();
+export function brainSystems(intel: Intel | null = null): BattleSystems {
+  const targeting = new Targeting(intel);
   return { tick10Hz: [targeting.step, stepCombat], tick1Hz: [] };
 }

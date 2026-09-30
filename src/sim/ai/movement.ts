@@ -7,6 +7,10 @@ export const CONVOY_SPACING = 25;
 export const MAX_SLOPE_COS = Math.cos(20 * Math.PI / 180);
 export const AIR_ALTITUDE = 60;
 export const ARRIVE = 6;
+export const DIRECT_ROUTE = 150;
+export const ROAD_JOIN = 10;
+export const ROAD_LEAVE = 30;
+export const ROAD_LEAVE_BEFORE = 0.9;
 
 export interface RoadNode { x: number; z: number; edges: { to: number; len: number }[] }
 
@@ -109,8 +113,17 @@ export function remaining(g: GroupState, u: Unit, member: GroupState['members'][
   return d;
 }
 
-function passable(t: Terrain, x: number, z: number) {
-  return t.normalAt(x, z).y >= MAX_SLOPE_COS && t.heightAt(x, z) > 0.5;
+export const INFANTRY_SLOPE_COS = Math.cos(35 * Math.PI / 180);
+export const TRACKED_SLOPE_COS = Math.cos(30 * Math.PI / 180);
+
+function passable(t: Terrain, x: number, z: number, slopeCos = MAX_SLOPE_COS) {
+  return t.normalAt(x, z).y >= slopeCos && (t.heightAt(x, z) > 0.5 || t.onBridge(x, z) !== null);
+}
+
+function climb(u: Unit) {
+  if (u.def.category === 'infantry') return INFANTRY_SLOPE_COS;
+  if (u.def.category === 'tracked') return TRACKED_SLOPE_COS;
+  return MAX_SLOPE_COS;
 }
 
 function stepToward(world: World, u: Unit, tx: number, tz: number, speed: number, dt: number, road: boolean) {
@@ -119,7 +132,8 @@ function stepToward(world: World, u: Unit, tx: number, tz: number, speed: number
   let step = Math.min(d, speed * dt), hx = dx / d, hz = dz / d;
   const t = world.terrain, air = !!u.def.move?.air;
   if (!road && !air) {
-    const ok = (ax: number, az: number) => passable(t, u.pos.x + ax * Math.max(step, 3), u.pos.z + az * Math.max(step, 3));
+    const slope = climb(u);
+    const ok = (ax: number, az: number) => passable(t, u.pos.x + ax * Math.max(step, 3), u.pos.z + az * Math.max(step, 3), slope);
     if (!ok(hx, hz)) {
       let found = false;
       for (const a of [0.5, -0.5, 1, -1, 1.5, -1.5]) {
@@ -137,6 +151,24 @@ function stepToward(world: World, u: Unit, tx: number, tz: number, speed: number
   return step;
 }
 
+export function setGroupRoute(world: World, id: string, units: number[], dest: Vec2, speedScale = 1) {
+  const lead = world.unit(units[0]);
+  const start: Vec2 = lead ? [lead.pos.x, lead.pos.z] : dest;
+  const graph = world.roads;
+  const direct = Math.hypot(dest[0] - start[0], dest[1] - start[1]) < DIRECT_ROUTE || !graph.nodes.length;
+  const path: Vec2[] = direct ? [dest] : [...graph.route([start, dest]), dest];
+  const on = (p: Vec2, a: Vec2, b: Vec2, near: number) => {
+    const dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz;
+    const t = l2 > 0 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / l2 : 1;
+    return { t, off: Math.hypot(p[0] - (a[0] + dx * t), p[1] - (a[1] + dz * t)) <= near };
+  };
+  while (path.length >= 3) { const r = on(start, path[0], path[1], ROAD_JOIN); if (r.t > 0 && r.t < 1 && r.off) path.shift(); else break; }
+  while (path.length >= 3) { const r = on(dest, path[path.length - 3], path[path.length - 2], ROAD_LEAVE); if (r.t > 0 && r.t < ROAD_LEAVE_BEFORE && r.off) path.splice(path.length - 2, 1); else break; }
+  const g: GroupState = { id, behavior: 'advance', path, loop: false, speedScale, started: true, members: units.map(unit => ({ unit, leg: 0, dir: 1, arrived: false })) };
+  world.groups.set(id, g);
+  return g;
+}
+
 export function stepGroups(world: World, groups: Iterable<GroupState>, dt: number) {
   for (const g of groups) {
     if (!g.started || g.behavior === 'hold' || g.behavior === 'defend' || g.path.length < 1) continue;
@@ -145,7 +177,7 @@ export function stepGroups(world: World, groups: Iterable<GroupState>, dt: numbe
       const u = world.unit(m.unit);
       if (!u || !u.alive || !u.def.move) continue;
       if (m.arrived) { u.vel.set(0, 0, 0); if (g.behavior === 'convoy') ahead = { u, left: remaining(g, u, m) }; continue; }
-      if (g.behavior !== 'convoy' && u.ai.state === 'engage') { u.vel.set(0, 0, 0); continue; }
+      if (g.behavior !== 'convoy' && (u.ai.state === 'engage' || (u.def.category === 'infantry' && u.battle?.target && u.battle.aim <= 0))) { u.vel.set(0, 0, 0); continue; }
       const road = !u.def.move.offroad || world.terrain.roads.length > 0 && world.terrain.nearRoad(u.pos.x, u.pos.z, 12);
       let speed = unitSpeed(u, road, g.speedScale);
       const left = remaining(g, u, m);
