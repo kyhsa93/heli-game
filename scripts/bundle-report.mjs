@@ -31,7 +31,7 @@ const all = new Set(Object.values(manifest).map(e => e.file).filter(js));
 const size = files => [...files].filter(js).reduce((s, f) => s + gz(f), 0);
 
 const rows = [['first', size(first)], ['battle', size(battle)], ['all', size(all)]];
-console.log('| route | JS gzip KB | budget (A1, warning) |');
+console.log('| route | JS gzip KB | budget (A1) |');
 console.log('| --- | --- | --- |');
 let over = false;
 for (const [name, kb] of rows) {
@@ -39,4 +39,7 @@ for (const [name, kb] of rows) {
   if (kb > b) over = true;
   console.log(`| ${name} | ${kb.toFixed(1)} | ${b}${kb > b ? ' ⚠ over' : ''} |`);
 }
-if (over) console.warn('warning: a route is over its bundle budget (enforced from B10-3)');
+if (over) {
+  console.error('a route is over its bundle budget (A1)');
+  process.exitCode = 1;
+}

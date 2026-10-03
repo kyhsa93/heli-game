@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { assets } from '../../assets/loader';
+import { HELI_GROUP } from '../../assets/manifest';
 import { t, tList } from '../../content/strings';
 import { cardDevice, Coach, deathTip, type CoachFacts } from './coach';
 import type { Settings } from '../../save/save';
@@ -102,6 +104,7 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
   const heliReady = side === 'coalition';
   const [role, setRole] = useState<'heli' | 'soldier'>(heliReady && !firstFoot ? 'heli' : 'soldier');
   const heliSpawn = firstSortie ? 'baseAir' : 'base';
+  useEffect(() => { if (role === 'heli') void assets.loadGroup(HELI_GROUP); }, [role]);
   const home = runtime.conquest.points.find(p => p.owner === side);
   const soldierSpawn = firstFoot && home ? `point:${home.id}` : 'soldierBase';
   const [spawnId, setSpawnId] = useState(role === 'heli' ? heliSpawn : soldierSpawn);

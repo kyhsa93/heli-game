@@ -37,6 +37,7 @@ export const defaultFetchers: Fetchers = {
 export class AssetLoader {
   private cache = new Map<string, unknown>();
   private failed = new Set<string>();
+  private pending = new Map<string, Promise<void>>();
 
   constructor(private readonly fetchers: Fetchers = defaultFetchers, private readonly defs: AssetDef[] = ASSETS) {}
 
@@ -47,11 +48,14 @@ export class AssetLoader {
     onProgress?.(todo.length ? 0 : 1);
     await Promise.all(todo.map(async def => {
       if (!this.cache.has(def.id) && !this.failed.has(def.id)) {
-        try {
-          this.cache.set(def.id, await this.fetchers[def.kind](assetUrl(def.path), def));
-        } catch {
-          this.failed.add(def.id);
+        let job = this.pending.get(def.id);
+        if (!job) {
+          job = this.fetchers[def.kind](assetUrl(def.path), def)
+            .then(v => { this.cache.set(def.id, v); }, () => { this.failed.add(def.id); })
+            .finally(() => this.pending.delete(def.id));
+          this.pending.set(def.id, job);
         }
+        await job;
       }
       (this.cache.has(def.id) ? report.loaded : report.failed).push(def.id);
       onProgress?.(++done / todo.length);

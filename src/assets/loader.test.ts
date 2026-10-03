@@ -48,6 +48,13 @@ describe('AssetLoader', () => {
     expect(calls).toHaveLength(2);
   });
 
+  it('fetches an asset once when two callers ask for its group at the same time', async () => {
+    const calls: string[] = [];
+    const loader = new AssetLoader(fakeFetchers(calls), defs);
+    await Promise.all([loader.loadGroup('m01'), loader.loadGroup('m01')]);
+    expect(calls.filter(c => c.includes('later'))).toHaveLength(1);
+  });
+
   it('reports completion immediately for an empty group', async () => {
     const loader = new AssetLoader(fakeFetchers([]), defs);
     const progress: number[] = [];

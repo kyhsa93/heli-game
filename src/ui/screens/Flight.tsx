@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type PointerEvent as RPointerEvent, type ReactNode } from 'react';
 import { assets } from '../../assets/loader';
+import { HELI_GROUP } from '../../assets/manifest';
 import { GameAudio } from '../../audio/game';
 import { t, tList, tPairs } from '../../content/strings';
 import { clamp } from '../../core/math';
@@ -33,6 +34,7 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
   const onRendererRef = useRef(onRenderer);
   onRendererRef.current = onRenderer;
   const mountRef = useRef<HTMLDivElement>(null);
+  const heliSoundsRef = useRef(false);
   const hudRef = useRef<HTMLDivElement>(null);
   const missionRef = useRef<HTMLDivElement>(null);
   const msgRef = useRef<HTMLDivElement>(null);
@@ -172,6 +174,10 @@ export function Flight({ session, touch, settings = freshSave().settings, onSett
       input,
       onFrame: ({ simDt, cockpit, agl }) => {
         const h = sim.player, tp = sim.target;
+        if (sim.avatar.kind === 'heli' && !heliSoundsRef.current) {
+          heliSoundsRef.current = true;
+          void assets.loadGroup(HELI_GROUP).then(() => audioRef.current?.loadSamples(id => assets.get<ArrayBuffer>(id)));
+        }
         if (hudRef.current) {
           hudRef.current.style.display = !cockpit && hudOnRef.current && sim.avatar.kind === 'heli' ? '' : 'none';
           hudRef.current.textContent =

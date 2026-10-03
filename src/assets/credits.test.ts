@@ -2,7 +2,10 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseCredits } from './credits';
-import { ASSETS, BOOT_BUDGET_BYTES, BOOT_GROUP } from './manifest';
+import { ASSETS, BOOT_BUDGET_BYTES, BOOT_GROUP, FARP_GROUP, HELI_GROUP, MISSION_BUDGET_BYTES, UNITS_GROUP } from './manifest';
+import { MODEL_FOR_UNIT } from '../render/unitModels';
+import rosters from '../content/battle/rosters.json';
+import units from '../content/units.json';
 
 const ROOT = join(__dirname, '../../public/assets');
 const LICENSES = new Set(['CC0', 'Public Domain', 'CC-BY-3.0', 'CC-BY-4.0', 'OFL-1.1', 'MIT', 'Apache-2.0', 'ISC']);
@@ -39,6 +42,25 @@ describe('external asset credits (10-external-assets.md 10.8)', () => {
   it(`keeps the boot assets within ${BOOT_BUDGET_BYTES / 1024} KB`, () => {
     const total = ASSETS.filter(a => a.group === BOOT_GROUP).reduce((n, a) => n + statSync(join(ROOT, a.path)).size, 0);
     expect(total).toBeLessThanOrEqual(BOOT_BUDGET_BYTES);
+  });
+
+  it('keeps sounds only a helicopter makes out of the boot group', () => {
+    const heliOnly = ['audio.rotor_loop', 'audio.engine_start', 'audio.rocket_launch', 'audio.hellfire_launch'];
+    for (const id of heliOnly) expect(ASSETS.find(a => a.id === id)?.group, id).toBe(HELI_GROUP);
+  });
+
+  it('loads in a battle only the models a roster unit is drawn with', () => {
+    const defs = units as Record<string, { category: string }>;
+    const drawn = new Set(Object.values(rosters.units).flat()
+      .filter(id => defs[id]?.category !== 'infantry')
+      .map(id => MODEL_FOR_UNIT[id]).filter(Boolean));
+    const loaded = ASSETS.filter(a => a.group === UNITS_GROUP).map(a => a.id.replace('model.', ''));
+    for (const m of loaded) expect(drawn.has(m), `${m} is loaded for every battle but no roster unit is drawn with it`).toBe(true);
+  });
+
+  it(`keeps what one match loads after boot within ${MISSION_BUDGET_BYTES / 1024} KB`, () => {
+    const total = ASSETS.filter(a => [UNITS_GROUP, FARP_GROUP, HELI_GROUP].includes(a.group)).reduce((n, a) => n + statSync(join(ROOT, a.path)).size, 0);
+    expect(total).toBeLessThanOrEqual(MISSION_BUDGET_BYTES);
   });
 
   it('parses the credits table format', () => {
