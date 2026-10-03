@@ -136,6 +136,14 @@ describe('shipped fonts', () => {
     }
   });
 
+  it('carries the OFL licence record (name IDs 13 and 14) in every font', () => {
+    for (const f of ['b612-mono.woff2', 'karda-sans-regular.woff2', 'karda-sans-bold.woff2']) {
+      const n = names(join(FONTS, f));
+      expect([...n.get(13) ?? []].join(' '), `${f} name 13`).toMatch(/SIL Open Font License, Version 1\.1/);
+      expect([...n.get(14) ?? []].join(' '), `${f} name 14`).toMatch(/^https?:\/\//);
+    }
+  });
+
   it('keeps the B612 Mono name, which declares no reserved name', () => {
     expect([...names(join(FONTS, 'b612-mono.woff2')).get(1)!]).toEqual(['B612 Mono']);
   });

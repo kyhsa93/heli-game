@@ -35,7 +35,9 @@ chars.delete('\n'); chars.delete('\r');
 const textFile = join(tmpdir(), `subset-${process.pid}.txt`);
 writeFileSync(textFile, [...chars].join(''));
 requireTool('pyftsubset', 'Install fonttools and brotli: pip install --user fonttools brotli');
-run('pyftsubset', [input, `--text-file=${textFile}`, '--flavor=woff2', `--output-file=${output}`, '--layout-features=*', '--no-hinting']);
+// Name IDs 13 and 14 are the licence description and URL. pyftsubset keeps only 0-6 by
+// default, which shipped every font without the licence record OFL asks to travel with it.
+run('pyftsubset', [input, `--text-file=${textFile}`, '--flavor=woff2', `--output-file=${output}`, '--layout-features=*', '--no-hinting', '--name-IDs=0,1,2,3,4,5,6,13,14']);
 if (a.rename) {
   const py = [
     'import sys',

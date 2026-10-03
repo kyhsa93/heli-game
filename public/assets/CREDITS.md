@@ -45,3 +45,11 @@
 | audio/footstep_0.mp3 | Impact Sounds — footstep_grass_000 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 첫 0.3초, 0.1초 페이드아웃, OGG → 모노 64kbps MP3 | 2026-09-30 |
 | audio/footstep_1.mp3 | Impact Sounds — footstep_grass_002 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 첫 0.3초, 0.1초 페이드아웃, OGG → 모노 64kbps MP3 | 2026-09-30 |
 | audio/impact_body.mp3 | Impact Sounds — impactPunch_heavy_002 | Kenney (kenney.nl) | https://kenney.nl/assets/impact-sounds | CC0 | 0.1초 페이드아웃, OGG → 모노 64kbps MP3. 플레이어 보병 피격 | 2026-09-30 |
+
+## 라이선스 원문
+
+- CC0: https://creativecommons.org/publicdomain/zero/1.0/
+- CC-BY-3.0: https://creativecommons.org/licenses/by/3.0/
+- CC-BY-4.0: https://creativecommons.org/licenses/by/4.0/
+- OFL-1.1: `licenses/OFL-1.1.txt` (빌드에 함께 배포), https://openfontlicense.org
+- MIT: 게임 코드에 들어간 three.js·React·scheduler의 고지는 `licenses/THIRD-PARTY-NOTICES.txt` (빌드에 함께 배포)

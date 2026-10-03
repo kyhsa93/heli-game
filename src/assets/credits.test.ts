@@ -46,3 +46,23 @@ describe('external asset credits (10-external-assets.md 10.8)', () => {
     expect(parseCredits(md)).toEqual([{ file: 'a.mp3', title: 'T', author: 'A', url: 'https://x', license: 'CC0', modified: '잘라냄', checked: '2026-09-29' }]);
   });
 });
+
+describe('licence texts travel with the build', () => {
+  const root = join(__dirname, '../..');
+  const md = readFileSync(join(root, 'public/assets/CREDITS.md'), 'utf8');
+
+  it('gives every licence in use a place to read it', () => {
+    const section = md.slice(md.indexOf('## 라이선스 원문'));
+    const used = new Set(parseCredits(md).map(r => r.license));
+    for (const l of used) expect(section, `${l} has no licence text or URI`).toMatch(new RegExp(`^- ${l.replace(/[.]/g, '\\.')}:`, 'm'));
+  });
+
+  it('ships the OFL text and the notices of the code bundled into the game', () => {
+    const ofl = readFileSync(join(root, 'public/licenses/OFL-1.1.txt'), 'utf8');
+    expect(ofl).toMatch(/SIL OPEN FONT LICENSE Version 1\.1/);
+    expect(ofl).toMatch(/Reserved Font Name Pretendard/);
+    const notices = readFileSync(join(root, 'public/licenses/THIRD-PARTY-NOTICES.txt'), 'utf8');
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { dependencies: Record<string, string> };
+    for (const dep of Object.keys(pkg.dependencies)) expect(notices, `${dep} notice missing`).toMatch(new RegExp(`^${dep}$`, 'm'));
+  });
+});
