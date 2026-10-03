@@ -64,17 +64,19 @@ console.log('| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 let failed = false;
 for (const side of sides) {
   const idle = rate(side, 'idle');
+  const hasIdle = idle.n > 0;
   const judged: Rate[] = [];
   for (const role of roles) {
     const r = rate(side, role), rs = runs.filter(x => x.side === side && x.player === role);
     const [lo, hi] = wilson(r);
     let verdict = '—';
     if (role !== 'idle') {
-      if (UPPER_BOUND[role]) verdict = 'upper bound, not judged';
+      if (!hasIdle) verdict = 'no idle row to judge against';
+      else if (UPPER_BOUND[role]) verdict = 'upper bound, not judged';
       else { const v = roleVerdict(r, idle); verdict = `**${v.verdict}** — ${v.reason}`; judged.push(r); if (v.verdict === 'fail') failed = true; }
     }
     const entered = rs.filter(x => x.firstEntry !== null);
-    console.log(`| ${side} | ${role} | ${r.wins}/${r.n} (${pct(r.wins / r.n)}) | ${pct(lo)}–${pct(hi)} | ${role === 'idle' ? '' : `${((r.wins / r.n - idle.wins / idle.n) * 100).toFixed(0)}pp`} | ${verdict} | ${role === 'soldier' ? `${entered.length}/${rs.length}` : ''} | ${role === 'soldier' ? median(entered.map(x => x.firstEntry!)).toFixed(0) : ''} | ${role === 'soldier' ? median(rs.filter(x => x.firstContact !== null).map(x => x.firstContact!)).toFixed(0) : ''} | ${(rs.reduce((a, x) => a + x.endFlips, 0) / rs.length).toFixed(2)} | ${role === 'idle' ? '' : `${(rs.reduce((a, x) => a + x.proxyKills, 0) / rs.length).toFixed(1)} / ${(rs.reduce((a, x) => a + x.proxyDeaths, 0) / rs.length).toFixed(1)}`} |`);
+    console.log(`| ${side} | ${role} | ${r.wins}/${r.n} (${pct(r.wins / r.n)}) | ${pct(lo)}–${pct(hi)} | ${role === 'idle' || !hasIdle ? '' : `${((r.wins / r.n - idle.wins / idle.n) * 100).toFixed(0)}pp`} | ${verdict} | ${role === 'soldier' ? `${entered.length}/${rs.length}` : ''} | ${role === 'soldier' ? median(entered.map(x => x.firstEntry!)).toFixed(0) : ''} | ${role === 'soldier' ? median(rs.filter(x => x.firstContact !== null).map(x => x.firstContact!)).toFixed(0) : ''} | ${(rs.reduce((a, x) => a + x.endFlips, 0) / rs.length).toFixed(2)} | ${role === 'idle' ? '' : `${(rs.reduce((a, x) => a + x.proxyKills, 0) / rs.length).toFixed(1)} / ${(rs.reduce((a, x) => a + x.proxyDeaths, 0) / rs.length).toFixed(1)}`} |`);
   }
   const s = spreadVerdict(judged);
   console.log(`| ${side} | (spread) | | | | **${s.verdict}** — ${s.reason} | | | | | |`);
