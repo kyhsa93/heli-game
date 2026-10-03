@@ -73,7 +73,7 @@
 | VPA · idle | 11.8분 | 40% | 0 / 20 / 2 |
 | VPA · proxy | 10.9분 | 100% (대리 처치 15.3 / 사망 0.1) | 4 / 20 / 0 |
 
-- 목표: 중앙값 8~12분 ✓, idle 30~50% ✓, proxy ≥ 60% ✓, "80% 시드에서 거점마다 소유 변경" ✗ → #179.
+- 목표: 중앙값 8~12분 ✓, idle 30~50% ✓, proxy ≥ 60% ✓(**폐기**: 봇 통계 사격이라 실패할 수 없는 기준이었다 — 아래 '역할 영향력'의 P0 띠로 교체, 결정 O3), "80% 시드에서 거점마다 소유 변경" ✗ → #179.
 - 바꾼 수치: 빠른 점령전 티켓 300 → **200**, 출혈 0.1 → **0.3/초·거점**(점령전은 그대로, B5에서). 봇 대 봇 살상 배율 `botLethality`(1)는 올려도 처치 수가 거의 안 늘었다 — 교전 기회가 병목이었다.
 - 대리 헬기는 거의 죽지 않는다(봇 방공은 통계 사격, 진영당 대공조 1·방공 차량 1). 실제 플레이어는 봇이 진짜 탄·미사일을 쏘는 기존 경로라 다르다.
 
@@ -132,3 +132,28 @@ PWA가 아무것도 캐시하지 않으므로(`sw.js` no-store) 매 실행이 �
 `credits.test.ts`가 지킨다: 헬기 전용 소리는 boot에 없을 것, `units` 그룹의 모델은 로스터 유닛(보병은 코드 인형이라 제외)이 그려지는 모델일 것, 경기당 합계 예산.
 
 제거 직후(128.5 KB) 대비 첫 번들 +15 KB는 전장 설정 화면과 문자열이다.
+
+## 역할 영향력 (#193, 2026-10-03)
+
+`npm run battle:roles -- --seeds 100` — 기둥 P0 띠를 역할마다 95% 구간으로 판정한다. #187(경사 규칙 하나)·#192(전방 집결지) 뒤의 값이다. 7 프로세스로 21분.
+
+### harek quick · 100 seeds a cell · P0 band: role − idle ≥ 20pp, role < 95%, roles within 25pp (95% intervals)
+
+| side | role | wins | 95% interval | − idle | verdict | entered a point | firstEntrySec | firstContactSec | flips in last 3 min | kills / deaths |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| coalition | idle | 39/100 (39%) | 30%–49% |  | — |  |  |  | 1.31 |  |
+| coalition | soldier | 51/100 (51%) | 41%–61% | 12pp | **undecided** — beats idle by -2-25pp — more seeds | 40/100 | 201 | 349 | 0.95 | 0.9 / 6.0 |
+| coalition | proxy | 98/100 (98%) | 93%–99% | 59pp | upper bound, not judged |  |  |  | 1.45 | 14.0 / 0.0 |
+| coalition | (spread) | | | | **undecided** — one judged role | | | | | |
+| veros | idle | 50/100 (50%) | 40%–60% |  | — |  |  |  | 1.74 |  |
+| veros | soldier | 58/100 (58%) | 48%–67% | 8pp | **undecided** — beats idle by -6-21pp — more seeds | 65/100 | 209 | 451 | 1.43 | 0.8 / 6.5 |
+| veros | proxy | 99/100 (99%) | 95%–100% | 49pp | upper bound, not judged |  |  |  | 1.70 | 13.7 / 0.0 |
+| veros | (spread) | | | | **undecided** — one judged role | | | | | |
+
+- `proxy`: attack helicopter played by a bot that hits with the bots' statistical fire (vsUnits), not the player's weapons — an upper bound, not judged.
+
+600 matches in 1264 s on 7 processes.
+
+- 보병이 처음으로 무입력보다 높게 나왔다(연합 +12pp, VPA +8pp). 그러나 구간 위 끝이 25pp·21pp로 띠(20pp)에 걸쳐 있어 아직 **판정 불가**다 — 통과로 볼 근거도, 실패로 볼 근거도 없다.
+- 공격 헬기는 상한이다(#198이 실제 무기 경로로 옮기기 전까지 판정에서 뺀다). 역할 수치는 이 표가 판정을 낼 때까지 바꾸지 않는다(O11).
+

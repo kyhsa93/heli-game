@@ -11,7 +11,8 @@
     "check": "tsc && vitest run && vite build && node scripts/bundle-report.mjs",
     "battle:map": "node --experimental-transform-types --no-warnings --import ./scripts/lib/ts.mjs scripts/battle-map-gen.ts",
     "battle:bench": "node --experimental-transform-types --no-warnings --import ./scripts/lib/ts.mjs scripts/battle-bench.ts",
-    "battle:harness": "node --experimental-transform-types --no-warnings --import ./scripts/lib/ts.mjs scripts/battle-harness.ts"
+    "battle:harness": "node --experimental-transform-types --no-warnings --import ./scripts/lib/ts.mjs scripts/battle-harness.ts",
+    "battle:roles": "node --experimental-transform-types --no-warnings --import ./scripts/lib/ts.mjs scripts/battle-roles.ts"
   },
   "dependencies": {
     "react": "^19.3.0",

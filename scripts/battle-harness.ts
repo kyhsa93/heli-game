@@ -19,14 +19,26 @@ const stance = arg('stance', 'cover') as ProxyStance;
 const seeds = Number(arg('seeds', '20'));
 const first = Number(arg('seed', '1'));
 const trace = process.argv.includes('--trace');
+const json = process.argv.includes('--json');
 const overrides = process.argv.flatMap((a, i) => (a === '--set' ? [process.argv[i + 1]] : []));
 const def = JSON.parse(readFileSync(`src/content/battle/maps/${mapId}.json`, 'utf8')) as BattleMapDef;
 
-interface Run { starts: Record<string, string>; fell: string[]; seed: number; minutes: number; winner: string; tickets: string; flips: Record<string, number>; kills: number; proxyKills: number; proxyDeaths: number; life: number; inside: number; firstEntry: number | null; stalled: number; ms: number }
+interface Run { starts: Record<string, string>; fell: string[]; seed: number; minutes: number; winner: string; tickets: string; flips: Record<string, number>; kills: number; proxyKills: number; proxyDeaths: number; life: number; inside: number; firstEntry: number | null; stalled: number; firstContact: number | null; endFlips: number; ms: number }
 
 function play(seed: number): Run {
   const { session, runtime } = createBattleSession(def, mode, { side, seed });
-  for (const kv of overrides) { const [k, v] = kv.split('='); (runtime.rules as unknown as Record<string, number>)[k] = Number(v); }
+  for (const kv of overrides) {
+    const [path, v] = kv.split('=');
+    const keys = path.split('.');
+    let at = runtime.rules as unknown as Record<string, unknown>;
+    for (const k of keys.slice(0, -1)) {
+      if (typeof at[k] !== 'object' || at[k] === null) throw new Error(`--set ${path}: no rule group ${k}`);
+      at = at[k] as Record<string, unknown>;
+    }
+    const last = keys[keys.length - 1];
+    if (typeof at[last] !== 'number') throw new Error(`--set ${path}: no numeric rule ${last}`);
+    at[last] = Number(v);
+  }
   session.start();
   session.frozen = false;
   const world = session.world;
@@ -34,13 +46,14 @@ function play(seed: number): Run {
   const starts = Object.fromEntries(runtime.conquest.points.filter(p => p.owner !== 'neutral').map(p => [p.owner, p.id]));
   const fell = new Set<string>();
   let kills = 0;
-  world.events.on('pointOwner', e => { flips[e.id]++; if (e.from !== 'neutral' && starts[e.from] === e.id) fell.add(e.from); });
+  const flipTimes: number[] = [];
+  world.events.on('pointOwner', e => { flips[e.id]++; flipTimes.push(runtime.conquest.elapsed); if (e.from !== 'neutral' && starts[e.from] === e.id) fell.add(e.from); });
   world.events.on('unitDestroyed', () => { kills++; });
   const proxy = player === 'proxy' ? new ProxyPilot(runtime, side) : null;
   const soldier = player === 'soldier' ? new SoldierProxy(runtime, side, stance) : null;
   const t0 = performance.now();
   let steps = 0;
-  let inside = 0, firstEntry: number | null = null, stalled = 0;
+  let inside = 0, firstEntry: number | null = null, stalled = 0, firstContact: number | null = null;
   let last: { x: number; z: number } | null = null;
   const limit = (runtime.rules.timeLimitSec + 30) * 120;
   while (session.mode !== 'done' && steps < limit) {
@@ -52,6 +65,7 @@ function play(seed: number): Run {
     if (me && me.alive) {
       const inEnemy = runtime.conquest.points.some(p => p.owner !== side && Math.hypot(me.pos.x - p.x, me.pos.z - p.z) <= p.radius);
       if (inEnemy) { inside += STEP; firstEntry ??= runtime.conquest.elapsed; }
+      if (world.soldierCommands.fire) firstContact ??= runtime.conquest.elapsed;
       if (steps % 120 === 0) {
         const inAny = runtime.conquest.points.some(p => Math.hypot(me.pos.x - p.x, me.pos.z - p.z) <= p.radius);
         if (last && !inAny && Math.hypot(me.pos.x - last.x, me.pos.z - last.z) < 1) stalled += 1;
@@ -71,7 +85,7 @@ function play(seed: number): Run {
   const c = runtime.conquest;
   return {
     starts, fell: [...fell], seed, minutes: c.elapsed / 60, winner: c.winner ?? 'none', tickets: `${Math.floor(c.tickets.coalition)}:${Math.floor(c.tickets.veros)}`,
-    flips, kills, proxyKills: proxy?.kills ?? soldier?.kills ?? 0, proxyDeaths: proxy?.deaths ?? soldier?.deaths ?? 0, life: soldier ? soldier.aliveTime / Math.max(1, soldier.deaths) : 0, inside, firstEntry, stalled, ms: (performance.now() - t0) / Math.max(1, steps / 2),
+    flips, kills, proxyKills: proxy?.kills ?? soldier?.kills ?? 0, proxyDeaths: proxy?.deaths ?? soldier?.deaths ?? 0, life: soldier ? soldier.aliveTime / Math.max(1, soldier.deaths) : 0, inside, firstEntry, stalled, firstContact, endFlips: flipTimes.filter(t => t >= c.elapsed - 180).length, ms: (performance.now() - t0) / Math.max(1, steps / 2),
   };
 }
 
@@ -79,8 +93,10 @@ const runs: Run[] = [];
 for (let s = first; s < first + seeds; s++) {
   const r = play(s);
   runs.push(r);
+  if (json) { console.log(`RUN ${JSON.stringify({ ...r, side, player })}`); continue; }
   console.log(`seed ${String(r.seed).padStart(3)}  ${r.minutes.toFixed(1).padStart(5)} min  ${r.winner.padEnd(9)}  tickets ${r.tickets.padEnd(8)}  flips ${Object.entries(r.flips).map(([k, v]) => `${k}${v}`).join(' ')}  kills ${r.kills}${player !== 'idle' ? `  proxy ${r.proxyKills}/${r.proxyDeaths}` : ''}${player === 'soldier' ? `  life ${r.life.toFixed(0)}s  inside ${r.inside.toFixed(0)}s  entry ${r.firstEntry === null ? '-' : `${r.firstEntry.toFixed(0)}s`}  stalled ${r.stalled}s` : ''}`);
 }
+if (json) process.exit(0);
 const sorted = runs.map(r => r.minutes).sort((a, b) => a - b);
 const median = sorted[Math.floor(sorted.length / 2)];
 const wins = runs.filter(r => r.winner === side).length;
