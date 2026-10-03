@@ -1,8 +1,7 @@
-import { waterDepth, WADE_DEPTH } from '../infantry/movement';
+import { climbable, groundAt, waterDepth, WADE_DEPTH } from '../infantry/movement';
 import type { Terrain } from '../terrain';
 
 export const FOOT_CELL = 4;
-export const FOOT_SLOPE_DEG = 32;
 export const FOOT_AHEAD = 5;
 
 export interface FootBounds { minX: number; minZ: number; maxX: number; maxZ: number }
@@ -14,23 +13,21 @@ export class FootField {
   readonly nz: number;
   readonly dist: Float64Array;
 
-  constructor(readonly terrain: Terrain, gx: number, gz: number, readonly bounds: FootBounds, readonly cell = FOOT_CELL, slopeDeg = FOOT_SLOPE_DEG) {
+  constructor(readonly terrain: Terrain, gx: number, gz: number, readonly bounds: FootBounds, readonly cell = FOOT_CELL) {
     this.nx = Math.ceil((bounds.maxX - bounds.minX) / cell);
     this.nz = Math.ceil((bounds.maxZ - bounds.minZ) / cell);
-    const n = this.nx, total = n * this.nz, flat = Math.cos((slopeDeg * Math.PI) / 180);
-    const h = new Float32Array(total), open = new Uint8Array(total), gentle = new Uint8Array(total);
+    const n = this.nx, total = n * this.nz;
+    const open = new Uint8Array(total), h = new Float32Array(total), gentle = new Uint8Array(total);
+    const q = cell / 3;
     for (let i = 0; i < total; i++) {
       const [x, z] = this.center(i);
-      h[i] = terrain.surfaceAt(x, z);
       open[i] = waterDepth(terrain, x, z) <= WADE_DEPTH ? 1 : 0;
-      gentle[i] = terrain.onBridge(x, z, 4) !== null || terrain.normalAt(x, z).y >= flat ? 1 : 0;
+      h[i] = groundAt(terrain, x, z);
+      let ok = 1;
+      for (let a = -1; a <= 1 && ok; a++) for (let b = -1; b <= 1 && ok; b++) if (!climbable(terrain, x + a * q, z + b * q)) ok = 0;
+      gentle[i] = ok;
     }
-    const climb = (to: number, from: number) => {
-      if (h[to] <= h[from]) return true;
-      if (!gentle[to]) return false;
-      const [ax, az] = this.center(to), [bx, bz] = this.center(from);
-      return terrain.normalAt((ax + bx) / 2, (az + bz) / 2).y >= flat;
-    };
+    const climb = (to: number, from: number) => h[to] <= h[from] || gentle[to] === 1;
     this.dist = new Float64Array(total).fill(Infinity);
     const start = this.index(gx, gz);
     this.dist[start] = 0;

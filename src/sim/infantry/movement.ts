@@ -9,7 +9,7 @@ export const STAMINA = 8;
 export const STAMINA_RECOVERY = 1 / 1.5;
 export const PRONE_DOWN = 0.8;
 export const PRONE_UP = 0.6;
-export const MAX_SLOPE_DEG = 35;
+export const MAX_SLOPE_DEG = 45;
 export const WADE_DEPTH = 1.2;
 export const WADE_FACTOR = 0.5;
 export const GRAVITY = 9.81;
@@ -95,7 +95,7 @@ export function stepSoldier(s: SoldierState, c: SoldierCommands, m: SoldierMotio
   if (dv > maxDv) { s.vel.x += (dvx / dv) * maxDv; s.vel.z += (dvz / dv) * maxDv; } else { s.vel.x = tx; s.vel.z = tz; }
 
   let nx = s.pos.x + s.vel.x * dt, nz = s.pos.z + s.vel.z * dt;
-  if (s.onGround && !walkable(t, s.pos.x, s.pos.z, nx, nz)) {
+  if (s.onGround && !footStep(t, s.pos.x, s.pos.z, nx, nz)) {
     nx = s.pos.x; nz = s.pos.z; s.vel.x = 0; s.vel.z = 0;
   }
   [nx, nz] = pushOut(t, nx, nz, obstacles);
@@ -126,11 +126,28 @@ export function stepSoldier(s: SoldierState, c: SoldierCommands, m: SoldierMotio
   return out;
 }
 
-function walkable(t: Terrain, x0: number, z0: number, x1: number, z1: number) {
+export function climbable(t: Terrain, x: number, z: number) {
+  return t.onBridge(x, z, 4) !== null || t.normalAt(x, z).y >= SLOPE_COS;
+}
+
+export function footStep(t: Terrain, x0: number, z0: number, x1: number, z1: number) {
   if (waterDepth(t, x1, z1) > WADE_DEPTH) return false;
   const rise = groundAt(t, x1, z1) - groundAt(t, x0, z0);
   if (rise <= 0) return true;
-  return t.onBridge(x1, z1, 4) !== null || t.normalAt(x1, z1).y >= SLOPE_COS;
+  return climbable(t, x1, z1);
+}
+
+export const FOOT_SAMPLE = 1;
+
+export function footWalk(t: Terrain, x0: number, z0: number, x1: number, z1: number) {
+  const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / FOOT_SAMPLE));
+  let px = x0, pz = z0;
+  for (let k = 1; k <= n; k++) {
+    const x = x0 + ((x1 - x0) * k) / n, z = z0 + ((z1 - z0) * k) / n;
+    if (!footStep(t, px, pz, x, z)) return false;
+    px = x; pz = z;
+  }
+  return true;
 }
 
 export function pushOut(t: Terrain, x: number, z: number, obstacles: readonly Obstacle[] = []): [number, number] {

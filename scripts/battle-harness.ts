@@ -22,7 +22,7 @@ const trace = process.argv.includes('--trace');
 const overrides = process.argv.flatMap((a, i) => (a === '--set' ? [process.argv[i + 1]] : []));
 const def = JSON.parse(readFileSync(`src/content/battle/maps/${mapId}.json`, 'utf8')) as BattleMapDef;
 
-interface Run { starts: Record<string, string>; fell: string[]; seed: number; minutes: number; winner: string; tickets: string; flips: Record<string, number>; kills: number; proxyKills: number; proxyDeaths: number; life: number; ms: number }
+interface Run { starts: Record<string, string>; fell: string[]; seed: number; minutes: number; winner: string; tickets: string; flips: Record<string, number>; kills: number; proxyKills: number; proxyDeaths: number; life: number; inside: number; firstEntry: number | null; stalled: number; ms: number }
 
 function play(seed: number): Run {
   const { session, runtime } = createBattleSession(def, mode, { side, seed });
@@ -40,12 +40,24 @@ function play(seed: number): Run {
   const soldier = player === 'soldier' ? new SoldierProxy(runtime, side, stance) : null;
   const t0 = performance.now();
   let steps = 0;
+  let inside = 0, firstEntry: number | null = null, stalled = 0;
+  let last: { x: number; z: number } | null = null;
   const limit = (runtime.rules.timeLimitSec + 30) * 120;
   while (session.mode !== 'done' && steps < limit) {
     proxy?.step(world, STEP);
     soldier?.step(session, STEP);
     session.step(STEP);
     steps++;
+    const me = soldier ? world.soldier : null;
+    if (me && me.alive) {
+      const inEnemy = runtime.conquest.points.some(p => p.owner !== side && Math.hypot(me.pos.x - p.x, me.pos.z - p.z) <= p.radius);
+      if (inEnemy) { inside += STEP; firstEntry ??= runtime.conquest.elapsed; }
+      if (steps % 120 === 0) {
+        const inAny = runtime.conquest.points.some(p => Math.hypot(me.pos.x - p.x, me.pos.z - p.z) <= p.radius);
+        if (last && !inAny && Math.hypot(me.pos.x - last.x, me.pos.z - last.z) < 1) stalled += 1;
+        last = { x: me.pos.x, z: me.pos.z };
+      }
+    } else if (steps % 120 === 0) last = null;
     if (trace && steps % (120 * 60) === 0) {
       const c = runtime.conquest;
       const alive = (s: BattleSide) => world.units.filter(u => u.alive && u.side === s && u.def.move).length;
@@ -59,7 +71,7 @@ function play(seed: number): Run {
   const c = runtime.conquest;
   return {
     starts, fell: [...fell], seed, minutes: c.elapsed / 60, winner: c.winner ?? 'none', tickets: `${Math.floor(c.tickets.coalition)}:${Math.floor(c.tickets.veros)}`,
-    flips, kills, proxyKills: proxy?.kills ?? soldier?.kills ?? 0, proxyDeaths: proxy?.deaths ?? soldier?.deaths ?? 0, life: soldier ? soldier.aliveTime / Math.max(1, soldier.deaths) : 0, ms: (performance.now() - t0) / Math.max(1, steps / 2),
+    flips, kills, proxyKills: proxy?.kills ?? soldier?.kills ?? 0, proxyDeaths: proxy?.deaths ?? soldier?.deaths ?? 0, life: soldier ? soldier.aliveTime / Math.max(1, soldier.deaths) : 0, inside, firstEntry, stalled, ms: (performance.now() - t0) / Math.max(1, steps / 2),
   };
 }
 
@@ -67,7 +79,7 @@ const runs: Run[] = [];
 for (let s = first; s < first + seeds; s++) {
   const r = play(s);
   runs.push(r);
-  console.log(`seed ${String(r.seed).padStart(3)}  ${r.minutes.toFixed(1).padStart(5)} min  ${r.winner.padEnd(9)}  tickets ${r.tickets.padEnd(8)}  flips ${Object.entries(r.flips).map(([k, v]) => `${k}${v}`).join(' ')}  kills ${r.kills}${player !== 'idle' ? `  proxy ${r.proxyKills}/${r.proxyDeaths}` : ''}${player === 'soldier' ? `  life ${r.life.toFixed(0)}s` : ''}`);
+  console.log(`seed ${String(r.seed).padStart(3)}  ${r.minutes.toFixed(1).padStart(5)} min  ${r.winner.padEnd(9)}  tickets ${r.tickets.padEnd(8)}  flips ${Object.entries(r.flips).map(([k, v]) => `${k}${v}`).join(' ')}  kills ${r.kills}${player !== 'idle' ? `  proxy ${r.proxyKills}/${r.proxyDeaths}` : ''}${player === 'soldier' ? `  life ${r.life.toFixed(0)}s  inside ${r.inside.toFixed(0)}s  entry ${r.firstEntry === null ? '-' : `${r.firstEntry.toFixed(0)}s`}  stalled ${r.stalled}s` : ''}`);
 }
 const sorted = runs.map(r => r.minutes).sort((a, b) => a - b);
 const median = sorted[Math.floor(sorted.length / 2)];
@@ -86,6 +98,12 @@ console.log(`| seeds where every point changed owner | ${everyFlip}/${runs.lengt
 console.log(`| seeds where a middle point changed owner | ${middle}/${runs.length} (${((middle / runs.length) * 100).toFixed(0)}%) |`);
 console.log(`| decided seeds where the loser's start point fell | ${loserFell}/${decided.length} (${((loserFell / Math.max(1, decided.length)) * 100).toFixed(0)}%) |`);
 console.log(`| mean kills | ${(runs.reduce((a, r) => a + r.kills, 0) / runs.length).toFixed(0)} |`);
-if (player === 'soldier') console.log(`| proxy seconds alive per death | ${(runs.reduce((a, r) => a + r.life, 0) / runs.length).toFixed(0)} |`);
+if (player === 'soldier') {
+  console.log(`| proxy seconds alive per death | ${(runs.reduce((a, r) => a + r.life, 0) / runs.length).toFixed(0)} |`);
+  const entered = runs.filter(r => r.firstEntry !== null).map(r => r.firstEntry!).sort((a, b) => a - b);
+  console.log(`| proxy seconds inside a point it does not hold | ${(runs.reduce((a, r) => a + r.inside, 0) / runs.length).toFixed(0)} |`);
+  console.log(`| seeds where the proxy entered such a point (firstEntrySec median) | ${entered.length}/${runs.length}${entered.length ? ` (${entered[Math.floor(entered.length / 2)].toFixed(0)} s)` : ''} |`);
+  console.log(`| proxy seconds stalled outside any point | ${(runs.reduce((a, r) => a + r.stalled, 0) / runs.length).toFixed(0)} |`);
+}
 if (player !== 'idle') console.log(`| proxy kills / deaths | ${(runs.reduce((a, r) => a + r.proxyKills, 0) / runs.length).toFixed(1)} / ${(runs.reduce((a, r) => a + r.proxyDeaths, 0) / runs.length).toFixed(1)} |`);
 console.log(`| sim ms per 60 fps frame | ${(runs.reduce((a, r) => a + r.ms, 0) / runs.length).toFixed(3)} |`);

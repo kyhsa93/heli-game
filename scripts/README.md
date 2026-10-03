@@ -23,4 +23,4 @@
 | `npm run battle:map -- --map harek --search --from 1 --tries 400 --write` | 원칙 1·4·7·9·13을 만족하는 지형 시드를 찾아 맵 파일에 기록 |
 | `npm run battle:map -- --map harek --png out.png` | 위에서 본 지형도(음영·물·숲·도로·교량·거점·본진·헬기 BP·빠른 점령전 구역)를 PNG로 |
 | `npm run battle:bench -- --mode quick --minutes 10` | 봇끼리 전투의 프레임·틱 시간 |
-| `npm run battle:harness -- --side coalition --player idle\|proxy\|soldier [--stance cover\|exposed] --seeds 20 [--set tickets=250] [--trace]` | 여러 시드 경기 결과표(길이·승률·거점 소유 변경·대리 기여) |
+| `npm run battle:harness -- --side coalition --player idle\|proxy\|soldier [--stance cover\|exposed] --seeds 20 [--set tickets=250] [--trace]` | 여러 시드 경기 결과표(길이·승률·거점 소유 변경·대리 기여, 보병 대리는 적 거점 안 시간·첫 진입 시각·전진 중 정지 시간) |

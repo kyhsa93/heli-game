@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 import { STANDARD_LOADOUT } from '../heli/loadout';
 import { visualSight } from '../los';
 import { memberPos } from '../infantry/squad';
-import { waterDepth, WADE_DEPTH } from '../infantry/movement';
+import { footWalk } from '../infantry/movement';
 import { soldierEye } from '../infantry/soldier';
 import type { FlightSession } from '../session';
 import type { Unit } from '../units';
@@ -27,7 +27,6 @@ export const RIFLE_SPEED = 850;
 export const STEER_STEPS = 8;
 export const STEER_ANGLE = Math.PI / 12;
 export const PROBE = 4;
-export const STEEP = Math.tan((30 * Math.PI) / 180);
 export const FAR_SPAWN = 2000;
 export const SPAWN_WAIT = 30;
 export const FIELD_MARGIN = 1000;
@@ -128,7 +127,13 @@ export class SoldierProxy {
       this.stuckAt = [s.pos.x, s.pos.z, world.time];
     }
     const f = path ? this.field(world, x, z) : null;
-    const via = f?.contains(s.pos.x, s.pos.z) ? f.next(s.pos.x, s.pos.z) : null;
+    let via: [number, number] | null = null;
+    if (f?.contains(s.pos.x, s.pos.z)) {
+      for (let ahead = FOOT_AHEAD; ahead >= 1 && !via; ahead--) {
+        const p = f.next(s.pos.x, s.pos.z, ahead);
+        if (p && (ahead === 1 || footWalk(world.terrain, s.pos.x, s.pos.z, p[0], p[1]))) via = p;
+      }
+    }
     if (via && Math.hypot(x - s.pos.x, z - s.pos.z) > FOOT_CELL * FOOT_AHEAD) [x, z] = via;
     const goal = Math.atan2(-(x - s.pos.x), -(z - s.pos.z)) + this.detour;
     const yaw = this.walkable(world, goal);
@@ -153,12 +158,12 @@ export class SoldierProxy {
   }
 
   private walkable(world: World, goal: number) {
-    const s = world.soldier!, t = world.terrain, h0 = t.surfaceAt(s.pos.x, s.pos.z);
+    const s = world.soldier!, t = world.terrain;
     for (let k = 0; k <= STEER_STEPS; k++) {
       for (const sign of k === 0 ? [1] : [this.lean, -this.lean]) {
         const yaw = goal + sign * k * STEER_ANGLE;
         const fx = s.pos.x - Math.sin(yaw) * PROBE, fz = s.pos.z - Math.cos(yaw) * PROBE;
-        if (Math.abs(t.surfaceAt(fx, fz) - h0) <= PROBE * STEEP && waterDepth(t, fx, fz) <= WADE_DEPTH) { if (k > 0) this.lean = sign; return yaw; }
+        if (footWalk(t, s.pos.x, s.pos.z, fx, fz)) { if (k > 0) this.lean = sign; return yaw; }
       }
     }
     return goal;

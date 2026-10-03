@@ -1,11 +1,14 @@
 import * as THREE from 'three';
 import { ROAD_HALF_WIDTH, type Terrain } from '../sim/terrain';
+import { MAX_SLOPE_DEG } from '../sim/infantry/movement';
 
 export const CHUNK = 2000;
 export const FAR_STEP = 4;
 export const NEAR_DISTANCE = 2600;
 export const SKIRT = 40;
 export const DETAIL_TILE = 16;
+export const ROCK_FULL_NY = Math.cos((MAX_SLOPE_DEG * Math.PI) / 180);
+export const ROCK_FROM_NY = Math.cos(((MAX_SLOPE_DEG - 15) * Math.PI) / 180);
 
 const sand = new THREE.Color(0xc8b98a), wet = new THREE.Color(0x6f6a4f), grassA = new THREE.Color(0x4f7a34);
 const grassB = new THREE.Color(0x76883f), rock = new THREE.Color(0x7a746b), snow = new THREE.Color(0xf2f4f6);
@@ -15,7 +18,7 @@ export function groundColor(t: Terrain, x: number, z: number, h: number, ny: num
   if (h < 3) return out.copy(sand);
   out.copy(grassA).lerp(grassB, t.forest(x * 1.7, z * 1.7));
   if (t.forest(x, z) > 0.5) out.multiplyScalar(0.82);
-  out.lerp(rock, Math.min(1, Math.max(0, (0.86 - ny) * 6)));
+  out.lerp(rock, Math.min(1, Math.max(0, (ROCK_FROM_NY - ny) / (ROCK_FROM_NY - ROCK_FULL_NY))));
   if (h > 300) out.lerp(rock, Math.min(1, (h - 300) / 80));
   if (h > 400 && ny > 0.7) out.lerp(snow, Math.min(1, (h - 400) / 40));
   return out;
@@ -88,7 +91,7 @@ export function terrainMaterial(detail: THREE.Texture | null) {
   vec4 dA = texture2D(detailMap, vDetailPos.xz / ${DETAIL_TILE.toFixed(1)});
   vec4 dB = texture2D(detailMap, vDetailPos.xz / ${(DETAIL_TILE * 7.3).toFixed(1)});
   vec4 dt = mix(dA, dB, 0.35);
-  float rockW = smoothstep(0.9, 0.7, vDetailUp);
+  float rockW = smoothstep(${ROCK_FROM_NY.toFixed(3)}, ${ROCK_FULL_NY.toFixed(3)}, vDetailUp);
   float snowW = smoothstep(380.0, 430.0, vDetailPos.y) * (1.0 - rockW);
   float dirtW = smoothstep(4.0, 1.0, vDetailPos.y);
   float grassW = max(0.0, 1.0 - rockW - snowW - dirtW);

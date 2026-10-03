@@ -4,7 +4,10 @@ import type { BattleMapDef } from '../battle/schema';
 import { battleTerrainOptions } from '../battle/terrain';
 import type { SimEvent } from '../events';
 import { STEP, World } from '../world';
-import { FALL_SAFE, groundAt, PRONE_DOWN, SPEED, STAMINA, TRUNK_RADIUS, waterDepth } from './movement';
+import { FALL_SAFE, footStep, groundAt, MAX_SLOPE_DEG, PRONE_DOWN, SPEED, STAMINA, TRUNK_RADIUS, waterDepth } from './movement';
+import type { Terrain } from '../terrain';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { SOLDIER_RADIUS } from './soldier';
 
 const harek = JSON.parse(harekRaw) as BattleMapDef;
@@ -66,14 +69,14 @@ describe('soldier movement (wiki 12.3)', () => {
     expect(w.soldierMotion.stamina).toBeCloseTo(STAMINA, 5);
   });
 
-  it('cannot climb slopes steeper than 35 degrees', () => {
+  it(`cannot climb slopes steeper than ${MAX_SLOPE_DEG} degrees`, () => {
     const w = new World({ seed: 5 });
     const t = w.terrain;
     let spot: { x: number; z: number; yaw: number } | null = null;
-    for (let i = 0; i < 20000 && !spot; i++) {
-      const x = ((i * 7919) % 1999) - 1000, z = ((i * 104729) % 1997) - 1000;
+    for (let i = 0; i < 200000 && !spot; i++) {
+      const x = ((i * 7919) % 5999) - 3000, z = ((i * 104729) % 5987) - 3000;
       const n = t.normalAt(x, z);
-      if (n.y > 0.76 || t.heightAt(x, z) < 5) continue;
+      if (n.y > Math.cos(((MAX_SLOPE_DEG + 3) * Math.PI) / 180) || t.heightAt(x, z) < 5) continue;
       const yaw = Math.atan2(n.x, n.z);
       const bx = x + Math.sin(yaw) * 3, bz = z + Math.cos(yaw) * 3;
       if (t.normalAt(bx, bz).y < 0.83 || t.heightAt(bx, bz) > t.heightAt(x, z)) continue;
@@ -157,5 +160,22 @@ describe('soldier movement (wiki 12.3)', () => {
     v.s.pos.set(p.x, groundAt(t, p.x, p.z + 2), p.z + 2);
     run(w, 0.1);
     expect(v.s.alive).toBe(false);
+  });
+
+  it('has one rule for a step uphill, and the flow field and the proxy use it (#187)', () => {
+    const plane = (deg: number) => ({
+      onBridge: () => null,
+      heightAt: (x: number) => 10 + x * Math.tan((deg * Math.PI) / 180),
+      surfaceAt: (x: number) => 10 + x * Math.tan((deg * Math.PI) / 180),
+      normalAt: () => ({ x: 0, y: Math.cos((deg * Math.PI) / 180), z: 0 }),
+    }) as unknown as Terrain;
+    expect(footStep(plane(MAX_SLOPE_DEG - 1), 0, 0, 1, 0)).toBe(true);
+    expect(footStep(plane(MAX_SLOPE_DEG + 1), 0, 0, 1, 0)).toBe(false);
+    expect(footStep(plane(MAX_SLOPE_DEG + 1), 1, 0, 0, 0)).toBe(true);
+    for (const f of ['../battle/footpath.ts', '../battle/soldierProxy.ts']) {
+      const src = readFileSync(join(__dirname, f), 'utf8');
+      expect(src, f).toMatch(/climbable\(|footWalk\(|footStep\(/);
+      expect(src, `${f} judges slope itself`).not.toMatch(/normalAt|SLOPE|STEEP|Math\.tan/);
+    }
   });
 });

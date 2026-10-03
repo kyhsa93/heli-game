@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { MISSION_SIZE, Terrain } from '../sim/terrain';
-import { chunkGeometry, CHUNK, FAR_STEP, NEAR_DISTANCE, SKIRT, TerrainChunks } from './terrainChunks';
+import { chunkGeometry, CHUNK, FAR_STEP, groundColor, NEAR_DISTANCE, ROCK_FROM_NY, ROCK_FULL_NY, SKIRT, TerrainChunks } from './terrainChunks';
 
 const t = new Terrain(3, { size: MISSION_SIZE });
 
@@ -39,5 +39,13 @@ describe('chunked terrain (06 6.1, 08 8.6)', () => {
     expect(near.length).toBeLessThanOrEqual(16);
     for (const k of c.chunks) expect(k.near.visible).not.toBe(k.far.visible);
     expect(NEAR_DISTANCE).toBeGreaterThan(CHUNK);
+  });
+
+  it('paints ground a soldier cannot climb as rock, and the slopes leading up to it as turning to rock (#187)', () => {
+    const t = new Terrain(5);
+    const at = (ny: number) => groundColor(t, 100, 100, 50, ny).getHexString();
+    expect(at(ROCK_FULL_NY - 0.01)).toBe(at(0));
+    expect(at(ROCK_FROM_NY + 0.01)).toBe(at(1));
+    expect(at((ROCK_FROM_NY + ROCK_FULL_NY) / 2)).not.toBe(at(0));
   });
 });
