@@ -106,14 +106,15 @@ function BattleOverlays({ game, side, touch, tips, onTip, onAgain, onSetup, onTi
   const heliSpawn = firstSortie ? 'baseAir' : 'base';
   useEffect(() => { if (role === 'heli') void assets.loadGroup(HELI_GROUP); }, [role]);
   const home = runtime.conquest.points.find(p => p.owner === side);
-  const soldierSpawn = firstFoot && home ? `point:${home.id}` : 'soldierBase';
+  const hasRally = runtime.spawnPoints(session.world).some(p => p.id === 'rally');
+  const soldierSpawn = hasRally ? 'rally' : firstFoot && home ? `point:${home.id}` : 'soldierBase';
   const [spawnId, setSpawnId] = useState(role === 'heli' ? heliSpawn : soldierSpawn);
   const [kit, setKit] = useState<KitId>('closeSupport');
   const c = runtime.conquest;
   const all = runtime.spawnPoints(session.world);
   const points = all.filter(p => p.role === role);
   const chosen = points.find(p => p.id === spawnId) ?? points[0];
-  const spawnLabel = (p: typeof chosen) => p.role === 'heli' ? t(p.kind === 'pad' ? 'battle.deploy.spawnBase' : 'battle.deploy.spawnBaseAir') : p.label === 'base' ? t('battle.deploy.spawnSoldierBase') : p.label.startsWith('squad:') ? squadLabel(p.label) : t('battle.deploy.spawnPoint', { id: p.label });
+  const spawnLabel = (p: typeof chosen) => p.role === 'heli' ? t(p.kind === 'pad' ? 'battle.deploy.spawnBase' : 'battle.deploy.spawnBaseAir') : p.label === 'base' ? t('battle.deploy.spawnSoldierBase') : p.label === 'rally' ? t('battle.deploy.spawnRally') : p.label.startsWith('squad:') ? squadLabel(p.label) : t('battle.deploy.spawnPoint', { id: p.label });
   if (snap.mode === 'deploy') {
     const wait = session.deployIn();
     return (

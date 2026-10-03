@@ -102,6 +102,10 @@ export class BattleRuntime implements Objective {
       if (world.units.some(u => foe(u) && u.def.move && Math.hypot(u.pos.x - p.x, u.pos.z - p.z) <= POINT_CLEAR)) continue;
       out.push({ id: `point:${p.id}`, role: 'soldier', kind: 'ground', pad, x: p.x, z: p.z, headingDeg, label: p.id });
     }
+    const rally = this.map.modes[this.mode]?.rally?.[side];
+    if (rally && !world.units.some(u => foe(u) && u.def.move && Math.hypot(u.pos.x - rally[0], u.pos.z - rally[1]) <= SQUAD_CLEAR)) {
+      out.push({ id: 'rally', role: 'soldier', kind: 'ground', pad, x: rally[0], z: rally[1], headingDeg, label: 'rally' });
+    }
     const quiet = world.units.filter(u => u.alive && u.side === side && u.members && !(u.battle?.firedAt !== undefined && world.time - u.battle.firedAt < SQUAD_QUIET)
       && !world.units.some(o => foe(o) && o.def.move && Math.hypot(o.pos.x - u.pos.x, o.pos.z - u.pos.z) <= SQUAD_CLEAR));
     quiet.sort((a, b) => Math.hypot(a.pos.x - enemy.position[0], a.pos.z - enemy.position[1]) - Math.hypot(b.pos.x - enemy.position[0], b.pos.z - enemy.position[1]) || a.id - b.id);

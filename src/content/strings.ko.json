@@ -433,6 +433,7 @@
       "points": "거점 {list}",
       "role": "역할",
       "spawnSoldierBase": "본진",
+      "spawnRally": "전방 집결지",
       "spawnPoint": "거점 {id}",
       "spawnSquad": "분대 옆 ({id} 근처)",
       "spawnSquadN": "분대 {n} ({id} 근처)"

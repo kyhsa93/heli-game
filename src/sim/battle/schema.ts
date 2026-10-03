@@ -23,8 +23,8 @@ export interface BattleMapDef {
   waypoints: { id: string; name: string; position: Vec2 }[];
   fixed: UnitSpawn[];
   modes: {
-    conquest?: { points: string[]; start: Record<string, PointOwner> };
-    quick?: { points: string[]; start: Record<string, PointOwner>; combatZone: Vec2[] };
+    conquest?: { points: string[]; start: Record<string, PointOwner>; rally?: Partial<Record<BattleSide, Vec2>> };
+    quick?: { points: string[]; start: Record<string, PointOwner>; combatZone: Vec2[]; rally?: Partial<Record<BattleSide, Vec2>> };
     breakthrough?: { sectors: { points: string[]; attackerBase: Vec2; defenderRoster: string }[] };
   };
 }
@@ -149,6 +149,10 @@ export function validateBattleMap(def: BattleMapDef): string[] {
       if (!OWNERS.has(owner)) e(`${path}.start.${p}`, `unknown owner ${owner}`);
     }
     for (const p of m.points ?? []) if (!(p in (m.start ?? {}))) e(`${path}.start`, `missing owner for ${p}`);
+    for (const [side, at] of Object.entries(m.rally ?? {})) {
+      if (side !== 'coalition' && side !== 'veros') e(`${path}.rally.${side}`, 'unknown side');
+      inside(`${path}.rally.${side}`, at);
+    }
   }
   if (modes.quick) polygon('modes.quick.combatZone', modes.quick.combatZone);
   return errors;

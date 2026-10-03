@@ -28,10 +28,15 @@ describe('infantry capture and spawning (wiki 3.3, B2-9)', () => {
     expect(world.soldier!.alive).toBe(true);
   });
 
-  it('offers the base, quiet friendly points and quiet friendly squads', () => {
+  it('offers the base, quiet friendly points, the rally point and quiet friendly squads', () => {
     const { runtime, world } = battle();
     const ids = () => runtime.spawnPoints(world).filter(p => p.role === 'soldier').map(p => p.id);
-    expect(ids()).toEqual(['soldierBase', 'point:A']);
+    expect(ids()).toEqual(['soldierBase', 'point:A', 'rally']);
+    const rally = runtime.spawnPoints(world).find(p => p.id === 'rally')!;
+    const near = world.spawnUnit('inf', rally.x + 60, rally.z);
+    expect(ids()).not.toContain('rally');
+    world.damageUnit(near, 1e5, false);
+    expect(ids()).toContain('rally');
     const a = runtime.conquest.points.find(p => p.id === 'A')!;
     const enemy = world.spawnUnit('inf', a.x + 100, a.z);
     expect(ids()).not.toContain('point:A');
