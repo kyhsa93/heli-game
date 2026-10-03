@@ -220,12 +220,12 @@
     "tooHigh": "고도가 너무 높습니다 ({fpm} ft) — 100ft 아래로 내려가세요"
   },
   "title": {
-    "name": "아파치",
-    "subtitle": "카르다 전선",
+    "name": "카르다 전선",
+    "subtitle": "봇과 함께 싸우는 점령전",
     "settings": "설정",
     "soon": "준비 중",
     "battle": "전장",
-    "battleSub": "봇과 함께 싸우는 빠른 점령전 — 아파치"
+    "battleSub": "빠른 점령전"
   },
   "training": {
     "back": "뒤로"

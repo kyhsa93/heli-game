@@ -1,7 +1,7 @@
 {
-  "name": "헬기 조종",
-  "short_name": "헬기 조종",
-  "description": "AH-64 아파치 1인칭 조종석 시뮬레이터",
+  "name": "카르다 전선",
+  "short_name": "카르다 전선",
+  "description": "봇과 함께 싸우는 점령전",
   "lang": "ko",
   "id": "./",
   "start_url": "./",
