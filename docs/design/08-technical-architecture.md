@@ -11,7 +11,7 @@
   - 허용 라이선스는 CC0·퍼블릭 도메인·CC-BY 3.0/4.0·OFL·MIT·Apache-2.0·ISC. 추가 전에 상세 페이지에서 라이선스를 다시 확인한다.
   - GLB는 `gltf-transform`(devDependency, `scripts/`에서만 사용 — 번들에 안 들어감)으로 meshopt 압축·텍스처 축소, 런타임 디코더는 three에 포함된 `GLTFLoader` + `meshopt_decoder`를 쓴다(새 런타임 의존성 없음), 오디오는 모노 MP3 64~96kbps, 폰트는 사용 글자만 뽑은 woff2. 원본 고용량 파일은 저장소에 넣지 않는다.
   - 에셋 로드 실패 시 코드 도형·합성음으로 폴백해 게임은 계속 동작한다.
-- 배포: `main` push → GitHub Actions(`.github/workflows/deploy.yml`)가 `npm ci && npm run check` 후 GitHub Pages에 배포. 경로 `base: '/heli-game/'`.
+- 배포: `main` push → GitHub Actions(`.github/workflows/deploy.yml`)가 `npm ci && npm run check` 후 GitHub Pages에 배포. 경로 `base: '/karda/'`.
 - PWA: `public/sw.js`는 **아무것도 캐시하지 않고 모든 요청을 `cache: 'no-store'`로** 받는다(소유자 요구사항). 캐시 전략을 바꾸지 말 것. 그 결과 첫 로드 용량이 매번 발생하므로 **번들 크기를 의식**한다(8.7절 예산).
 
 ## 8.2 현재 코드 지도 (M0 완료 시점)

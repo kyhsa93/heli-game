@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const TOOLS = process.env.HELI_TOOLS ?? join(homedir(), '.cache', 'heli-game-tools');
+const TOOLS = process.env.HELI_TOOLS ?? join(homedir(), '.cache', 'karda-tools');
 
 export const PINNED = {
   'ffmpeg-static': '5.3.0',

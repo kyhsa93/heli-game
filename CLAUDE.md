@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-브라우저 3D 전쟁 게임. 기존 AH-64 아파치 조종 콘텐츠(캠페인·훈련·즉시 출격)는 2026-09-30 제거했고, 봇과 함께 혼자 하는 배틀필드식 **"전장"** 모드로 다시 만드는 중이다. 게임 이름은 **카르다 전선**(2026-10-03 결정 O1, "아파치"는 탈것 이름으로만). 새 기획은 저장소 위키(https://github.com/kyhsa93/heli-game/wiki), 방향의 기준은 위키 [비전과 방향]·[소유자 결정]. 세부 기획은 `.claude/agents/game-designer.md`, 방향·우선순위는 디렉터 에이전트 넷(`game-director`·`creative-director`·`art-director`·`technical-director`).
+브라우저 3D 전쟁 게임. 기존 AH-64 아파치 조종 콘텐츠(캠페인·훈련·즉시 출격)는 2026-09-30 제거했고, 봇과 함께 혼자 하는 배틀필드식 **"전장"** 모드로 다시 만드는 중이다. 게임 이름은 **카르다 전선**(2026-10-03 결정 O1, "아파치"는 탈것 이름으로만). 새 기획은 저장소 위키(https://github.com/kyhsa93/karda/wiki), 방향의 기준은 위키 [비전과 방향]·[소유자 결정]. 세부 기획은 `.claude/agents/game-designer.md`, 방향·우선순위는 디렉터 에이전트 넷(`game-director`·`creative-director`·`art-director`·`technical-director`).
 
 ## 먼저 읽을 것
 
@@ -26,5 +26,5 @@ npm test         # vitest만
 - 새 런타임 의존성은 추가하지 않는다(필요하면 이유를 커밋 메시지에).
 - 사용자에게 보이는 문자열은 한국어, 코드 식별자는 영어. 주석은 거의 쓰지 않는다.
 - 렌더·UI 변경은 헤드리스 스크린샷으로 직접 확인한다. `?debug`로 `window.__flight`가 노출되며, 소프트웨어 렌더링은 느리므로 sim을 직접 스텝해서 상황을 만든다(08장 8.8절).
-- `main`에 push하면 GitHub Actions가 GitHub Pages(`/heli-game/`)로 배포한다.
+- `main`에 push하면 GitHub Actions가 GitHub Pages(`/karda/`)로 배포한다.
 - 기획과 다르게 구현했으면 해당 기획 문서도 같이 고친다. 로드맵 체크박스도 갱신한다.

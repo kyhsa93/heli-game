@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  base: '/heli-game/',
+  base: '/karda/',
   plugins: [react()],
   build: { assetsDir: 'static', manifest: true },
 });

@@ -25,15 +25,15 @@ function loadWorker() {
 describe('service worker', () => {
   it('always fetches page navigations from the network, bypassing the HTTP cache', async () => {
     const { fetchMock, dispatchFetch } = loadWorker();
-    const res = dispatchFetch({ url: 'https://kyhsa93.github.io/heli-game/', mode: 'navigate' });
+    const res = dispatchFetch({ url: 'https://kyhsa93.github.io/karda/', mode: 'navigate' });
     expect(res).toBeDefined();
     await res;
-    expect(fetchMock).toHaveBeenCalledWith('https://kyhsa93.github.io/heli-game/', expect.objectContaining({ cache: 'no-store' }));
+    expect(fetchMock).toHaveBeenCalledWith('https://kyhsa93.github.io/karda/', expect.objectContaining({ cache: 'no-store' }));
   });
 
   it('bypasses the cache for same-origin assets too', async () => {
     const { fetchMock, dispatchFetch } = loadWorker();
-    const req = { url: 'https://kyhsa93.github.io/heli-game/assets/index.js' };
+    const req = { url: 'https://kyhsa93.github.io/karda/assets/index.js' };
     await dispatchFetch(req);
     expect(fetchMock).toHaveBeenCalledWith(expect.objectContaining(req), { cache: 'no-store' });
   });
@@ -41,7 +41,7 @@ describe('service worker', () => {
   it('leaves cross-origin and non-GET requests alone', () => {
     const { fetchMock, dispatchFetch } = loadWorker();
     expect(dispatchFetch({ url: 'https://fonts.example.com/a.woff2' })).toBeUndefined();
-    expect(dispatchFetch({ url: 'https://kyhsa93.github.io/heli-game/x', method: 'POST' })).toBeUndefined();
+    expect(dispatchFetch({ url: 'https://kyhsa93.github.io/karda/x', method: 'POST' })).toBeUndefined();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

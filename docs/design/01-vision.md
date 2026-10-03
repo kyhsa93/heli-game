@@ -1,6 +1,6 @@
 # 01. 비전
 
-> 전장 모드 기준 1차 개정(B1-16, 2026-09-30). 상세 기획의 기준은 저장소 위키 [01-비전](https://github.com/kyhsa93/heli-game/wiki/01-비전)과 [소유자 결정](https://github.com/kyhsa93/heli-game/wiki/11-소유자-결정)이다. 이 장은 코드 작업자가 먼저 알아야 할 요약만 담는다.
+> 전장 모드 기준 1차 개정(B1-16, 2026-09-30). 상세 기획의 기준은 저장소 위키 [01-비전](https://github.com/kyhsa93/karda/wiki/01-비전)과 [소유자 결정](https://github.com/kyhsa93/karda/wiki/11-소유자-결정)이다. 이 장은 코드 작업자가 먼저 알아야 할 요약만 담는다.
 
 ## 1.1 콘셉트
 
